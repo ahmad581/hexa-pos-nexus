@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,6 +41,7 @@ export const Menu = () => {
   const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [menuItems, setMenuItems] = useState<MenuItem[]>(initialMenuItems);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>("All Items");
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
@@ -50,10 +50,16 @@ export const Menu = () => {
   const [itemForm, setItemForm] = useState({ name: "", description: "", price: 0, category: "", available: true });
   const { toast } = useToast();
 
-  const filteredItems = menuItems.filter(item => 
-    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredItems = menuItems.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategoryFilter === "All Items" || item.category === selectedCategoryFilter;
+    return matchesSearch && matchesCategory;
+  });
+
+  const handleCategoryClick = (categoryName: string) => {
+    setSelectedCategoryFilter(categoryName);
+  };
 
   const handleSaveCategory = () => {
     if (selectedCategory) {
@@ -205,16 +211,38 @@ export const Menu = () => {
       {/* Categories */}
       <Card className="bg-gray-800 border-gray-700 p-6">
         <h3 className="text-lg font-semibold text-white mb-4">Categories</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          {/* All Items Category */}
+          <div 
+            className={`p-4 rounded-lg cursor-pointer transition-colors ${
+              selectedCategoryFilter === "All Items" 
+                ? "bg-green-600 text-white" 
+                : "bg-gray-700 hover:bg-gray-600"
+            }`}
+            onClick={() => handleCategoryClick("All Items")}
+          >
+            <h4 className="font-medium text-white">All Items</h4>
+            <p className="text-gray-300 text-sm">Show all menu items</p>
+          </div>
+          
           {categories.map((category) => (
-            <div key={category.id} className="bg-gray-700 p-4 rounded-lg">
+            <div 
+              key={category.id} 
+              className={`p-4 rounded-lg cursor-pointer transition-colors ${
+                selectedCategoryFilter === category.name 
+                  ? "bg-green-600 text-white" 
+                  : "bg-gray-700 hover:bg-gray-600"
+              }`}
+              onClick={() => handleCategoryClick(category.name)}
+            >
               <div className="flex items-center justify-between mb-2">
                 <h4 className="font-medium text-white">{category.name}</h4>
                 <div className="flex space-x-1">
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setSelectedCategory(category);
                       setCategoryForm({ name: category.name, description: category.description });
                       setCategoryDialogOpen(true);
@@ -226,7 +254,8 @@ export const Menu = () => {
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setCategories(categories.filter(cat => cat.id !== category.id));
                       toast({ title: "Category deleted successfully!", variant: "destructive" });
                     }}
@@ -236,9 +265,17 @@ export const Menu = () => {
                   </Button>
                 </div>
               </div>
-              <p className="text-gray-400 text-sm">{category.description}</p>
+              <p className="text-gray-300 text-sm">{category.description}</p>
             </div>
           ))}
+        </div>
+
+        {/* Selected Category Display */}
+        <div className="mt-4 p-3 bg-gray-700 rounded-lg">
+          <p className="text-white">
+            <span className="font-medium">Active Filter:</span> 
+            <span className="ml-2 px-2 py-1 bg-green-600 rounded text-sm">{selectedCategoryFilter}</span>
+          </p>
         </div>
       </Card>
 
