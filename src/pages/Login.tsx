@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { LogIn } from "lucide-react";
@@ -7,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const Login = () => {
   const [email, setEmail] = useState("");
@@ -14,6 +14,7 @@ export const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { login } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,8 +23,7 @@ export const Login = () => {
     // Simulate authentication
     setTimeout(() => {
       if (email === "admin@hexapos.com" && password === "admin123") {
-        localStorage.setItem("isAuthenticated", "true");
-        localStorage.setItem("userEmail", email);
+        login(email);
         toast({
           title: "Login Successful",
           description: "Welcome to Hexa POS!",
