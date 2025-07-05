@@ -1,9 +1,9 @@
-
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Users, DollarSign } from "lucide-react";
+import { useOrder } from "@/contexts/OrderContext";
 
 interface Table {
   id: string;
@@ -31,6 +31,7 @@ const initialTables: Table[] = [
 
 export const Tables = () => {
   const [tables, setTables] = useState<Table[]>(initialTables);
+  const { orders, setSelectedTable, updateOrderStatus } = useOrder();
 
   const getStatusColor = (status: Table["status"]) => {
     switch (status) {
@@ -48,6 +49,16 @@ export const Tables = () => {
         ? { ...table, status: newStatus, ...(newStatus !== "Occupied" && { currentOrder: undefined }) }
         : table
     ));
+  };
+
+  const handleTakeOrder = (tableNumber: number) => {
+    setSelectedTable(tableNumber);
+    // Navigate to menu page - you might want to add navigation here
+    window.location.href = '/menu';
+  };
+
+  const getTableOrders = (tableNumber: number) => {
+    return orders.filter(order => order.tableNumber === tableNumber);
   };
 
   return (
@@ -115,111 +126,144 @@ export const Tables = () => {
 
       {/* Tables Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {tables.map((table) => (
-          <Card key={table.id} className="bg-gray-800 border-gray-700 p-6 hover:shadow-lg transition-shadow">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-white">Table {table.number}</h3>
-              <Badge className={getStatusColor(table.status)}>
-                {table.status}
-              </Badge>
-            </div>
+        {tables.map((table) => {
+          const tableOrders = getTableOrders(table.number);
+          const activeOrder = tableOrders.find(order => order.status !== 'served');
 
-            <div className="space-y-3">
-              <div className="flex items-center text-gray-300">
-                <Users size={16} className="mr-2" />
-                <span className="text-sm">Capacity: {table.capacity} guests</span>
+          return (
+            <Card key={table.id} className="bg-gray-800 border-gray-700 p-6 hover:shadow-lg transition-shadow">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-white">Table {table.number}</h3>
+                <Badge className={getStatusColor(table.status)}>
+                  {table.status}
+                </Badge>
               </div>
 
-              {table.currentOrder && (
-                <>
-                  <div className="border-t border-gray-700 pt-3">
-                    <div className="flex items-center text-gray-300 mb-2">
-                      <Clock size={16} className="mr-2" />
-                      <span className="text-sm">Since {table.currentOrder.startTime}</span>
-                    </div>
-                    <div className="flex items-center text-gray-300 mb-2">
-                      <span className="text-sm">{table.currentOrder.items} items ordered</span>
-                    </div>
-                    <div className="flex items-center text-green-400">
-                      <DollarSign size={16} className="mr-1" />
-                      <span className="font-semibold">${table.currentOrder.total.toFixed(2)}</span>
-                    </div>
-                  </div>
-                </>
-              )}
+              <div className="space-y-3">
+                <div className="flex items-center text-gray-300">
+                  <Users size={16} className="mr-2" />
+                  <span className="text-sm">Capacity: {table.capacity} guests</span>
+                </div>
 
-              <div className="pt-4 space-y-2">
-                {table.status === "Available" && (
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      size="sm"
-                      onClick={() => handleStatusChange(table.id, "Occupied")}
-                      className="bg-red-600 hover:bg-red-700 text-xs"
-                    >
-                      Seat Guests
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleStatusChange(table.id, "Reserved")}
-                      className="border-yellow-500 text-yellow-400 hover:bg-yellow-500/10 text-xs"
-                    >
-                      Reserve
-                    </Button>
-                  </div>
+                {activeOrder && (
+                  <>
+                    <div className="border-t border-gray-700 pt-3">
+                      <div className="flex items-center text-gray-300 mb-2">
+                        <Clock size={16} className="mr-2" />
+                        <span className="text-sm">Order placed at {activeOrder.timestamp}</span>
+                      </div>
+                      <div className="flex items-center text-gray-300 mb-2">
+                        <span className="text-sm">{activeOrder.items.length} items ordered</span>
+                      </div>
+                      <div className="flex items-center text-green-400 mb-2">
+                        <DollarSign size={16} className="mr-1" />
+                        <span className="font-semibold">${activeOrder.total.toFixed(2)}</span>
+                      </div>
+                      <Badge className={`text-xs ${
+                        activeOrder.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
+                        activeOrder.status === 'preparing' ? 'bg-blue-500/20 text-blue-400' :
+                        activeOrder.status === 'ready' ? 'bg-green-500/20 text-green-400' :
+                        'bg-gray-500/20 text-gray-400'
+                      }`}>
+                        {activeOrder.status.charAt(0).toUpperCase() + activeOrder.status.slice(1)}
+                      </Badge>
+                    </div>
+                  </>
                 )}
 
-                {table.status === "Occupied" && (
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      size="sm"
-                      onClick={() => handleStatusChange(table.id, "Cleaning")}
-                      className="bg-blue-600 hover:bg-blue-700 text-xs"
-                    >
-                      Clear Table
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="border-gray-600 text-gray-300 hover:bg-gray-700 text-xs"
-                    >
-                      View Order
-                    </Button>
-                  </div>
-                )}
+                <div className="pt-4 space-y-2">
+                  {table.status === "Available" && (
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => handleStatusChange(table.id, "Occupied")}
+                        className="bg-red-600 hover:bg-red-700 text-xs"
+                      >
+                        Seat Guests
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleStatusChange(table.id, "Reserved")}
+                        className="border-yellow-500 text-yellow-400 hover:bg-yellow-500/10 text-xs"
+                      >
+                        Reserve
+                      </Button>
+                    </div>
+                  )}
 
-                {table.status === "Reserved" && (
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      size="sm"
-                      onClick={() => handleStatusChange(table.id, "Occupied")}
-                      className="bg-red-600 hover:bg-red-700 text-xs"
-                    >
-                      Seat Guests
-                    </Button>
+                  {table.status === "Occupied" && (
+                    <div className="grid grid-cols-1 gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => handleTakeOrder(table.number)}
+                        className="bg-green-600 hover:bg-green-700 text-xs"
+                      >
+                        Take Order
+                      </Button>
+                      {activeOrder && (
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => updateOrderStatus(activeOrder.id, 'preparing')}
+                            className="bg-blue-600 hover:bg-blue-700 text-xs"
+                            disabled={activeOrder.status !== 'pending'}
+                          >
+                            Start Preparing
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => updateOrderStatus(activeOrder.id, 'ready')}
+                            className="bg-orange-600 hover:bg-orange-700 text-xs"
+                            disabled={activeOrder.status !== 'preparing'}
+                          >
+                            Mark Ready
+                          </Button>
+                        </div>
+                      )}
+                      <Button
+                        size="sm"
+                        onClick={() => handleStatusChange(table.id, "Cleaning")}
+                        className="bg-gray-600 hover:bg-gray-700 text-xs"
+                      >
+                        Clear Table
+                      </Button>
+                    </div>
+                  )}
+
+                  {table.status === "Reserved" && (
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => handleStatusChange(table.id, "Occupied")}
+                        className="bg-red-600 hover:bg-red-700 text-xs"
+                      >
+                        Seat Guests
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => handleStatusChange(table.id, "Available")}
+                        className="bg-green-600 hover:bg-green-700 text-xs"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  )}
+
+                  {table.status === "Cleaning" && (
                     <Button
                       size="sm"
                       onClick={() => handleStatusChange(table.id, "Available")}
-                      className="bg-green-600 hover:bg-green-700 text-xs"
+                      className="w-full bg-green-600 hover:bg-green-700 text-xs"
                     >
-                      Cancel
+                      Mark Clean
                     </Button>
-                  </div>
-                )}
-
-                {table.status === "Cleaning" && (
-                  <Button
-                    size="sm"
-                    onClick={() => handleStatusChange(table.id, "Available")}
-                    className="w-full bg-green-600 hover:bg-green-700 text-xs"
-                  >
-                    Mark Clean
-                  </Button>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
-          </Card>
-        ))}
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
