@@ -1,5 +1,5 @@
-
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 
 export interface BusinessType {
   id: string;
@@ -22,7 +22,6 @@ export interface BusinessType {
 interface BusinessTypeContextType {
   businessTypes: BusinessType[];
   selectedBusinessType: BusinessType | null;
-  setSelectedBusinessType: (businessType: BusinessType) => void;
 }
 
 const BusinessTypeContext = createContext<BusinessTypeContextType | undefined>(undefined);
@@ -125,13 +124,20 @@ const initialBusinessTypes: BusinessType[] = [
 
 export const BusinessTypeProvider = ({ children }: { children: ReactNode }) => {
   const [businessTypes] = useState<BusinessType[]>(initialBusinessTypes);
-  const [selectedBusinessType, setSelectedBusinessType] = useState<BusinessType | null>(businessTypes[0]);
+  const [selectedBusinessType, setSelectedBusinessType] = useState<BusinessType | null>(null);
+  const { businessType } = useAuth();
+
+  useEffect(() => {
+    if (businessType) {
+      const businessTypeObj = businessTypes.find(bt => bt.id === businessType);
+      setSelectedBusinessType(businessTypeObj || businessTypes[0]);
+    }
+  }, [businessType, businessTypes]);
 
   return (
     <BusinessTypeContext.Provider value={{
       businessTypes,
-      selectedBusinessType,
-      setSelectedBusinessType
+      selectedBusinessType
     }}>
       {children}
     </BusinessTypeContext.Provider>

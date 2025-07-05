@@ -9,7 +9,11 @@ import {
   Phone,
   Settings,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Bed,
+  Calendar,
+  Scissors,
+  Building
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
@@ -22,20 +26,47 @@ interface SidebarProps {
 export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
   const { selectedBusinessType } = useBusinessType();
   
-  const businessTerms = selectedBusinessType?.terminology || {
-    units: 'Tables',
-    services: 'Menu'
+  const getMenuItems = () => {
+    const baseItems = [
+      { icon: LayoutDashboard, label: "Dashboard", path: "/" },
+      { icon: Users, label: "Employees", path: "/employees" },
+      { icon: BarChart3, label: "Analytics", path: "/analytics" },
+      { icon: Phone, label: "Call Center", path: "/call-center" },
+    ];
+
+    const businessSpecificItems: { [key: string]: any[] } = {
+      'restaurant': [
+        { icon: Menu, label: "Menu", path: "/menu" },
+        { icon: Table, label: "Tables", path: "/tables" },
+      ],
+      'hotel': [
+        { icon: Bed, label: "Rooms", path: "/rooms" },
+        { icon: Building, label: "Services", path: "/hotel-services" },
+      ],
+      'hair-salon': [
+        { icon: Calendar, label: "Appointments", path: "/appointments" },
+        { icon: Scissors, label: "Stylists", path: "/stylists" },
+      ],
+      'medical-clinic': [
+        { icon: Calendar, label: "Appointments", path: "/appointments" },
+        { icon: Users, label: "Patients", path: "/patients" },
+      ],
+      'retail-store': [
+        { icon: Menu, label: "Products", path: "/products" },
+        { icon: Building, label: "Inventory", path: "/inventory" },
+      ]
+    };
+
+    const businessItems = businessSpecificItems[selectedBusinessType?.id || 'restaurant'] || [];
+    
+    return [
+      ...baseItems,
+      ...businessItems,
+      { icon: Settings, label: "Settings", path: "/settings" }
+    ];
   };
 
-  const menuItems = [
-    { icon: LayoutDashboard, label: "Dashboard", path: "/" },
-    { icon: Users, label: "Employees", path: "/employees" },
-    { icon: BarChart3, label: "Analytics", path: "/analytics" },
-    { icon: Menu, label: businessTerms.services, path: "/menu" },
-    { icon: Table, label: businessTerms.units, path: "/tables" },
-    { icon: Phone, label: "Call Center", path: "/call-center" },
-    { icon: Settings, label: "Settings", path: "/settings" },
-  ];
+  const menuItems = getMenuItems();
 
   return (
     <div className={cn(

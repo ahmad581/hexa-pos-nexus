@@ -3,16 +3,20 @@ import { Bell, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BranchSelector } from "./BranchSelector";
-import { BusinessTypeSelector } from "./BusinessTypeSelector";
 import { useAuth } from "@/contexts/AuthContext";
+import { useBusinessType } from "@/contexts/BusinessTypeContext";
 
 export const Header = () => {
-  const { logout } = useAuth();
+  const { logout, userEmail } = useAuth();
+  const { selectedBusinessType } = useBusinessType();
 
   return (
     <header className="bg-gray-800 border-b border-gray-700 px-6 py-4 flex items-center justify-between">
       <div className="flex items-center space-x-4">
-        <BusinessTypeSelector />
+        <div className="flex items-center space-x-2">
+          <span className="text-2xl">{selectedBusinessType?.icon}</span>
+          <span className="text-white font-medium">{selectedBusinessType?.name}</span>
+        </div>
         <div className="w-px h-6 bg-gray-600"></div>
         <BranchSelector />
       </div>
@@ -27,7 +31,7 @@ export const Header = () => {
         
         <div className="flex items-center space-x-2 text-gray-300">
           <User size={18} />
-          <span className="text-sm">Admin User</span>
+          <span className="text-sm">{userEmail}</span>
         </div>
         
         <Button 

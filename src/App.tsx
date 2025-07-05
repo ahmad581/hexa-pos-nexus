@@ -9,6 +9,7 @@ import { BusinessTypeProvider } from "./contexts/BusinessTypeContext";
 import { BranchProvider } from "./contexts/BranchContext";
 import { OrderProvider } from "./contexts/OrderContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { BusinessRoute } from "./components/BusinessRoute";
 import { Layout } from "./components/Layout";
 import { Login } from "./pages/Login";
 import { Dashboard } from "./pages/Dashboard";
@@ -18,6 +19,10 @@ import { Menu } from "./pages/Menu";
 import { Tables } from "./pages/Tables";
 import { CallCenter } from "./pages/CallCenter";
 import { Settings } from "./pages/Settings";
+import { Rooms } from "./pages/hotel/Rooms";
+import { Services as HotelServices } from "./pages/hotel/Services";
+import { Appointments } from "./pages/salon/Appointments";
+import { Stylists } from "./pages/salon/Stylists";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,10 +47,44 @@ const App = () => (
                     <Route index element={<Dashboard />} />
                     <Route path="employees" element={<Employees />} />
                     <Route path="analytics" element={<Analytics />} />
-                    <Route path="menu" element={<Menu />} />
-                    <Route path="tables" element={<Tables />} />
                     <Route path="call-center" element={<CallCenter />} />
                     <Route path="settings" element={<Settings />} />
+                    
+                    {/* Restaurant-specific routes */}
+                    <Route path="menu" element={
+                      <BusinessRoute allowedBusinessTypes={['restaurant']}>
+                        <Menu />
+                      </BusinessRoute>
+                    } />
+                    <Route path="tables" element={
+                      <BusinessRoute allowedBusinessTypes={['restaurant']}>
+                        <Tables />
+                      </BusinessRoute>
+                    } />
+                    
+                    {/* Hotel-specific routes */}
+                    <Route path="rooms" element={
+                      <BusinessRoute allowedBusinessTypes={['hotel']}>
+                        <Rooms />
+                      </BusinessRoute>
+                    } />
+                    <Route path="hotel-services" element={
+                      <BusinessRoute allowedBusinessTypes={['hotel']}>
+                        <HotelServices />
+                      </BusinessRoute>
+                    } />
+                    
+                    {/* Hair Salon-specific routes */}
+                    <Route path="appointments" element={
+                      <BusinessRoute allowedBusinessTypes={['hair-salon']}>
+                        <Appointments />
+                      </BusinessRoute>
+                    } />
+                    <Route path="stylists" element={
+                      <BusinessRoute allowedBusinessTypes={['hair-salon']}>
+                        <Stylists />
+                      </BusinessRoute>
+                    } />
                   </Route>
                   <Route path="*" element={<NotFound />} />
                 </Routes>

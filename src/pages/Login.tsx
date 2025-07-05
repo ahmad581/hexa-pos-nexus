@@ -22,11 +22,23 @@ export const Login = () => {
 
     // Simulate authentication
     setTimeout(() => {
-      if (email === "admin@hexapos.com" && password === "admin123") {
+      const validCredentials = [
+        { email: "restaurant@hexapos.com", password: "admin123" },
+        { email: "hotel@hexapos.com", password: "admin123" },
+        { email: "salon@hexapos.com", password: "admin123" },
+        { email: "clinic@hexapos.com", password: "admin123" },
+        { email: "retail@hexapos.com", password: "admin123" }
+      ];
+
+      const isValid = validCredentials.some(cred => 
+        cred.email === email && cred.password === password
+      );
+
+      if (isValid) {
         login(email);
         toast({
           title: "Login Successful",
-          description: "Welcome to Hexa POS!",
+          description: "Welcome to BizHub POS!",
         });
         navigate("/");
       } else {
@@ -46,9 +58,9 @@ export const Login = () => {
         <div className="p-8">
           <div className="flex items-center justify-center mb-8">
             <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center mr-3">
-              <span className="text-white font-bold text-xl">H</span>
+              <span className="text-white font-bold text-xl">B</span>
             </div>
-            <h1 className="text-3xl font-bold text-white">Hexa POS</h1>
+            <h1 className="text-3xl font-bold text-white">BizHub POS</h1>
           </div>
           
           <form onSubmit={handleLogin} className="space-y-6">
@@ -95,9 +107,15 @@ export const Login = () => {
           </form>
           
           <div className="mt-6 text-center text-gray-400 text-sm">
-            <p>Demo credentials:</p>
-            <p>Email: admin@hexapos.com</p>
-            <p>Password: admin123</p>
+            <p className="mb-2">Demo credentials:</p>
+            <div className="space-y-1">
+              <p>🍽️ Restaurant: restaurant@hexapos.com</p>
+              <p>🏨 Hotel: hotel@hexapos.com</p>
+              <p>💇 Salon: salon@hexapos.com</p>
+              <p>🏥 Clinic: clinic@hexapos.com</p>
+              <p>🛍️ Retail: retail@hexapos.com</p>
+              <p className="mt-2">Password: admin123 (for all)</p>
+            </div>
           </div>
         </div>
       </Card>
