@@ -1,57 +1,40 @@
 
-import { Bell, Search, User, LogOut } from "lucide-react";
+import { Bell, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { BranchSelector } from "./BranchSelector";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
 
 export const Header = () => {
-  const { userEmail, logout } = useAuth();
-  const navigate = useNavigate();
-  const { toast } = useToast();
-
-  const handleLogout = () => {
-    logout();
-    toast({
-      title: "Logged out",
-      description: "You have been successfully logged out",
-    });
-    navigate("/login");
-  };
+  const { logout } = useAuth();
 
   return (
-    <header className="bg-gray-800 border-b border-gray-700 px-6 py-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-            <Input
-              placeholder="Search here..."
-              className="pl-10 bg-gray-700 border-gray-600 text-white placeholder-gray-400"
-            />
-          </div>
+    <header className="bg-gray-800 border-b border-gray-700 px-6 py-4 flex items-center justify-between">
+      <div className="flex items-center space-x-4">
+        <BranchSelector />
+      </div>
+      
+      <div className="flex items-center space-x-4">
+        <Button variant="ghost" size="sm" className="text-gray-300 relative">
+          <Bell size={18} />
+          <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-xs">
+            3
+          </Badge>
+        </Button>
+        
+        <div className="flex items-center space-x-2 text-gray-300">
+          <User size={18} />
+          <span className="text-sm">Admin User</span>
         </div>
         
-        <div className="flex items-center space-x-4">
-          <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white">
-            <Bell size={20} />
-          </Button>
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-              <User size={16} />
-            </div>
-            <span className="text-sm">{userEmail}</span>
-          </div>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={handleLogout}
-            className="text-gray-300 hover:text-white"
-          >
-            <LogOut size={16} />
-          </Button>
-        </div>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={logout}
+          className="text-gray-300 hover:text-red-400"
+        >
+          <LogOut size={18} />
+        </Button>
       </div>
     </header>
   );

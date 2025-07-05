@@ -1,5 +1,6 @@
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { useBranch } from './BranchContext';
 
 export interface OrderItem {
   id: string;
@@ -11,7 +12,15 @@ export interface OrderItem {
 
 export interface Order {
   id: string;
+  branchId: string;
+  branchName: string;
   tableNumber?: number;
+  customerInfo?: {
+    name: string;
+    phone: string;
+    address?: string;
+  };
+  orderType: 'dine-in' | 'takeout' | 'delivery' | 'phone';
   items: OrderItem[];
   total: number;
   status: 'pending' | 'preparing' | 'ready' | 'served';
@@ -22,10 +31,14 @@ interface OrderContextType {
   orders: Order[];
   currentOrder: OrderItem[];
   selectedTable: number | null;
+  orderType: Order['orderType'];
+  customerInfo: Order['customerInfo'];
   addItemToOrder: (item: Omit<OrderItem, 'id' | 'quantity'>) => void;
   removeItemFromOrder: (itemId: string) => void;
   updateItemQuantity: (itemId: string, quantity: number) => void;
   setSelectedTable: (tableNumber: number | null) => void;
+  setOrderType: (type: Order['orderType']) => void;
+  setCustomerInfo: (info: Order['customerInfo']) => void;
   submitOrder: () => void;
   clearCurrentOrder: () => void;
   updateOrderStatus: (orderId: string, status: Order['status']) => void;
@@ -42,9 +55,12 @@ export const useOrder = () => {
 };
 
 export const OrderProvider = ({ children }: { children: ReactNode }) => {
+  const { selectedBranch } = useBranch();
   const [orders, setOrders] = useState<Order[]>([]);
   const [currentOrder, setCurrentOrder] = useState<OrderItem[]>([]);
   const [selectedTable, setSelectedTable] = useState<number | null>(null);
+  const [orderType, setOrderType] = useState<Order['orderType']>('dine-in');
+  const [customerInfo, setCustomerInfo] = useState<Order['customerInfo']>();
 
   const addItemToOrder = (item: Omit<OrderItem, 'id' | 'quantity'>) => {
     const existingItem = currentOrder.find(orderItem => orderItem.name === item.name);
@@ -80,12 +96,16 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const submitOrder = () => {
-    if (currentOrder.length === 0) return;
+    if (currentOrder.length === 0 || !selectedBranch) return;
 
     const total = currentOrder.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const newOrder: Order = {
       id: Date.now().toString(),
-      tableNumber: selectedTable || undefined,
+      branchId: selectedBranch.id,
+      branchName: selectedBranch.name,
+      tableNumber: orderType === 'dine-in' ? selectedTable || undefined : undefined,
+      customerInfo: orderType !== 'dine-in' ? customerInfo : undefined,
+      orderType,
       items: [...currentOrder],
       total,
       status: 'pending',
@@ -99,6 +119,8 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
   const clearCurrentOrder = () => {
     setCurrentOrder([]);
     setSelectedTable(null);
+    setCustomerInfo(undefined);
+    setOrderType('dine-in');
   };
 
   const updateOrderStatus = (orderId: string, status: Order['status']) => {
@@ -112,10 +134,14 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
       orders,
       currentOrder,
       selectedTable,
+      orderType,
+      customerInfo,
       addItemToOrder,
       removeItemFromOrder,
       updateItemQuantity,
       setSelectedTable,
+      setOrderType,
+      setCustomerInfo,
       submitOrder,
       clearCurrentOrder,
       updateOrderStatus
