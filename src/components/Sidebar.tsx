@@ -12,6 +12,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useBusinessType } from "@/contexts/BusinessTypeContext";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -19,12 +20,19 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
+  const { selectedBusinessType } = useBusinessType();
+  
+  const businessTerms = selectedBusinessType?.terminology || {
+    units: 'Tables',
+    services: 'Menu'
+  };
+
   const menuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/" },
     { icon: Users, label: "Employees", path: "/employees" },
     { icon: BarChart3, label: "Analytics", path: "/analytics" },
-    { icon: Menu, label: "Menu", path: "/menu" },
-    { icon: Table, label: "Tables", path: "/tables" },
+    { icon: Menu, label: businessTerms.services, path: "/menu" },
+    { icon: Table, label: businessTerms.units, path: "/tables" },
     { icon: Phone, label: "Call Center", path: "/call-center" },
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
@@ -39,9 +47,9 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
         {!collapsed && (
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">H</span>
+              <span className="text-white font-bold text-sm">B</span>
             </div>
-            <span className="font-bold text-lg">Hexa POS</span>
+            <span className="font-bold text-lg">BizHub POS</span>
           </div>
         )}
         <button

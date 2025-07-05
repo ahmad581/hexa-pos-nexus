@@ -3,11 +3,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { MapPin } from "lucide-react";
 import { useBranch } from "@/contexts/BranchContext";
+import { useBusinessType } from "@/contexts/BusinessTypeContext";
 
 export const BranchSelector = () => {
   const { branches, selectedBranch, setSelectedBranch } = useBranch();
+  const { selectedBusinessType } = useBusinessType();
 
   const activeBranches = branches.filter(branch => branch.isActive);
+  const branchLabel = selectedBusinessType?.terminology.branch || 'Branch';
 
   return (
     <div className="flex items-center space-x-2">
@@ -20,7 +23,7 @@ export const BranchSelector = () => {
         }}
       >
         <SelectTrigger className="w-48 bg-gray-700 border-gray-600 text-white">
-          <SelectValue placeholder="Select Branch" />
+          <SelectValue placeholder={`Select ${branchLabel}`} />
         </SelectTrigger>
         <SelectContent className="bg-gray-800 border-gray-700">
           {activeBranches.map((branch) => (
@@ -28,7 +31,7 @@ export const BranchSelector = () => {
               <div className="flex items-center space-x-2">
                 <span>{branch.name}</span>
                 <Badge variant="outline" className="text-xs">
-                  {branch.address.split(',')[1]?.trim() || 'Branch'}
+                  {branch.address.split(',')[1]?.trim() || branchLabel}
                 </Badge>
               </div>
             </SelectItem>
