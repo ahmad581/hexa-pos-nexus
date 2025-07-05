@@ -40,15 +40,15 @@ export const CallCenter = () => {
 
   // Filter calls by selected branch
   const activeCalls: Call[] = [
-    { id: "1", customerName: "John Smith", phoneNumber: "+1 (555) 123-4567", orderType: "Delivery", status: "Active", startTime: "2:45 PM", duration: "03:42", address: "123 Main St, City", orderTotal: 34.50, branchId: selectedBranch?.id || '1' },
-    { id: "2", customerName: "Mary Johnson", phoneNumber: "+1 (555) 987-6543", orderType: "Pickup", status: "On Hold", startTime: "2:42 PM", duration: "06:15", orderTotal: 18.99, branchId: selectedBranch?.id || '1' },
-    { id: "3", customerName: "Bob Wilson", phoneNumber: "+1 (555) 456-7890", orderType: "Reservation", status: "Active", startTime: "2:40 PM", duration: "08:30", branchId: selectedBranch?.id || '1' }
+    { id: "1", customerName: "John Smith", phoneNumber: "+1 (555) 123-4567", orderType: "Delivery" as const, status: "Active" as const, startTime: "2:45 PM", duration: "03:42", address: "123 Main St, City", orderTotal: 34.50, branchId: selectedBranch?.id || '1' },
+    { id: "2", customerName: "Mary Johnson", phoneNumber: "+1 (555) 987-6543", orderType: "Pickup" as const, status: "On Hold" as const, startTime: "2:42 PM", duration: "06:15", orderTotal: 18.99, branchId: selectedBranch?.id || '1' },
+    { id: "3", customerName: "Bob Wilson", phoneNumber: "+1 (555) 456-7890", orderType: "Reservation" as const, status: "Active" as const, startTime: "2:40 PM", duration: "08:30", branchId: selectedBranch?.id || '1' }
   ].filter(call => call.branchId === selectedBranch?.id);
 
   const recentCalls: Call[] = [
-    { id: "4", customerName: "Alice Brown", phoneNumber: "+1 (555) 321-0987", orderType: "Delivery", status: "Completed", startTime: "2:30 PM", duration: "05:20", address: "456 Oak Ave, City", orderTotal: 52.75, branchId: selectedBranch?.id || '1' },
-    { id: "5", customerName: "David Lee", phoneNumber: "+1 (555) 654-3210", orderType: "Pickup", status: "Completed", startTime: "2:25 PM", duration: "03:15", orderTotal: 24.30, branchId: selectedBranch?.id || '1' },
-    { id: "6", customerName: "Sarah Davis", phoneNumber: "+1 (555) 789-0123", orderType: "Delivery", status: "Missed", startTime: "2:20 PM", duration: "00:00", branchId: selectedBranch?.id || '1' }
+    { id: "4", customerName: "Alice Brown", phoneNumber: "+1 (555) 321-0987", orderType: "Delivery" as const, status: "Completed" as const, startTime: "2:30 PM", duration: "05:20", address: "456 Oak Ave, City", orderTotal: 52.75, branchId: selectedBranch?.id || '1' },
+    { id: "5", customerName: "David Lee", phoneNumber: "+1 (555) 654-3210", orderType: "Pickup" as const, status: "Completed" as const, startTime: "2:25 PM", duration: "03:15", orderTotal: 24.30, branchId: selectedBranch?.id || '1' },
+    { id: "6", customerName: "Sarah Davis", phoneNumber: "+1 (555) 789-0123", orderType: "Delivery" as const, status: "Missed" as const, startTime: "2:20 PM", duration: "00:00", branchId: selectedBranch?.id || '1' }
   ].filter(call => call.branchId === selectedBranch?.id);
 
   const getStatusColor = (status: Call["status"]) => {
