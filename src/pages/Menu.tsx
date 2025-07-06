@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -5,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Plus, Edit, Trash2, Search, Phone } from "lucide-react";
+import { Plus, Edit, Trash2, Search, Phone, PhoneOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { OrderSummary } from "@/components/OrderSummary";
 import { useOrder } from "@/contexts/OrderContext";
@@ -25,6 +26,7 @@ interface MenuItem {
   price: number;
   category: string;
   available: boolean;
+  soldOut: boolean;
 }
 
 const initialCategories: Category[] = [
@@ -35,10 +37,10 @@ const initialCategories: Category[] = [
 ];
 
 const initialMenuItems: MenuItem[] = [
-  { id: "1", name: "Classic Burger", description: "Beef patty with lettuce, tomato, and cheese", price: 12.99, category: "Burgers", available: true },
-  { id: "2", name: "Margherita Pizza", description: "Fresh mozzarella, tomato sauce, and basil", price: 16.99, category: "Pizza", available: true },
-  { id: "3", name: "Coca Cola", description: "Classic soft drink", price: 2.99, category: "Drinks", available: true },
-  { id: "4", name: "Chocolate Cake", description: "Rich chocolate cake with frosting", price: 6.99, category: "Desserts", available: false }
+  { id: "1", name: "Classic Burger", description: "Beef patty with lettuce, tomato, and cheese", price: 12.99, category: "Burgers", available: true, soldOut: false },
+  { id: "2", name: "Margherita Pizza", description: "Fresh mozzarella, tomato sauce, and basil", price: 16.99, category: "Pizza", available: true, soldOut: false },
+  { id: "3", name: "Coca Cola", description: "Classic soft drink", price: 2.99, category: "Drinks", available: true, soldOut: true },
+  { id: "4", name: "Chocolate Cake", description: "Rich chocolate cake with frosting", price: 6.99, category: "Desserts", available: false, soldOut: false }
 ];
 
 export const Menu = () => {
@@ -51,10 +53,10 @@ export const Menu = () => {
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
   const [categoryForm, setCategoryForm] = useState({ name: "", description: "" });
-  const [itemForm, setItemForm] = useState({ name: "", description: "", price: 0, category: "", available: true });
+  const [itemForm, setItemForm] = useState({ name: "", description: "", price: 0, category: "", available: true, soldOut: false });
   const { toast } = useToast();
   const { addItemToOrder, setOrderType, setCustomerInfo } = useOrder();
-  const { activeCallInfo } = useCall();
+  const { activeCallInfo, setActiveCallInfo } = useCall();
 
   // Auto-populate customer info if coming from call center
   useEffect(() => {
@@ -81,6 +83,27 @@ export const Menu = () => {
 
   const handleCategoryClick = (categoryName: string) => {
     setSelectedCategoryFilter(categoryName);
+  };
+
+  const handleEndCall = () => {
+    if (activeCallInfo) {
+      setActiveCallInfo(null);
+      toast({ 
+        title: "Call ended",
+        description: "You can continue taking other orders or end the session."
+      });
+    }
+  };
+
+  const toggleSoldOut = (itemId: string) => {
+    setMenuItems(menuItems.map(item =>
+      item.id === itemId ? { ...item, soldOut: !item.soldOut } : item
+    ));
+    const item = menuItems.find(i => i.id === itemId);
+    toast({ 
+      title: `${item?.name} ${!item?.soldOut ? 'marked as sold out' : 'available again'}`,
+      variant: !item?.soldOut ? "destructive" : "default"
+    });
   };
 
   const handleSaveCategory = () => {
@@ -118,7 +141,7 @@ export const Menu = () => {
     }
     setItemDialogOpen(false);
     setSelectedItem(null);
-    setItemForm({ name: "", description: "", price: 0, category: "", available: true });
+    setItemForm({ name: "", description: "", price: 0, category: "", available: true, soldOut: false });
   };
 
   return (
@@ -137,7 +160,18 @@ export const Menu = () => {
                   </p>
                 </div>
               </div>
-              <Badge className="bg-blue-600 text-white">Phone Order</Badge>
+              <div className="flex items-center space-x-2">
+                <Badge className="bg-blue-600 text-white">Phone Order</Badge>
+                <Button
+                  onClick={handleEndCall}
+                  variant="outline"
+                  size="sm"
+                  className="border-red-500 text-red-400 hover:bg-red-500/10"
+                >
+                  <PhoneOff size={16} className="mr-2" />
+                  End Call
+                </Button>
+              </div>
             </div>
           </Card>
         </div>
@@ -242,6 +276,26 @@ export const Menu = () => {
                         <option key={cat.id} value={cat.name}>{cat.name}</option>
                       ))}
                     </select>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={itemForm.available}
+                        onChange={(e) => setItemForm({ ...itemForm, available: e.target.checked })}
+                        className="rounded"
+                      />
+                      <span>Available</span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={itemForm.soldOut}
+                        onChange={(e) => setItemForm({ ...itemForm, soldOut: e.target.checked })}
+                        className="rounded"
+                      />
+                      <span>Sold Out</span>
+                    </label>
                   </div>
                   <Button onClick={handleSaveItem} className="w-full bg-green-600 hover:bg-green-700">
                     {selectedItem ? "Update" : "Add"} Menu Item
@@ -358,17 +412,24 @@ export const Menu = () => {
                     <td className="py-3 text-gray-300">{item.category}</td>
                     <td className="py-3 text-white font-semibold">${item.price.toFixed(2)}</td>
                     <td className="py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        item.available 
-                          ? 'bg-green-500/20 text-green-400' 
-                          : 'bg-red-500/20 text-red-400'
-                      }`}>
-                        {item.available ? 'Available' : 'Unavailable'}
-                      </span>
+                      <div className="flex flex-col space-y-1">
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          item.available 
+                            ? 'bg-green-500/20 text-green-400' 
+                            : 'bg-red-500/20 text-red-400'
+                        }`}>
+                          {item.available ? 'Available' : 'Unavailable'}
+                        </span>
+                        {item.soldOut && (
+                          <span className="px-2 py-1 rounded-full text-xs bg-orange-500/20 text-orange-400">
+                            Sold Out
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="py-3">
-                      <div className="flex space-x-2">
-                        {item.available && (
+                      <div className="flex flex-wrap gap-1">
+                        {item.available && !item.soldOut && (
                           <Button
                             size="sm"
                             onClick={() => addItemToOrder({ name: item.name, price: item.price })}
@@ -379,6 +440,17 @@ export const Menu = () => {
                         )}
                         <Button
                           size="sm"
+                          onClick={() => toggleSoldOut(item.id)}
+                          className={`text-xs ${
+                            item.soldOut 
+                              ? 'bg-green-600 hover:bg-green-700' 
+                              : 'bg-orange-600 hover:bg-orange-700'
+                          }`}
+                        >
+                          {item.soldOut ? 'Mark Available' : 'Mark Sold Out'}
+                        </Button>
+                        <Button
+                          size="sm"
                           variant="ghost"
                           onClick={() => {
                             setSelectedItem(item);
@@ -387,7 +459,8 @@ export const Menu = () => {
                               description: item.description,
                               price: item.price,
                               category: item.category,
-                              available: item.available
+                              available: item.available,
+                              soldOut: item.soldOut
                             });
                             setItemDialogOpen(true);
                           }}

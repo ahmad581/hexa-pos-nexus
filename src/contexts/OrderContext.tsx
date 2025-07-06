@@ -42,6 +42,7 @@ interface OrderContextType {
   submitOrder: () => void;
   clearCurrentOrder: () => void;
   updateOrderStatus: (orderId: string, status: Order['status']) => void;
+  deleteOrder: (orderId: string) => void;
 }
 
 const OrderContext = createContext<OrderContextType | undefined>(undefined);
@@ -129,6 +130,10 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
     ));
   };
 
+  const deleteOrder = (orderId: string) => {
+    setOrders(orders.filter(order => order.id !== orderId));
+  };
+
   return (
     <OrderContext.Provider value={{
       orders,
@@ -144,7 +149,8 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
       setCustomerInfo,
       submitOrder,
       clearCurrentOrder,
-      updateOrderStatus
+      updateOrderStatus,
+      deleteOrder
     }}>
       {children}
     </OrderContext.Provider>
