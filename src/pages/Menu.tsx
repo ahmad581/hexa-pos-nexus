@@ -1,23 +1,15 @@
 
 import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
+import { Plus, Minus, ShoppingCart, Search, Filter, Phone, PhoneOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Plus, Edit, Trash2, Search, Phone, PhoneOff } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { OrderSummary } from "@/components/OrderSummary";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useOrder } from "@/contexts/OrderContext";
 import { useCall } from "@/contexts/CallContext";
-import { Badge } from "@/components/ui/badge";
-
-interface Category {
-  id: string;
-  name: string;
-  description: string;
-}
+import { useToast } from "@/hooks/use-toast";
 
 interface MenuItem {
   id: string;
@@ -25,474 +17,222 @@ interface MenuItem {
   description: string;
   price: number;
   category: string;
+  image?: string;
   available: boolean;
   soldOut: boolean;
 }
 
-const initialCategories: Category[] = [
-  { id: "1", name: "Burgers", description: "Delicious burgers and sandwiches" },
-  { id: "2", name: "Pizza", description: "Fresh pizza with various toppings" },
-  { id: "3", name: "Drinks", description: "Refreshing beverages" },
-  { id: "4", name: "Desserts", description: "Sweet treats and desserts" }
-];
-
-const initialMenuItems: MenuItem[] = [
-  { id: "1", name: "Classic Burger", description: "Beef patty with lettuce, tomato, and cheese", price: 12.99, category: "Burgers", available: true, soldOut: false },
-  { id: "2", name: "Margherita Pizza", description: "Fresh mozzarella, tomato sauce, and basil", price: 16.99, category: "Pizza", available: true, soldOut: false },
-  { id: "3", name: "Coca Cola", description: "Classic soft drink", price: 2.99, category: "Drinks", available: true, soldOut: true },
-  { id: "4", name: "Chocolate Cake", description: "Rich chocolate cake with frosting", price: 6.99, category: "Desserts", available: false, soldOut: false }
-];
-
 export const Menu = () => {
-  const [categories, setCategories] = useState<Category[]>(initialCategories);
-  const [menuItems, setMenuItems] = useState<MenuItem[]>(initialMenuItems);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>("All Items");
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-  const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
-  const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
-  const [itemDialogOpen, setItemDialogOpen] = useState(false);
-  const [categoryForm, setCategoryForm] = useState({ name: "", description: "" });
-  const [itemForm, setItemForm] = useState({ name: "", description: "", price: 0, category: "", available: true, soldOut: false });
+  const navigate = useNavigate();
+  const { activeCallInfo, endCall, isInCall } = useCall();
+  const { addItemToOrder, currentOrder, setCustomerInfo, customerInfo } = useOrder();
   const { toast } = useToast();
-  const { addItemToOrder, setOrderType, setCustomerInfo } = useOrder();
-  const { activeCallInfo, setActiveCallInfo } = useCall();
+  
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([
+    {
+      id: "1",
+      name: "Classic Burger",
+      description: "Juicy beef patty with lettuce, tomato, and special sauce",
+      price: 12.99,
+      category: "burgers",
+      available: true,
+      soldOut: false
+    },
+    {
+      id: "2",
+      name: "Margherita Pizza",
+      description: "Fresh mozzarella, tomatoes, and basil on thin crust",
+      price: 16.99,
+      category: "pizza",
+      available: true,
+      soldOut: false
+    },
+    {
+      id: "3",
+      name: "Caesar Salad",
+      description: "Crisp romaine lettuce with parmesan and croutons",
+      price: 9.99,
+      category: "salads",
+      available: true,
+      soldOut: true
+    },
+    {
+      id: "4",
+      name: "Grilled Chicken",
+      description: "Tender chicken breast with herbs and spices",
+      price: 18.99,
+      category: "mains",
+      available: true,
+      soldOut: false
+    }
+  ]);
 
-  // Auto-populate customer info if coming from call center
+  const categories = [
+    { value: "all", label: "All Items" },
+    { value: "burgers", label: "Burgers" },
+    { value: "pizza", label: "Pizza" },
+    { value: "salads", label: "Salads" },
+    { value: "mains", label: "Main Courses" }
+  ];
+
+  // Set customer info from call when component mounts
   useEffect(() => {
-    if (activeCallInfo) {
-      setOrderType('phone');
+    if (activeCallInfo && !customerInfo) {
       setCustomerInfo({
         name: activeCallInfo.customerName,
         phone: activeCallInfo.phoneNumber,
         address: activeCallInfo.address
       });
-      toast({ 
-        title: `Taking order for ${activeCallInfo.customerName}`,
-        description: `Phone: ${activeCallInfo.phoneNumber}`
-      });
     }
-  }, [activeCallInfo, setOrderType, setCustomerInfo, toast]);
-
-  const filteredItems = menuItems.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategoryFilter === "All Items" || item.category === selectedCategoryFilter;
-    return matchesSearch && matchesCategory;
-  });
-
-  const handleCategoryClick = (categoryName: string) => {
-    setSelectedCategoryFilter(categoryName);
-  };
+  }, [activeCallInfo, customerInfo, setCustomerInfo]);
 
   const handleEndCall = () => {
-    if (activeCallInfo) {
-      setActiveCallInfo(null);
-      toast({ 
-        title: "Call ended",
-        description: "You can continue taking other orders or end the session."
-      });
-    }
+    endCall();
+    toast({ title: "Call ended" });
+    navigate("/call-center");
   };
 
   const toggleSoldOut = (itemId: string) => {
-    setMenuItems(menuItems.map(item =>
+    setMenuItems(prev => prev.map(item => 
       item.id === itemId ? { ...item, soldOut: !item.soldOut } : item
     ));
-    const item = menuItems.find(i => i.id === itemId);
+    
+    const item = menuItems.find(item => item.id === itemId);
     toast({ 
-      title: `${item?.name} ${!item?.soldOut ? 'marked as sold out' : 'available again'}`,
-      variant: !item?.soldOut ? "destructive" : "default"
+      title: `${item?.name} marked as ${item?.soldOut ? 'available' : 'sold out'}` 
     });
   };
 
-  const handleSaveCategory = () => {
-    if (selectedCategory) {
-      setCategories(categories.map(cat => 
-        cat.id === selectedCategory.id ? { ...cat, ...categoryForm } : cat
-      ));
-      toast({ title: "Category updated successfully!" });
-    } else {
-      const newCategory: Category = {
-        id: Date.now().toString(),
-        ...categoryForm
-      };
-      setCategories([...categories, newCategory]);
-      toast({ title: "Category added successfully!" });
-    }
-    setCategoryDialogOpen(false);
-    setSelectedCategory(null);
-    setCategoryForm({ name: "", description: "" });
-  };
+  const filteredItems = menuItems.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         item.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === "all" || item.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
 
-  const handleSaveItem = () => {
-    if (selectedItem) {
-      setMenuItems(menuItems.map(item => 
-        item.id === selectedItem.id ? { ...item, ...itemForm } : item
-      ));
-      toast({ title: "Menu item updated successfully!" });
-    } else {
-      const newItem: MenuItem = {
-        id: Date.now().toString(),
-        ...itemForm
-      };
-      setMenuItems([...menuItems, newItem]);
-      toast({ title: "Menu item added successfully!" });
-    }
-    setItemDialogOpen(false);
-    setSelectedItem(null);
-    setItemForm({ name: "", description: "", price: 0, category: "", available: true, soldOut: false });
-  };
+  const totalItems = currentOrder.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Call Center Info Banner */}
-      {activeCallInfo && (
-        <div className="lg:col-span-3 mb-6">
-          <Card className="bg-blue-800 border-blue-700 p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <Phone className="text-blue-300" size={24} />
-                <div>
-                  <h3 className="text-white font-medium">Active Call Order</h3>
-                  <p className="text-blue-200 text-sm">
-                    {activeCallInfo.customerName} - {activeCallInfo.phoneNumber}
-                  </p>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-white">Menu</h1>
+          {isInCall && activeCallInfo && (
+            <p className="text-green-400">
+              📞 Taking order for: {activeCallInfo.customerName} ({activeCallInfo.phoneNumber})
+            </p>
+          )}
+        </div>
+        <div className="flex gap-2">
+          {isInCall && (
+            <Button
+              onClick={handleEndCall}
+              variant="outline"
+              className="border-red-500 text-red-400 hover:bg-red-500/10"
+            >
+              <PhoneOff size={16} className="mr-2" />
+              End Call
+            </Button>
+          )}
+          <Button className="bg-green-600 hover:bg-green-700 relative">
+            <ShoppingCart size={20} className="mr-2" />
+            View Cart
+            {totalItems > 0 && (
+              <Badge className="absolute -top-2 -right-2 bg-red-500 text-white px-2 py-1 text-xs rounded-full">
+                {totalItems}
+              </Badge>
+            )}
+          </Button>
+        </div>
+      </div>
+
+      {/* Search and Filter Controls */}
+      <Card className="bg-gray-800 border-gray-700 p-6">
+        <div className="flex flex-wrap gap-4 items-center">
+          <div className="flex items-center space-x-2">
+            <Filter size={16} className="text-gray-400" />
+            <span className="text-white font-medium">Filters:</span>
+          </div>
+          
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+            <Input
+              placeholder="Search menu items..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 bg-gray-700 border-gray-600"
+            />
+          </div>
+
+          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <SelectTrigger className="w-48 bg-gray-700 border-gray-600">
+              <SelectValue placeholder="Select category" />
+            </SelectTrigger>
+            <SelectContent className="bg-gray-800 border-gray-700">
+              {categories.map(category => (
+                <SelectItem key={category.value} value={category.value}>
+                  {category.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </Card>
+
+      {/* Menu Items Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredItems.map((item) => (
+          <Card key={item.id} className="bg-gray-800 border-gray-700 overflow-hidden">
+            <div className="p-6">
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="text-lg font-semibold text-white">{item.name}</h3>
+                <div className="flex gap-2">
+                  {item.soldOut && (
+                    <Badge className="bg-red-600 text-white">Sold Out</Badge>
+                  )}
+                  <Badge className={item.available ? "bg-green-600" : "bg-red-600"}>
+                    {item.available ? "Available" : "Unavailable"}
+                  </Badge>
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <Badge className="bg-blue-600 text-white">Phone Order</Badge>
+              
+              <p className="text-gray-400 text-sm mb-4">{item.description}</p>
+              
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-2xl font-bold text-green-400">${item.price}</span>
+              </div>
+
+              <div className="flex gap-2">
                 <Button
-                  onClick={handleEndCall}
+                  onClick={() => addItemToOrder({ name: item.name, price: item.price })}
+                  disabled={!item.available || item.soldOut}
+                  className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600"
+                >
+                  <Plus size={16} className="mr-2" />
+                  Add to Order
+                </Button>
+                
+                <Button
+                  onClick={() => toggleSoldOut(item.id)}
                   variant="outline"
                   size="sm"
-                  className="border-red-500 text-red-400 hover:bg-red-500/10"
+                  className={`${item.soldOut ? 'border-green-500 text-green-400' : 'border-red-500 text-red-400'}`}
                 >
-                  <PhoneOff size={16} className="mr-2" />
-                  End Call
+                  {item.soldOut ? 'Mark Available' : 'Mark Sold Out'}
                 </Button>
               </div>
             </div>
           </Card>
-        </div>
+        ))}
+      </div>
+
+      {filteredItems.length === 0 && (
+        <Card className="bg-gray-800 border-gray-700 p-8 text-center">
+          <p className="text-gray-400">No menu items found matching your criteria.</p>
+        </Card>
       )}
-
-      {/* Main Menu Content */}
-      <div className="lg:col-span-2 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-white">Menu Management</h1>
-            <p className="text-gray-400">Manage categories and menu items</p>
-          </div>
-          <div className="flex space-x-2">
-            <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="border-gray-600 text-gray-300">
-                  <Plus size={16} className="mr-2" />
-                  Add Category
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="bg-gray-800 border-gray-700 text-white">
-                <DialogHeader>
-                  <DialogTitle>{selectedCategory ? "Edit Category" : "Add New Category"}</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="categoryName">Name</Label>
-                    <Input
-                      id="categoryName"
-                      value={categoryForm.name}
-                      onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
-                      className="bg-gray-700 border-gray-600"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="categoryDescription">Description</Label>
-                    <Textarea
-                      id="categoryDescription"
-                      value={categoryForm.description}
-                      onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
-                      className="bg-gray-700 border-gray-600"
-                    />
-                  </div>
-                  <Button onClick={handleSaveCategory} className="w-full bg-green-600 hover:bg-green-700">
-                    {selectedCategory ? "Update" : "Add"} Category
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-
-            <Dialog open={itemDialogOpen} onOpenChange={setItemDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-green-600 hover:bg-green-700">
-                  <Plus size={16} className="mr-2" />
-                  Add Menu Item
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="bg-gray-800 border-gray-700 text-white">
-                <DialogHeader>
-                  <DialogTitle>{selectedItem ? "Edit Menu Item" : "Add New Menu Item"}</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="itemName">Name</Label>
-                    <Input
-                      id="itemName"
-                      value={itemForm.name}
-                      onChange={(e) => setItemForm({ ...itemForm, name: e.target.value })}
-                      className="bg-gray-700 border-gray-600"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="itemDescription">Description</Label>
-                    <Textarea
-                      id="itemDescription"
-                      value={itemForm.description}
-                      onChange={(e) => setItemForm({ ...itemForm, description: e.target.value })}
-                      className="bg-gray-700 border-gray-600"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="itemPrice">Price ($)</Label>
-                    <Input
-                      id="itemPrice"
-                      type="number"
-                      step="0.01"
-                      value={itemForm.price}
-                      onChange={(e) => setItemForm({ ...itemForm, price: parseFloat(e.target.value) || 0 })}
-                      className="bg-gray-700 border-gray-600"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="itemCategory">Category</Label>
-                    <select
-                      id="itemCategory"
-                      value={itemForm.category}
-                      onChange={(e) => setItemForm({ ...itemForm, category: e.target.value })}
-                      className="w-full p-2 bg-gray-700 border border-gray-600 rounded-md text-white"
-                    >
-                      <option value="">Select a category</option>
-                      {categories.map(cat => (
-                        <option key={cat.id} value={cat.name}>{cat.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <label className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        checked={itemForm.available}
-                        onChange={(e) => setItemForm({ ...itemForm, available: e.target.checked })}
-                        className="rounded"
-                      />
-                      <span>Available</span>
-                    </label>
-                    <label className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        checked={itemForm.soldOut}
-                        onChange={(e) => setItemForm({ ...itemForm, soldOut: e.target.checked })}
-                        className="rounded"
-                      />
-                      <span>Sold Out</span>
-                    </label>
-                  </div>
-                  <Button onClick={handleSaveItem} className="w-full bg-green-600 hover:bg-green-700">
-                    {selectedItem ? "Update" : "Add"} Menu Item
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </div>
-
-        {/* Categories */}
-        <Card className="bg-gray-800 border-gray-700 p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Categories</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            {/* All Items Category */}
-            <div 
-              className={`p-4 rounded-lg cursor-pointer transition-colors ${
-                selectedCategoryFilter === "All Items" 
-                  ? "bg-green-600 text-white" 
-                  : "bg-gray-700 hover:bg-gray-600"
-              }`}
-              onClick={() => handleCategoryClick("All Items")}
-            >
-              <h4 className="font-medium text-white">All Items</h4>
-              <p className="text-gray-300 text-sm">Show all menu items</p>
-            </div>
-            
-            {categories.map((category) => (
-              <div 
-                key={category.id} 
-                className={`p-4 rounded-lg cursor-pointer transition-colors ${
-                  selectedCategoryFilter === category.name 
-                    ? "bg-green-600 text-white" 
-                    : "bg-gray-700 hover:bg-gray-600"
-                }`}
-                onClick={() => handleCategoryClick(category.name)}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-medium text-white">{category.name}</h4>
-                  <div className="flex space-x-1">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedCategory(category);
-                        setCategoryForm({ name: category.name, description: category.description });
-                        setCategoryDialogOpen(true);
-                      }}
-                      className="text-blue-400 hover:text-blue-300 p-1"
-                    >
-                      <Edit size={14} />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setCategories(categories.filter(cat => cat.id !== category.id));
-                        toast({ title: "Category deleted successfully!", variant: "destructive" });
-                      }}
-                      className="text-red-400 hover:text-red-300 p-1"
-                    >
-                      <Trash2 size={14} />
-                    </Button>
-                  </div>
-                </div>
-                <p className="text-gray-300 text-sm">{category.description}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Selected Category Display */}
-          <div className="mt-4 p-3 bg-gray-700 rounded-lg">
-            <p className="text-white">
-              <span className="font-medium">Active Filter:</span> 
-              <span className="ml-2 px-2 py-1 bg-green-600 rounded text-sm">{selectedCategoryFilter}</span>
-            </p>
-          </div>
-        </Card>
-
-        {/* Menu Items */}
-        <Card className="bg-gray-800 border-gray-700 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-white">Menu Items</h3>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-              <Input
-                placeholder="Search menu items..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-gray-700 border-gray-600 w-64"
-              />
-            </div>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-700">
-                  <th className="text-left py-3 text-gray-400 font-medium">Name</th>
-                  <th className="text-left py-3 text-gray-400 font-medium">Description</th>
-                  <th className="text-left py-3 text-gray-400 font-medium">Category</th>
-                  <th className="text-left py-3 text-gray-400 font-medium">Price</th>
-                  <th className="text-left py-3 text-gray-400 font-medium">Status</th>
-                  <th className="text-left py-3 text-gray-400 font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredItems.map((item) => (
-                  <tr key={item.id} className="border-b border-gray-700">
-                    <td className="py-3 text-white font-medium">{item.name}</td>
-                    <td className="py-3 text-gray-300 max-w-xs truncate">{item.description}</td>
-                    <td className="py-3 text-gray-300">{item.category}</td>
-                    <td className="py-3 text-white font-semibold">${item.price.toFixed(2)}</td>
-                    <td className="py-3">
-                      <div className="flex flex-col space-y-1">
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          item.available 
-                            ? 'bg-green-500/20 text-green-400' 
-                            : 'bg-red-500/20 text-red-400'
-                        }`}>
-                          {item.available ? 'Available' : 'Unavailable'}
-                        </span>
-                        {item.soldOut && (
-                          <span className="px-2 py-1 rounded-full text-xs bg-orange-500/20 text-orange-400">
-                            Sold Out
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-3">
-                      <div className="flex flex-wrap gap-1">
-                        {item.available && !item.soldOut && (
-                          <Button
-                            size="sm"
-                            onClick={() => addItemToOrder({ name: item.name, price: item.price })}
-                            className="bg-green-600 hover:bg-green-700 text-xs"
-                          >
-                            Add to Order
-                          </Button>
-                        )}
-                        <Button
-                          size="sm"
-                          onClick={() => toggleSoldOut(item.id)}
-                          className={`text-xs ${
-                            item.soldOut 
-                              ? 'bg-green-600 hover:bg-green-700' 
-                              : 'bg-orange-600 hover:bg-orange-700'
-                          }`}
-                        >
-                          {item.soldOut ? 'Mark Available' : 'Mark Sold Out'}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => {
-                            setSelectedItem(item);
-                            setItemForm({
-                              name: item.name,
-                              description: item.description,
-                              price: item.price,
-                              category: item.category,
-                              available: item.available,
-                              soldOut: item.soldOut
-                            });
-                            setItemDialogOpen(true);
-                          }}
-                          className="text-blue-400 hover:text-blue-300"
-                        >
-                          <Edit size={16} />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => {
-                            setMenuItems(menuItems.filter(i => i.id !== item.id));
-                            toast({ title: "Menu item deleted successfully!", variant: "destructive" });
-                          }}
-                          className="text-red-400 hover:text-red-300"
-                        >
-                          <Trash2 size={16} />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-      </div>
-
-      {/* Order Summary Sidebar */}
-      <div className="lg:col-span-1">
-        <OrderSummary />
-      </div>
     </div>
   );
 };

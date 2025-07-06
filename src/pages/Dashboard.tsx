@@ -10,30 +10,31 @@ import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { useBranch } from "@/contexts/BranchContext";
 import { useToast } from "@/hooks/use-toast";
 
+// Comprehensive dummy data for different time periods and metrics
 const allTimeData = [
-  { period: "Jan", sales: 4000, orders: 240, deletedOrders: 8, updatedOrders: 45 },
-  { period: "Feb", sales: 3000, orders: 198, deletedOrders: 5, updatedOrders: 32 },
-  { period: "Mar", sales: 5000, orders: 300, deletedOrders: 12, updatedOrders: 58 },
-  { period: "Apr", sales: 4500, orders: 270, deletedOrders: 7, updatedOrders: 41 },
-  { period: "May", sales: 6000, orders: 350, deletedOrders: 15, updatedOrders: 67 },
-  { period: "Jun", sales: 5500, orders: 320, deletedOrders: 9, updatedOrders: 52 }
+  { period: "Jan", sales: 4000, orders: 240, deletedOrders: 8, updatedOrders: 45, burgers: 120, pizza: 80, drinks: 40 },
+  { period: "Feb", sales: 3000, orders: 198, deletedOrders: 5, updatedOrders: 32, burgers: 90, pizza: 70, drinks: 38 },
+  { period: "Mar", sales: 5000, orders: 300, deletedOrders: 12, updatedOrders: 58, burgers: 150, pizza: 90, drinks: 60 },
+  { period: "Apr", sales: 4500, orders: 270, deletedOrders: 7, updatedOrders: 41, burgers: 135, pizza: 85, drinks: 50 },
+  { period: "May", sales: 6000, orders: 350, deletedOrders: 15, updatedOrders: 67, burgers: 175, pizza: 105, drinks: 70 },
+  { period: "Jun", sales: 5500, orders: 320, deletedOrders: 9, updatedOrders: 52, burgers: 160, pizza: 95, drinks: 65 }
 ];
 
 const monthlyData = [
-  { period: "Week 1", sales: 1200, orders: 80, deletedOrders: 3, updatedOrders: 12 },
-  { period: "Week 2", sales: 1800, orders: 120, deletedOrders: 2, updatedOrders: 18 },
-  { period: "Week 3", sales: 1500, orders: 100, deletedOrders: 4, updatedOrders: 15 },
-  { period: "Week 4", sales: 1700, orders: 110, deletedOrders: 1, updatedOrders: 16 }
+  { period: "Week 1", sales: 1200, orders: 80, deletedOrders: 3, updatedOrders: 12, burgers: 40, pizza: 25, drinks: 15 },
+  { period: "Week 2", sales: 1800, orders: 120, deletedOrders: 2, updatedOrders: 18, burgers: 60, pizza: 35, drinks: 25 },
+  { period: "Week 3", sales: 1500, orders: 100, deletedOrders: 4, updatedOrders: 15, burgers: 50, pizza: 30, drinks: 20 },
+  { period: "Week 4", sales: 1700, orders: 110, deletedOrders: 1, updatedOrders: 16, burgers: 55, pizza: 32, drinks: 23 }
 ];
 
 const weeklyData = [
-  { period: "Mon", sales: 1200, orders: 45, deletedOrders: 2, updatedOrders: 8 },
-  { period: "Tue", sales: 1800, orders: 62, deletedOrders: 1, updatedOrders: 12 },
-  { period: "Wed", sales: 1500, orders: 58, deletedOrders: 3, updatedOrders: 9 },
-  { period: "Thu", sales: 2200, orders: 78, deletedOrders: 0, updatedOrders: 15 },
-  { period: "Fri", sales: 2800, orders: 95, deletedOrders: 4, updatedOrders: 18 },
-  { period: "Sat", sales: 3200, orders: 112, deletedOrders: 2, updatedOrders: 22 },
-  { period: "Sun", sales: 2900, orders: 105, deletedOrders: 1, updatedOrders: 16 }
+  { period: "Mon", sales: 1200, orders: 45, deletedOrders: 2, updatedOrders: 8, burgers: 22, pizza: 13, drinks: 10 },
+  { period: "Tue", sales: 1800, orders: 62, deletedOrders: 1, updatedOrders: 12, burgers: 31, pizza: 18, drinks: 13 },
+  { period: "Wed", sales: 1500, orders: 58, deletedOrders: 3, updatedOrders: 9, burgers: 29, pizza: 16, drinks: 13 },
+  { period: "Thu", sales: 2200, orders: 78, deletedOrders: 0, updatedOrders: 15, burgers: 39, pizza: 22, drinks: 17 },
+  { period: "Fri", sales: 2800, orders: 95, deletedOrders: 4, updatedOrders: 18, burgers: 47, pizza: 28, drinks: 20 },
+  { period: "Sat", sales: 3200, orders: 112, deletedOrders: 2, updatedOrders: 22, burgers: 56, pizza: 32, drinks: 24 },
+  { period: "Sun", sales: 2900, orders: 105, deletedOrders: 1, updatedOrders: 16, burgers: 52, pizza: 30, drinks: 23 }
 ];
 
 const getProductData = (businessType?: string) => {
@@ -102,28 +103,34 @@ export const Dashboard = () => {
     }
   };
 
-  const getMetricData = () => {
-    const data = getData();
-    switch (selectedMetric) {
-      case "sales":
-        return data.map(d => ({ ...d, value: d.sales }));
-      case "orders":
-        return data.map(d => ({ ...d, value: d.orders }));
-      case "deletedOrders":
-        return data.map(d => ({ ...d, value: d.deletedOrders }));
-      case "updatedOrders":
-        return data.map(d => ({ ...d, value: d.updatedOrders }));
-      default:
-        return data.map(d => ({ ...d, value: d.sales }));
+  const getFilteredData = () => {
+    let data = getData();
+    
+    // Filter by selected product
+    if (selectedProduct !== "all") {
+      const productKey = selectedProduct.toLowerCase();
+      data = data.map(item => ({
+        ...item,
+        value: (item as any)[productKey] || 0
+      }));
+    } else {
+      // Use the selected metric
+      data = data.map(d => ({
+        ...d,
+        value: (d as any)[selectedMetric] || 0
+      }));
     }
+    
+    return data;
   };
 
   const exportReport = () => {
-    const reportData = getData();
+    const reportData = getFilteredData();
     const csvContent = [
-      ["Period", "Sales", "Orders", "Deleted Orders", "Updated Orders"],
+      ["Period", "Value", "Sales", "Orders", "Deleted Orders", "Updated Orders"],
       ...reportData.map(item => [
         item.period,
+        item.value,
         item.sales,
         item.orders,
         item.deletedOrders,
@@ -135,9 +142,9 @@ export const Dashboard = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `dashboard-report-${selectedMetric}-${Date.now()}.csv`;
+    a.download = `dashboard-report-${selectedMetric}-${selectedProduct}-${dateRange}-${Date.now()}.csv`;
     a.click();
-    toast({ title: "Report exported successfully!" });
+    toast({ title: "Dashboard report exported successfully!" });
   };
 
   return (
@@ -248,14 +255,27 @@ export const Dashboard = () => {
         />
       </div>
 
-      {/* Dynamic Charts */}
+      {/* Dynamic Charts with Individual Filters */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="bg-gray-800 border-gray-700 p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">
-            {selectedMetric.charAt(0).toUpperCase() + selectedMetric.slice(1)} Overview
-          </h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-white">
+              {selectedProduct !== "all" ? selectedProduct.charAt(0).toUpperCase() + selectedProduct.slice(1) : selectedMetric.charAt(0).toUpperCase() + selectedMetric.slice(1)} Overview
+            </h3>
+            <div className="flex gap-2">
+              <Select value={selectedMetric} onValueChange={setSelectedMetric}>
+                <SelectTrigger className="w-32 bg-gray-700 border-gray-600 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-800 border-gray-700">
+                  <SelectItem value="sales">Sales</SelectItem>
+                  <SelectItem value="orders">Orders</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={getMetricData()}>
+            <BarChart data={getFilteredData()}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis dataKey="period" stroke="#9CA3AF" />
               <YAxis stroke="#9CA3AF" />
@@ -265,7 +285,20 @@ export const Dashboard = () => {
         </Card>
 
         <Card className="bg-gray-800 border-gray-700 p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">{businessTerms.services} Distribution</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-white">{businessTerms.services} Distribution</h3>
+            <Select value={selectedBranch} onValueChange={setSelectedBranch}>
+              <SelectTrigger className="w-32 bg-gray-700 border-gray-600 text-xs">
+                <SelectValue placeholder="Branch" />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-800 border-gray-700">
+                <SelectItem value="all">All</SelectItem>
+                {branches.slice(0, 3).map(branch => (
+                  <SelectItem key={branch.id} value={branch.id}>{branch.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
@@ -286,9 +319,23 @@ export const Dashboard = () => {
         </Card>
       </div>
 
-      {/* Sales Trend */}
+      {/* Sales Trend with Filters */}
       <Card className="bg-gray-800 border-gray-700 p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Sales Trend</h3>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-white">Sales Trend</h3>
+          <div className="flex gap-2">
+            <Select value={dateRange} onValueChange={setDateRange}>
+              <SelectTrigger className="w-32 bg-gray-700 border-gray-600 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-800 border-gray-700">
+                <SelectItem value="week">Week</SelectItem>
+                <SelectItem value="month">Month</SelectItem>
+                <SelectItem value="year">Year</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={getData()}>
             <CartesianGrid strokeDasharray="3 3" stroke="#374151" />

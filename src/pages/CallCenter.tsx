@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PhoneIncoming, PhoneCall, Clock, User, MapPin, Phone, PhoneOff } from "lucide-react";
+import { PhoneIncoming, PhoneCall, Clock, User, MapPin, Phone, PhoneOff, Pause } from "lucide-react";
 import { useBranch } from "@/contexts/BranchContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { useCall } from "@/contexts/CallContext";
@@ -36,6 +36,18 @@ export const CallCenter = () => {
   const [activeCall, setActiveCall] = useState<IncomingCall | null>(null);
   const [branchSelectionDialog, setBranchSelectionDialog] = useState(false);
   const [selectedBranchForOrder, setSelectedBranchForOrder] = useState<string>("");
+  
+  const [incomingCalls, setIncomingCalls] = useState<IncomingCall[]>([
+    { id: "1", customerName: "John Smith", phoneNumber: "+1 (555) 123-4567", callType: "Sales" as const, status: "Ringing" as const, startTime: "2:45 PM", duration: "00:00", address: "123 Main St, City", branchId: selectedBranch?.id || '1', priority: "High" as const },
+    { id: "2", customerName: "Mary Johnson", phoneNumber: "+1 (555) 987-6543", callType: "Support" as const, status: "Active" as const, startTime: "2:42 PM", duration: "06:15", branchId: selectedBranch?.id || '1', priority: "Medium" as const },
+    { id: "3", customerName: "Bob Wilson", phoneNumber: "+1 (555) 456-7890", callType: "Appointment" as const, status: "On Hold" as const, startTime: "2:40 PM", duration: "08:30", branchId: selectedBranch?.id || '1', priority: "Low" as const }
+  ].filter(call => call.branchId === selectedBranch?.id));
+
+  const [recentCalls, setRecentCalls] = useState<IncomingCall[]>([
+    { id: "4", customerName: "Alice Brown", phoneNumber: "+1 (555) 321-0987", callType: "Sales" as const, status: "Completed" as const, startTime: "2:30 PM", duration: "05:20", address: "456 Oak Ave, City", branchId: selectedBranch?.id || '1', priority: "Medium" as const },
+    { id: "5", customerName: "David Lee", phoneNumber: "+1 (555) 654-3210", callType: "Support" as const, status: "Completed" as const, startTime: "2:25 PM", duration: "03:15", branchId: selectedBranch?.id || '1', priority: "Low" as const },
+    { id: "6", customerName: "Sarah Davis", phoneNumber: "+1 (555) 789-0123", callType: "Complaint" as const, status: "Missed" as const, startTime: "2:20 PM", duration: "00:00", branchId: selectedBranch?.id || '1', priority: "Urgent" as const }
+  ].filter(call => call.branchId === selectedBranch?.id));
 
   const businessTerms = selectedBusinessType?.terminology || {
     customer: 'Customer',
@@ -43,19 +55,6 @@ export const CallCenter = () => {
     service: 'Service',
     services: 'Services'
   };
-
-  // Incoming calls data - filtered by selected branch
-  const incomingCalls: IncomingCall[] = [
-    { id: "1", customerName: "John Smith", phoneNumber: "+1 (555) 123-4567", callType: "Sales" as const, status: "Ringing" as const, startTime: "2:45 PM", duration: "00:00", address: "123 Main St, City", branchId: selectedBranch?.id || '1', priority: "High" as const },
-    { id: "2", customerName: "Mary Johnson", phoneNumber: "+1 (555) 987-6543", callType: "Support" as const, status: "Active" as const, startTime: "2:42 PM", duration: "06:15", branchId: selectedBranch?.id || '1', priority: "Medium" as const },
-    { id: "3", customerName: "Bob Wilson", phoneNumber: "+1 (555) 456-7890", callType: "Appointment" as const, status: "On Hold" as const, startTime: "2:40 PM", duration: "08:30", branchId: selectedBranch?.id || '1', priority: "Low" as const }
-  ].filter(call => call.branchId === selectedBranch?.id);
-
-  const recentCalls: IncomingCall[] = [
-    { id: "4", customerName: "Alice Brown", phoneNumber: "+1 (555) 321-0987", callType: "Sales" as const, status: "Completed" as const, startTime: "2:30 PM", duration: "05:20", address: "456 Oak Ave, City", branchId: selectedBranch?.id || '1', priority: "Medium" as const },
-    { id: "5", customerName: "David Lee", phoneNumber: "+1 (555) 654-3210", callType: "Support" as const, status: "Completed" as const, startTime: "2:25 PM", duration: "03:15", branchId: selectedBranch?.id || '1', priority: "Low" as const },
-    { id: "6", customerName: "Sarah Davis", phoneNumber: "+1 (555) 789-0123", callType: "Complaint" as const, status: "Missed" as const, startTime: "2:20 PM", duration: "00:00", branchId: selectedBranch?.id || '1', priority: "Urgent" as const }
-  ].filter(call => call.branchId === selectedBranch?.id);
 
   const getStatusColor = (status: IncomingCall["status"]) => {
     switch (status) {
@@ -92,12 +91,35 @@ export const CallCenter = () => {
   const handleAnswerCall = (call: IncomingCall) => {
     setActiveCall(call);
     
+    // Update call status to Active
+    setIncomingCalls(prev => prev.map(c => 
+      c.id === call.id ? { ...c, status: "Active" as const } : c
+    ));
+    
     if (call.callType === "Sales") {
-      // Show branch selection dialog for sales calls
       setBranchSelectionDialog(true);
     } else {
       toast({ title: `Answered call from ${call.customerName}` });
     }
+  };
+
+  const handlePutOnHold = (callId: string) => {
+    setIncomingCalls(prev => prev.map(call => 
+      call.id === callId ? { ...call, status: "On Hold" as const } : call
+    ));
+    toast({ title: "Call put on hold" });
+  };
+
+  const handleEndCall = (callId: string) => {
+    setIncomingCalls(prev => prev.filter(call => call.id !== callId));
+    setRecentCalls(prev => [
+      ...prev,
+      ...incomingCalls.filter(call => call.id === callId).map(call => ({
+        ...call,
+        status: "Completed" as const
+      }))
+    ]);
+    toast({ title: "Call ended" });
   };
 
   const handleBranchSelection = () => {
@@ -105,7 +127,6 @@ export const CallCenter = () => {
 
     const selectedBranch = branches.find(b => b.id === selectedBranchForOrder);
     
-    // Set the call info in context
     setActiveCallInfo({
       customerName: activeCall.customerName,
       phoneNumber: activeCall.phoneNumber,
@@ -115,7 +136,6 @@ export const CallCenter = () => {
 
     setBranchSelectionDialog(false);
     
-    // Navigate to appropriate page based on business type
     const targetPage = selectedBusinessType?.id === 'restaurant' ? '/menu' : 
                       selectedBusinessType?.id === 'hair-salon' ? '/appointments' :
                       selectedBusinessType?.id === 'hotel' ? '/hotel-services' : '/menu';
@@ -158,7 +178,7 @@ export const CallCenter = () => {
         <Card className="bg-gray-800 border-gray-700 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-2xl font-bold text-blue-400">147</div>
+              <div className="text-2xl font-bold text-blue-400">{incomingCalls.length + recentCalls.length}</div>
               <div className="text-gray-400 text-sm">Calls Today</div>
             </div>
             <Phone className="text-blue-400" size={24} />
@@ -224,15 +244,27 @@ export const CallCenter = () => {
                   size="sm" 
                   onClick={() => handleAnswerCall(call)}
                   className="bg-green-600 hover:bg-green-700"
-                  disabled={call.status === 'Active' || call.status === 'Completed'}
+                  disabled={call.status === 'Active'}
                 >
                   <Phone size={14} className="mr-1" />
                   {call.status === 'Ringing' ? 'Answer' : 'Active'}
                 </Button>
-                <Button size="sm" variant="outline" className="border-blue-500 text-blue-400 hover:bg-blue-500/10">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="border-blue-500 text-blue-400 hover:bg-blue-500/10"
+                  onClick={() => handlePutOnHold(call.id)}
+                  disabled={call.status === 'On Hold' || call.status === 'Ringing'}
+                >
+                  <Pause size={14} className="mr-1" />
                   Put on Hold
                 </Button>
-                <Button size="sm" variant="outline" className="border-red-500 text-red-400 hover:bg-red-500/10">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="border-red-500 text-red-400 hover:bg-red-500/10"
+                  onClick={() => handleEndCall(call.id)}
+                >
                   <PhoneOff size={14} className="mr-1" />
                   End Call
                 </Button>

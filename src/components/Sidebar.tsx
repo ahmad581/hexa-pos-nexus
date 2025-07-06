@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { FileText, LayoutDashboard, ListChecks, Settings, Users, ShoppingBag, File, Home, Hotel, ClipboardList, UserPlus, BarChartBig, Phone, Menu, X } from "lucide-react";
+import { FileText, LayoutDashboard, ListChecks, Settings, Users, ShoppingBag, File, Home, Hotel, ClipboardList, UserPlus, BarChartBig, Phone, Menu, ChevronLeft } from "lucide-react";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -141,15 +141,27 @@ export const Sidebar = () => {
       <aside className={`hidden md:flex flex-col bg-gray-900 border-r border-gray-700 text-white transition-all duration-300 ${
         isCollapsed ? 'w-16' : 'w-60'
       }`}>
-        {/* Toggle Button */}
-        <div className="p-4 border-b border-gray-700">
+        {/* Header with Logo and Toggle */}
+        <div className="p-4 border-b border-gray-700 flex items-center justify-between">
+          {!isCollapsed && (
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">
+                  {selectedBusinessType?.name?.charAt(0) || 'B'}
+                </span>
+              </div>
+              <span className="font-semibold text-sm">
+                {selectedBusinessType?.name || 'Business'}
+              </span>
+            </div>
+          )}
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="w-full justify-center hover:bg-gray-800"
+            className="hover:bg-gray-800"
           >
-            {isCollapsed ? <Menu className="h-4 w-4" /> : <X className="h-4 w-4" />}
+            {isCollapsed ? <Menu className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </Button>
         </div>
 

@@ -12,6 +12,7 @@ interface CallContextType {
   activeCallInfo: CallInfo | null;
   setActiveCallInfo: (info: CallInfo | null) => void;
   endCall: () => void;
+  isInCall: boolean;
 }
 
 const CallContext = createContext<CallContextType | undefined>(undefined);
@@ -31,11 +32,14 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
     setActiveCallInfo(null);
   };
 
+  const isInCall = activeCallInfo !== null;
+
   return (
     <CallContext.Provider value={{
       activeCallInfo,
       setActiveCallInfo,
-      endCall
+      endCall,
+      isInCall
     }}>
       {children}
     </CallContext.Provider>
