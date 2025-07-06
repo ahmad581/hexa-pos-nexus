@@ -1,14 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Plus, Edit, Trash2, Search } from "lucide-react";
+import { Plus, Edit, Trash2, Search, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { OrderSummary } from "@/components/OrderSummary";
 import { useOrder } from "@/contexts/OrderContext";
+import { useCall } from "@/contexts/CallContext";
+import { Badge } from "@/components/ui/badge";
 
 interface Category {
   id: string;
@@ -51,7 +53,24 @@ export const Menu = () => {
   const [categoryForm, setCategoryForm] = useState({ name: "", description: "" });
   const [itemForm, setItemForm] = useState({ name: "", description: "", price: 0, category: "", available: true });
   const { toast } = useToast();
-  const { addItemToOrder } = useOrder();
+  const { addItemToOrder, setOrderType, setCustomerInfo } = useOrder();
+  const { activeCallInfo } = useCall();
+
+  // Auto-populate customer info if coming from call center
+  useEffect(() => {
+    if (activeCallInfo) {
+      setOrderType('phone');
+      setCustomerInfo({
+        name: activeCallInfo.customerName,
+        phone: activeCallInfo.phoneNumber,
+        address: activeCallInfo.address
+      });
+      toast({ 
+        title: `Taking order for ${activeCallInfo.customerName}`,
+        description: `Phone: ${activeCallInfo.phoneNumber}`
+      });
+    }
+  }, [activeCallInfo, setOrderType, setCustomerInfo, toast]);
 
   const filteredItems = menuItems.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -104,6 +123,26 @@ export const Menu = () => {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Call Center Info Banner */}
+      {activeCallInfo && (
+        <div className="lg:col-span-3 mb-6">
+          <Card className="bg-blue-800 border-blue-700 p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <Phone className="text-blue-300" size={24} />
+                <div>
+                  <h3 className="text-white font-medium">Active Call Order</h3>
+                  <p className="text-blue-200 text-sm">
+                    {activeCallInfo.customerName} - {activeCallInfo.phoneNumber}
+                  </p>
+                </div>
+              </div>
+              <Badge className="bg-blue-600 text-white">Phone Order</Badge>
+            </div>
+          </Card>
+        </div>
+      )}
+
       {/* Main Menu Content */}
       <div className="lg:col-span-2 space-y-6">
         <div className="flex items-center justify-between">
