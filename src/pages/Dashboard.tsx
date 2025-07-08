@@ -9,6 +9,22 @@ import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { useBranch } from "@/contexts/BranchContext";
 import { useToast } from "@/hooks/use-toast";
 
+// Data type definitions
+type BaseDataItem = {
+  period: string;
+  sales: number;
+  orders: number;
+  deletedOrders: number;
+  updatedOrders: number;
+  burgers: number;
+  pizza: number;
+  drinks: number;
+};
+
+type ProcessedDataItem = BaseDataItem & {
+  value: number;
+};
+
 // Comprehensive dummy data for different time periods and metrics
 const allTimeData = [
   { period: "Jan", sales: 4000, orders: 240, deletedOrders: 8, updatedOrders: 45, burgers: 120, pizza: 80, drinks: 40 },
@@ -93,7 +109,7 @@ export const Dashboard = () => {
 
   const productData = getProductData(selectedBusinessType?.id);
 
-  const getData = () => {
+  const getData = (): BaseDataItem[] => {
     switch (dateRange) {
       case "year": return allTimeData;
       case "month": return monthlyData;
@@ -102,25 +118,24 @@ export const Dashboard = () => {
     }
   };
 
-  const getFilteredData = () => {
+  const getFilteredData = (): ProcessedDataItem[] => {
     let data = getData();
     
     // Filter by selected product and add value property
     if (selectedProduct !== "all") {
-      const productKey = selectedProduct.toLowerCase();
-      data = data.map(item => ({
+      const productKey = selectedProduct.toLowerCase() as keyof BaseDataItem;
+      return data.map(item => ({
         ...item,
-        value: (item as any)[productKey] || 0
+        value: typeof item[productKey] === 'number' ? item[productKey] as number : 0
       }));
     } else {
       // Use the selected metric and add value property
-      data = data.map(item => ({
+      const metricKey = selectedMetric as keyof BaseDataItem;
+      return data.map(item => ({
         ...item,
-        value: (item as any)[selectedMetric] || 0
+        value: typeof item[metricKey] === 'number' ? item[metricKey] as number : 0
       }));
     }
-    
-    return data;
   };
 
   const exportReport = () => {
