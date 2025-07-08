@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { FileText, LayoutDashboard, ListChecks, Settings, Users, ShoppingBag, File, Home, Hotel, ClipboardList, UserPlus, BarChartBig, Phone, Menu, ChevronLeft } from "lucide-react";
+import { FileText, LayoutDashboard, ListChecks, Settings, Users, ShoppingBag, File, Home, Hotel, ClipboardList, UserPlus, BarChartBig, Phone, Menu, ChevronLeft, Pill, Package, Calendar, Dumbbell, Car, Heart } from "lucide-react";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -60,6 +60,32 @@ export const Sidebar = () => {
     { to: "/appointments", icon: ClipboardList, label: "Appointments" }
   ];
 
+  const pharmacyItems = [
+    { to: "/prescriptions", icon: Pill, label: "Prescriptions" },
+    { to: "/pharmacy-inventory", icon: Package, label: "Inventory" }
+  ];
+
+  const groceryItems = [
+    { to: "/grocery-inventory", icon: Package, label: "Inventory" },
+    { to: "/suppliers", icon: Users, label: "Suppliers" }
+  ];
+
+  const gymItems = [
+    { to: "/members", icon: Users, label: "Members" },
+    { to: "/classes", icon: Calendar, label: "Classes" },
+    { to: "/equipment", icon: Dumbbell, label: "Equipment" }
+  ];
+
+  const autoRepairItems = [
+    { to: "/auto-services", icon: Car, label: "Services" },
+    { to: "/vehicles", icon: Car, label: "Vehicles" }
+  ];
+
+  const petCareItems = [
+    { to: "/pet-appointments", icon: Calendar, label: "Appointments" },
+    { to: "/pets", icon: Heart, label: "Pets" }
+  ];
+
   const getBusinessSpecificItems = () => {
     switch (selectedBusinessType?.id) {
       case 'restaurant':
@@ -72,6 +98,16 @@ export const Sidebar = () => {
         return retailItems;
       case 'medical-clinic':
         return clinicItems;
+      case 'pharmacy':
+        return pharmacyItems;
+      case 'grocery':
+        return groceryItems;
+      case 'gym':
+        return gymItems;
+      case 'auto-repair':
+        return autoRepairItems;
+      case 'pet-care':
+        return petCareItems;
       default:
         return [];
     }

@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 
@@ -53,6 +54,23 @@ const initialBusinessTypes: BusinessType[] = [
     }
   },
   {
+    id: 'hotel',
+    name: 'Hotel',
+    icon: '🏨',
+    category: 'Hospitality',
+    features: ['room-booking', 'guest-management', 'billing', 'concierge'],
+    terminology: {
+      branch: 'Property',
+      branches: 'Properties',
+      unit: 'Room',
+      units: 'Rooms',
+      customer: 'Guest',
+      customers: 'Guests',
+      service: 'Service',
+      services: 'Services'
+    }
+  },
+  {
     id: 'hair-salon',
     name: 'Hair Salon',
     icon: '💇',
@@ -67,23 +85,6 @@ const initialBusinessTypes: BusinessType[] = [
       customers: 'Clients',
       service: 'Service',
       services: 'Services'
-    }
-  },
-  {
-    id: 'retail-store',
-    name: 'Retail Store',
-    icon: '🛍️',
-    category: 'Retail',
-    features: ['inventory-management', 'pos', 'customer-loyalty', 'sales-tracking'],
-    terminology: {
-      branch: 'Store',
-      branches: 'Stores',
-      unit: 'Counter',
-      units: 'Counters',
-      customer: 'Customer',
-      customers: 'Customers',
-      service: 'Product',
-      services: 'Products'
     }
   },
   {
@@ -104,18 +105,103 @@ const initialBusinessTypes: BusinessType[] = [
     }
   },
   {
-    id: 'hotel',
-    name: 'Hotel',
-    icon: '🏨',
-    category: 'Hospitality',
-    features: ['room-booking', 'guest-management', 'billing', 'concierge'],
+    id: 'retail-store',
+    name: 'Retail Store',
+    icon: '🛍️',
+    category: 'Retail',
+    features: ['inventory-management', 'pos', 'customer-loyalty', 'sales-tracking'],
     terminology: {
-      branch: 'Property',
-      branches: 'Properties',
+      branch: 'Store',
+      branches: 'Stores',
+      unit: 'Counter',
+      units: 'Counters',
+      customer: 'Customer',
+      customers: 'Customers',
+      service: 'Product',
+      services: 'Products'
+    }
+  },
+  {
+    id: 'pharmacy',
+    name: 'Pharmacy',
+    icon: '💊',
+    category: 'Healthcare',
+    features: ['prescription-management', 'inventory-tracking', 'billing', 'customer-records'],
+    terminology: {
+      branch: 'Pharmacy',
+      branches: 'Pharmacies',
+      unit: 'Counter',
+      units: 'Counters',
+      customer: 'Patient',
+      customers: 'Patients',
+      service: 'Prescription',
+      services: 'Prescriptions'
+    }
+  },
+  {
+    id: 'grocery',
+    name: 'Grocery Store',
+    icon: '🛒',
+    category: 'Retail',
+    features: ['inventory-management', 'pos', 'fresh-produce-tracking', 'supplier-management'],
+    terminology: {
+      branch: 'Store',
+      branches: 'Stores',
+      unit: 'Checkout',
+      units: 'Checkouts',
+      customer: 'Customer',
+      customers: 'Customers',
+      service: 'Product',
+      services: 'Products'
+    }
+  },
+  {
+    id: 'gym',
+    name: 'Gym & Fitness',
+    icon: '💪',
+    category: 'Health & Fitness',
+    features: ['membership-management', 'class-scheduling', 'equipment-tracking', 'trainer-management'],
+    terminology: {
+      branch: 'Location',
+      branches: 'Locations',
+      unit: 'Station',
+      units: 'Stations',
+      customer: 'Member',
+      customers: 'Members',
+      service: 'Class',
+      services: 'Classes'
+    }
+  },
+  {
+    id: 'auto-repair',
+    name: 'Auto Repair',
+    icon: '🔧',
+    category: 'Automotive',
+    features: ['service-scheduling', 'parts-inventory', 'customer-vehicles', 'billing'],
+    terminology: {
+      branch: 'Shop',
+      branches: 'Shops',
+      unit: 'Bay',
+      units: 'Bays',
+      customer: 'Customer',
+      customers: 'Customers',
+      service: 'Service',
+      services: 'Services'
+    }
+  },
+  {
+    id: 'pet-care',
+    name: 'Pet Care',
+    icon: '🐾',
+    category: 'Pet Services',
+    features: ['appointment-booking', 'pet-records', 'service-management', 'billing'],
+    terminology: {
+      branch: 'Clinic',
+      branches: 'Clinics',
       unit: 'Room',
       units: 'Rooms',
-      customer: 'Guest',
-      customers: 'Guests',
+      customer: 'Pet Owner',
+      customers: 'Pet Owners',
       service: 'Service',
       services: 'Services'
     }

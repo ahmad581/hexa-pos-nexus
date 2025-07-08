@@ -17,6 +17,11 @@ const getBusinessTypeFromEmail = (email: string): string => {
   if (email.startsWith('salon@') || email.includes('salon')) return 'hair-salon';
   if (email.startsWith('clinic@') || email.includes('clinic')) return 'medical-clinic';
   if (email.startsWith('retail@') || email.includes('retail')) return 'retail-store';
+  if (email.startsWith('pharmacy@') || email.includes('pharmacy')) return 'pharmacy';
+  if (email.startsWith('grocery@') || email.includes('grocery')) return 'grocery';
+  if (email.startsWith('gym@') || email.includes('gym')) return 'gym';
+  if (email.startsWith('autorepair@') || email.includes('autorepair')) return 'auto-repair';
+  if (email.startsWith('petcare@') || email.includes('petcare')) return 'pet-care';
   return 'restaurant'; // default
 };
 

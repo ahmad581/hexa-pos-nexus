@@ -16,15 +16,41 @@ import { Login } from "./pages/Login";
 import { Dashboard } from "./pages/Dashboard";
 import { Employees } from "./pages/Employees";
 import { Analytics } from "./pages/Analytics";
-import { Menu } from "./pages/Menu";
-import { Tables } from "./pages/Tables";
-import { Orders } from "./pages/Orders";
 import { CallCenter } from "./pages/CallCenter";
 import { Settings } from "./pages/Settings";
+
+// Restaurant imports
+import { Menu } from "./pages/businesses/restaurant/Menu";
+import { Tables } from "./pages/businesses/restaurant/Tables";
+import { Orders } from "./pages/businesses/restaurant/Orders";
+
+// Hotel imports
 import { Rooms } from "./pages/hotel/Rooms";
 import { Services as HotelServices } from "./pages/hotel/Services";
+
+// Salon imports
 import { Appointments } from "./pages/salon/Appointments";
 import { Stylists } from "./pages/salon/Stylists";
+
+// Retail imports
+import { Products } from "./pages/businesses/retail/Products";
+import { Inventory } from "./pages/businesses/retail/Inventory";
+
+// Pharmacy imports
+import { Prescriptions } from "./pages/businesses/pharmacy/Prescriptions";
+
+// Grocery imports
+import { GroceryInventory } from "./pages/businesses/grocery/Inventory";
+
+// Gym imports
+import { Members } from "./pages/businesses/gym/Members";
+
+// Auto repair imports
+import { AutoRepairServices } from "./pages/businesses/auto-repair/Services";
+
+// Pet care imports
+import { PetAppointments } from "./pages/businesses/pet-care/Appointments";
+
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -53,7 +79,7 @@ const App = () => (
                       <Route path="call-center" element={<CallCenter />} />
                       <Route path="settings" element={<Settings />} />
                       
-                      {/* Restaurant-specific routes */}
+                      {/* Restaurant routes */}
                       <Route path="menu" element={
                         <BusinessRoute allowedBusinessTypes={['restaurant']}>
                           <Menu />
@@ -70,7 +96,7 @@ const App = () => (
                         </BusinessRoute>
                       } />
                       
-                      {/* Hotel-specific routes */}
+                      {/* Hotel routes */}
                       <Route path="rooms" element={
                         <BusinessRoute allowedBusinessTypes={['hotel']}>
                           <Rooms />
@@ -82,15 +108,62 @@ const App = () => (
                         </BusinessRoute>
                       } />
                       
-                      {/* Hair Salon-specific routes */}
+                      {/* Hair Salon routes */}
                       <Route path="appointments" element={
-                        <BusinessRoute allowedBusinessTypes={['hair-salon']}>
+                        <BusinessRoute allowedBusinessTypes={['hair-salon', 'medical-clinic', 'pet-care']}>
                           <Appointments />
                         </BusinessRoute>
                       } />
                       <Route path="stylists" element={
                         <BusinessRoute allowedBusinessTypes={['hair-salon']}>
                           <Stylists />
+                        </BusinessRoute>
+                      } />
+                      
+                      {/* Retail routes */}
+                      <Route path="products" element={
+                        <BusinessRoute allowedBusinessTypes={['retail-store']}>
+                          <Products />
+                        </BusinessRoute>
+                      } />
+                      <Route path="inventory" element={
+                        <BusinessRoute allowedBusinessTypes={['retail-store']}>
+                          <Inventory />
+                        </BusinessRoute>
+                      } />
+                      
+                      {/* Pharmacy routes */}
+                      <Route path="prescriptions" element={
+                        <BusinessRoute allowedBusinessTypes={['pharmacy']}>
+                          <Prescriptions />
+                        </BusinessRoute>
+                      } />
+                      
+                      {/* Grocery routes */}
+                      <Route path="grocery-inventory" element={
+                        <BusinessRoute allowedBusinessTypes={['grocery']}>
+                          <GroceryInventory />
+                        </BusinessRoute>
+                      } />
+                      
+                      {/* Gym routes */}
+                      <Route path="members" element={
+                        <BusinessRoute allowedBusinessTypes={['gym']}>
+                          <Members />
+                        </BusinessRoute>
+                      } />
+                      
+                      {/* Auto repair routes */}
+                      <Route path="auto-services" element={
+                        <BusinessRoute allowedBusinessTypes={['auto-repair']}>
+                          <AutoRepairServices />
+                        </BusinessRoute>
+                      } />
+                      
+                      {/* Pet care routes */}
+                      <Route path="pet-appointments" element={
+                        <BusinessRoute allowedBusinessTypes={['pet-care']}>
+                          <PetAppointments />
                         </BusinessRoute>
                       } />
                     </Route>

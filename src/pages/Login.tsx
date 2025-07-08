@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { LogIn } from "lucide-react";
@@ -23,11 +24,16 @@ export const Login = () => {
     // Simulate authentication
     setTimeout(() => {
       const validCredentials = [
-        { email: "restaurant@hexapos.com", password: "admin123" },
-        { email: "hotel@hexapos.com", password: "admin123" },
-        { email: "salon@hexapos.com", password: "admin123" },
-        { email: "clinic@hexapos.com", password: "admin123" },
-        { email: "retail@hexapos.com", password: "admin123" }
+        { email: "restaurant@bizhub.com", password: "demo123" },
+        { email: "hotel@bizhub.com", password: "demo123" },
+        { email: "salon@bizhub.com", password: "demo123" },
+        { email: "clinic@bizhub.com", password: "demo123" },
+        { email: "retail@bizhub.com", password: "demo123" },
+        { email: "pharmacy@bizhub.com", password: "demo123" },
+        { email: "grocery@bizhub.com", password: "demo123" },
+        { email: "gym@bizhub.com", password: "demo123" },
+        { email: "autorepair@bizhub.com", password: "demo123" },
+        { email: "petcare@bizhub.com", password: "demo123" }
       ];
 
       const isValid = validCredentials.some(cred => 
@@ -52,6 +58,11 @@ export const Login = () => {
     }, 1000);
   };
 
+  const fillCredentials = (businessEmail: string) => {
+    setEmail(businessEmail);
+    setPassword("demo123");
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
       <Card className="w-full max-w-md bg-gray-800 border-gray-700">
@@ -69,7 +80,7 @@ export const Login = () => {
               <Input
                 id="email"
                 type="email"
-                placeholder="admin@hexapos.com"
+                placeholder="business@bizhub.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400"
@@ -107,14 +118,88 @@ export const Login = () => {
           </form>
           
           <div className="mt-6 text-center text-gray-400 text-sm">
-            <p className="mb-2">Demo credentials:</p>
-            <div className="space-y-1">
-              <p>🍽️ Restaurant: restaurant@hexapos.com</p>
-              <p>🏨 Hotel: hotel@hexapos.com</p>
-              <p>💇 Salon: salon@hexapos.com</p>
-              <p>🏥 Clinic: clinic@hexapos.com</p>
-              <p>🛍️ Retail: retail@hexapos.com</p>
-              <p className="mt-2">Password: admin123 (for all)</p>
+            <p className="mb-3">Demo credentials (Password: demo123):</p>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => fillCredentials("restaurant@bizhub.com")}
+                className="text-left justify-start p-2 h-auto"
+              >
+                🍽️ Restaurant
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => fillCredentials("hotel@bizhub.com")}
+                className="text-left justify-start p-2 h-auto"
+              >
+                🏨 Hotel
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => fillCredentials("salon@bizhub.com")}
+                className="text-left justify-start p-2 h-auto"
+              >
+                💇 Hair Salon
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => fillCredentials("clinic@bizhub.com")}
+                className="text-left justify-start p-2 h-auto"
+              >
+                🏥 Medical Clinic
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => fillCredentials("retail@bizhub.com")}
+                className="text-left justify-start p-2 h-auto"
+              >
+                🛍️ Retail Store
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => fillCredentials("pharmacy@bizhub.com")}
+                className="text-left justify-start p-2 h-auto"
+              >
+                💊 Pharmacy
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => fillCredentials("grocery@bizhub.com")}
+                className="text-left justify-start p-2 h-auto"
+              >
+                🛒 Grocery Store
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => fillCredentials("gym@bizhub.com")}
+                className="text-left justify-start p-2 h-auto"
+              >
+                💪 Gym & Fitness
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => fillCredentials("autorepair@bizhub.com")}
+                className="text-left justify-start p-2 h-auto"
+              >
+                🔧 Auto Repair
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => fillCredentials("petcare@bizhub.com")}
+                className="text-left justify-start p-2 h-auto"
+              >
+                🐾 Pet Care
+              </Button>
             </div>
           </div>
         </div>
