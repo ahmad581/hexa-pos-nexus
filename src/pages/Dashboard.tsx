@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { StatCard } from "@/components/StatCard";
 import { Card } from "@/components/ui/card";
@@ -106,7 +105,7 @@ export const Dashboard = () => {
   const getFilteredData = () => {
     let data = getData();
     
-    // Filter by selected product
+    // Filter by selected product and add value property
     if (selectedProduct !== "all") {
       const productKey = selectedProduct.toLowerCase();
       data = data.map(item => ({
@@ -114,10 +113,10 @@ export const Dashboard = () => {
         value: (item as any)[productKey] || 0
       }));
     } else {
-      // Use the selected metric
-      data = data.map(d => ({
-        ...d,
-        value: (d as any)[selectedMetric] || 0
+      // Use the selected metric and add value property
+      data = data.map(item => ({
+        ...item,
+        value: (item as any)[selectedMetric] || 0
       }));
     }
     
@@ -160,7 +159,6 @@ export const Dashboard = () => {
         </Button>
       </div>
 
-      {/* Dynamic Filters */}
       <Card className="bg-gray-800 border-gray-700 p-6">
         <div className="flex flex-wrap gap-4 items-center">
           <div className="flex items-center space-x-2">
@@ -219,7 +217,6 @@ export const Dashboard = () => {
         </div>
       </Card>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Earnings"
@@ -255,7 +252,6 @@ export const Dashboard = () => {
         />
       </div>
 
-      {/* Dynamic Charts with Individual Filters */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="bg-gray-800 border-gray-700 p-6">
           <div className="flex justify-between items-center mb-4">
@@ -319,7 +315,6 @@ export const Dashboard = () => {
         </Card>
       </div>
 
-      {/* Sales Trend with Filters */}
       <Card className="bg-gray-800 border-gray-700 p-6">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold text-white">Sales Trend</h3>
@@ -346,7 +341,6 @@ export const Dashboard = () => {
         </ResponsiveContainer>
       </Card>
 
-      {/* Recent Transactions */}
       <Card className="bg-gray-800 border-gray-700 p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-white">Latest Transactions</h3>
