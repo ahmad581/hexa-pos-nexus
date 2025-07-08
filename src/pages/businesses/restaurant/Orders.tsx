@@ -1,10 +1,11 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Clock, MapPin, Phone } from "lucide-react";
 import { OrderSummary } from "@/components/OrderSummary";
+import { useOrder } from "@/contexts/OrderContext";
 
 interface Order {
   id: string;
@@ -51,6 +52,34 @@ const initialOrders: Order[] = [
 
 export const Orders = () => {
   const [orders, setOrders] = useState<Order[]>(initialOrders);
+  const { orders: contextOrders, updateOrderStatus } = useOrder();
+
+  // Merge context orders with initial orders
+  useEffect(() => {
+    const mergedOrders = [
+      ...initialOrders,
+      ...contextOrders.map(order => ({
+        id: order.id,
+        customerName: order.customerInfo?.name || 'Unknown Customer',
+        customerPhone: order.customerInfo?.phone || 'No phone',
+        items: order.items.map(item => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price
+        })),
+        total: order.total,
+        status: order.status === 'pending' ? 'Pending' as const : 
+                order.status === 'preparing' ? 'Preparing' as const :
+                order.status === 'ready' ? 'Ready' as const : 'Delivered' as const,
+        orderTime: order.timestamp,
+        type: order.orderType === 'dine-in' ? 'Dine-in' as const :
+              order.orderType === 'takeout' ? 'Takeout' as const : 'Delivery' as const,
+        tableNumber: order.tableNumber,
+        address: order.customerInfo?.address
+      }))
+    ];
+    setOrders(mergedOrders);
+  }, [contextOrders]);
 
   const getStatusColor = (status: Order["status"]) => {
     switch (status) {
@@ -67,6 +96,16 @@ export const Orders = () => {
       case "Takeout": return "bg-orange-500/20 text-orange-400";
       case "Delivery": return "bg-teal-500/20 text-teal-400";
     }
+  };
+
+  const handleStatusUpdate = (orderId: string, newStatus: Order["status"]) => {
+    setOrders(prev => prev.map(order => 
+      order.id === orderId ? { ...order, status: newStatus } : order
+    ));
+    
+    // Also update context orders if it exists there
+    const contextStatus = newStatus.toLowerCase() as 'pending' | 'preparing' | 'ready' | 'served';
+    updateOrderStatus(orderId, contextStatus === 'delivered' ? 'served' : contextStatus);
   };
 
   return (
@@ -137,17 +176,29 @@ export const Orders = () => {
 
               <div className="mt-4 flex gap-2">
                 {order.status === "Pending" && (
-                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                  <Button 
+                    size="sm" 
+                    className="bg-blue-600 hover:bg-blue-700"
+                    onClick={() => handleStatusUpdate(order.id, "Preparing")}
+                  >
                     Start Preparing
                   </Button>
                 )}
                 {order.status === "Preparing" && (
-                  <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                  <Button 
+                    size="sm" 
+                    className="bg-green-600 hover:bg-green-700"
+                    onClick={() => handleStatusUpdate(order.id, "Ready")}
+                  >
                     Mark Ready
                   </Button>
                 )}
                 {order.status === "Ready" && order.type !== "Dine-in" && (
-                  <Button size="sm" className="bg-gray-600 hover:bg-gray-700">
+                  <Button 
+                    size="sm" 
+                    className="bg-gray-600 hover:bg-gray-700"
+                    onClick={() => handleStatusUpdate(order.id, "Delivered")}
+                  >
                     Mark Delivered
                   </Button>
                 )}
