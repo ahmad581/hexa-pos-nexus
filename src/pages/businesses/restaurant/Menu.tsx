@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Minus, ShoppingCart, Search, Filter, Phone, PhoneOff } from "lucide-react";
@@ -111,8 +112,6 @@ export const Menu = () => {
     return matchesSearch && matchesCategory;
   });
 
-  const totalItems = currentOrder.reduce((sum, item) => sum + item.quantity, 0);
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -135,15 +134,6 @@ export const Menu = () => {
               End Call
             </Button>
           )}
-          <Button className="bg-green-600 hover:bg-green-700 relative">
-            <ShoppingCart size={20} className="mr-2" />
-            View Cart
-            {totalItems > 0 && (
-              <Badge className="absolute -top-2 -right-2 bg-red-500 text-white px-2 py-1 text-xs rounded-full">
-                {totalItems}
-              </Badge>
-            )}
-          </Button>
         </div>
       </div>
 
