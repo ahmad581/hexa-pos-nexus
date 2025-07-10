@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -103,9 +102,26 @@ export const Orders = () => {
       order.id === orderId ? { ...order, status: newStatus } : order
     ));
     
-    // Also update context orders if it exists there
-    const contextStatus = newStatus.toLowerCase() as 'pending' | 'preparing' | 'ready' | 'served';
-    updateOrderStatus(orderId, contextStatus === 'delivered' ? 'served' : contextStatus);
+    // Map Order status to OrderContext status
+    let contextStatus: 'pending' | 'preparing' | 'ready' | 'served';
+    switch (newStatus) {
+      case 'Pending':
+        contextStatus = 'pending';
+        break;
+      case 'Preparing':
+        contextStatus = 'preparing';
+        break;
+      case 'Ready':
+        contextStatus = 'ready';
+        break;
+      case 'Delivered':
+        contextStatus = 'served';
+        break;
+      default:
+        contextStatus = 'pending';
+    }
+    
+    updateOrderStatus(orderId, contextStatus);
   };
 
   return (
