@@ -3,7 +3,9 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, MapPin, Phone } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Clock, MapPin, Phone, Edit, Trash2, Filter } from "lucide-react";
 import { useOrder } from "@/contexts/OrderContext";
 
 interface Order {
@@ -17,6 +19,8 @@ interface Order {
   type: "Dine-in" | "Takeout" | "Delivery";
   tableNumber?: number;
   address?: string;
+  isDeleted?: boolean;
+  isUpdated?: boolean;
 }
 
 const initialOrders: Order[] = [
@@ -51,34 +55,66 @@ const initialOrders: Order[] = [
 
 export const Orders = () => {
   const [orders, setOrders] = useState<Order[]>(initialOrders);
-  const { orders: contextOrders, updateOrderStatus } = useOrder();
+  const [filteredOrders, setFilteredOrders] = useState<Order[]>(initialOrders);
+  const [filter, setFilter] = useState<string>("all");
+  const [editingOrder, setEditingOrder] = useState<string | null>(null);
+  const { orders: contextOrders, updateOrderStatus, deleteOrder: deleteContextOrder } = useOrder();
 
   // Merge context orders with initial orders
   useEffect(() => {
     const mergedOrders = [
       ...initialOrders,
-      ...contextOrders.map(order => ({
-        id: order.id,
-        customerName: order.customerInfo?.name || 'Unknown Customer',
-        customerPhone: order.customerInfo?.phone || 'No phone',
-        items: order.items.map(item => ({
-          name: item.name,
-          quantity: item.quantity,
-          price: item.price
-        })),
-        total: order.total,
-        status: order.status === 'pending' ? 'Pending' as const : 
-                order.status === 'preparing' ? 'Preparing' as const :
-                order.status === 'ready' ? 'Ready' as const : 'Delivered' as const,
-        orderTime: order.timestamp,
-        type: order.orderType === 'dine-in' ? 'Dine-in' as const :
-              order.orderType === 'takeout' ? 'Takeout' as const : 'Delivery' as const,
-        tableNumber: order.tableNumber,
-        address: order.customerInfo?.address
-      }))
+      ...contextOrders
+        .filter(order => order.orderType !== 'phone') // Remove phone orders
+        .map(order => ({
+          id: order.id,
+          customerName: order.customerInfo?.name || 'Unknown Customer',
+          customerPhone: order.customerInfo?.phone || 'No phone',
+          items: order.items.map(item => ({
+            name: item.name,
+            quantity: item.quantity,
+            price: item.price
+          })),
+          total: order.total,
+          status: order.status === 'pending' ? 'Pending' as const : 
+                  order.status === 'preparing' ? 'Preparing' as const :
+                  order.status === 'ready' ? 'Ready' as const : 'Delivered' as const,
+          orderTime: order.timestamp,
+          type: order.orderType === 'dine-in' ? 'Dine-in' as const :
+                order.orderType === 'takeout' ? 'Takeout' as const : 'Delivery' as const,
+          tableNumber: order.tableNumber,
+          address: order.customerInfo?.address
+        }))
     ];
     setOrders(mergedOrders);
   }, [contextOrders]);
+
+  // Apply filters
+  useEffect(() => {
+    let filtered = orders;
+    
+    switch (filter) {
+      case "deleted":
+        filtered = orders.filter(order => order.isDeleted);
+        break;
+      case "updated":
+        filtered = orders.filter(order => order.isUpdated);
+        break;
+      case "delivery":
+        filtered = orders.filter(order => order.type === "Delivery" && !order.isDeleted);
+        break;
+      case "dine-in":
+        filtered = orders.filter(order => order.type === "Dine-in" && !order.isDeleted);
+        break;
+      case "takeout":
+        filtered = orders.filter(order => order.type === "Takeout" && !order.isDeleted);
+        break;
+      default:
+        filtered = orders.filter(order => !order.isDeleted);
+    }
+    
+    setFilteredOrders(filtered);
+  }, [orders, filter]);
 
   const getStatusColor = (status: Order["status"]) => {
     switch (status) {
@@ -99,7 +135,7 @@ export const Orders = () => {
 
   const handleStatusUpdate = (orderId: string, newStatus: Order["status"]) => {
     setOrders(prev => prev.map(order => 
-      order.id === orderId ? { ...order, status: newStatus } : order
+      order.id === orderId ? { ...order, status: newStatus, isUpdated: true } : order
     ));
     
     // Map Order status to OrderContext status
@@ -124,6 +160,17 @@ export const Orders = () => {
     updateOrderStatus(orderId, contextStatus);
   };
 
+  const handleDeleteOrder = (orderId: string) => {
+    setOrders(prev => prev.map(order => 
+      order.id === orderId ? { ...order, isDeleted: true } : order
+    ));
+    deleteContextOrder(orderId);
+  };
+
+  const handleEditToggle = (orderId: string) => {
+    setEditingOrder(editingOrder === orderId ? null : orderId);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -131,95 +178,135 @@ export const Orders = () => {
           <h1 className="text-3xl font-bold text-white">Orders</h1>
           <p className="text-gray-400">Manage restaurant orders</p>
         </div>
+        
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Filter size={16} className="text-gray-400" />
+            <Select value={filter} onValueChange={setFilter}>
+              <SelectTrigger className="w-48 bg-gray-800 border-gray-700 text-white">
+                <SelectValue placeholder="Filter orders" />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-800 border-gray-700">
+                <SelectItem value="all">All Orders</SelectItem>
+                <SelectItem value="dine-in">Dine-in</SelectItem>
+                <SelectItem value="takeout">Takeout</SelectItem>
+                <SelectItem value="delivery">Delivery</SelectItem>
+                <SelectItem value="updated">Updated</SelectItem>
+                <SelectItem value="deleted">Deleted</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {orders.map((order) => (
-          <Card key={order.id} className="bg-gray-800 border-gray-700 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-white">Order #{order.id}</h3>
-              <div className="flex gap-2">
-                <Badge className={getTypeColor(order.type)}>
-                  {order.type}
-                </Badge>
-                <Badge className={getStatusColor(order.status)}>
-                  {order.status}
-                </Badge>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="text-gray-300">
-                <span className="font-medium">{order.customerName}</span>
-              </div>
-              <div className="flex items-center text-gray-300">
-                <Phone size={16} className="mr-2" />
-                <span className="text-sm">{order.customerPhone}</span>
-              </div>
-              <div className="flex items-center text-gray-300">
-                <Clock size={16} className="mr-2" />
-                <span className="text-sm">{order.orderTime}</span>
-              </div>
-              
-              {order.tableNumber && (
-                <div className="text-gray-300">
-                  <span className="text-sm">Table {order.tableNumber}</span>
-                </div>
-              )}
-              
-              {order.address && (
-                <div className="flex items-center text-gray-300">
-                  <MapPin size={16} className="mr-2" />
-                  <span className="text-sm">{order.address}</span>
-                </div>
-              )}
-
-              <div className="border-t border-gray-700 pt-3">
-                {order.items.map((item, index) => (
-                  <div key={index} className="flex justify-between text-sm text-gray-300 mb-1">
-                    <span>{item.quantity}x {item.name}</span>
-                    <span>${(item.quantity * item.price).toFixed(2)}</span>
+      <Card className="bg-gray-800 border-gray-700">
+        <Table>
+          <TableHeader>
+            <TableRow className="border-gray-700">
+              <TableHead className="text-gray-300">Order #</TableHead>
+              <TableHead className="text-gray-300">Customer</TableHead>
+              <TableHead className="text-gray-300">Type</TableHead>
+              <TableHead className="text-gray-300">Items</TableHead>
+              <TableHead className="text-gray-300">Total</TableHead>
+              <TableHead className="text-gray-300">Status</TableHead>
+              <TableHead className="text-gray-300">Time</TableHead>
+              <TableHead className="text-gray-300">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredOrders.map((order) => (
+              <TableRow key={order.id} className="border-gray-700 hover:bg-gray-750">
+                <TableCell className="text-white font-medium">#{order.id}</TableCell>
+                <TableCell>
+                  <div className="text-white">
+                    <div className="font-medium">{order.customerName}</div>
+                    <div className="flex items-center text-sm text-gray-400 mt-1">
+                      <Phone size={12} className="mr-1" />
+                      {order.customerPhone}
+                    </div>
+                    {order.tableNumber && (
+                      <div className="text-sm text-gray-400">Table {order.tableNumber}</div>
+                    )}
+                    {order.address && (
+                      <div className="flex items-center text-sm text-gray-400 mt-1">
+                        <MapPin size={12} className="mr-1" />
+                        {order.address}
+                      </div>
+                    )}
                   </div>
-                ))}
-                <div className="flex justify-between font-bold text-green-400 text-lg mt-2">
-                  <span>Total</span>
-                  <span>${order.total.toFixed(2)}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-4 flex gap-2">
-              {order.status === "Pending" && (
-                <Button 
-                  size="sm" 
-                  className="bg-blue-600 hover:bg-blue-700"
-                  onClick={() => handleStatusUpdate(order.id, "Preparing")}
-                >
-                  Start Preparing
-                </Button>
-              )}
-              {order.status === "Preparing" && (
-                <Button 
-                  size="sm" 
-                  className="bg-green-600 hover:bg-green-700"
-                  onClick={() => handleStatusUpdate(order.id, "Ready")}
-                >
-                  Mark Ready
-                </Button>
-              )}
-              {order.status === "Ready" && order.type !== "Dine-in" && (
-                <Button 
-                  size="sm" 
-                  className="bg-gray-600 hover:bg-gray-700"
-                  onClick={() => handleStatusUpdate(order.id, "Delivered")}
-                >
-                  Mark Delivered
-                </Button>
-              )}
-            </div>
-          </Card>
-        ))}
-      </div>
+                </TableCell>
+                <TableCell>
+                  <Badge className={`${getTypeColor(order.type)} text-xs`}>
+                    {order.type}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <div className="text-sm text-gray-300">
+                    {order.items.map((item, index) => (
+                      <div key={index} className="flex justify-between">
+                        <span>{item.quantity}x {item.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </TableCell>
+                <TableCell className="text-green-400 font-bold">
+                  ${order.total.toFixed(2)}
+                </TableCell>
+                <TableCell>
+                  {editingOrder === order.id ? (
+                    <Select 
+                      value={order.status} 
+                      onValueChange={(value) => handleStatusUpdate(order.id, value as Order["status"])}
+                    >
+                      <SelectTrigger className="w-32 bg-gray-700 border-gray-600 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-gray-800 border-gray-700">
+                        <SelectItem value="Pending">Pending</SelectItem>
+                        <SelectItem value="Preparing">Preparing</SelectItem>
+                        <SelectItem value="Ready">Ready</SelectItem>
+                        <SelectItem value="Delivered">Delivered</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Badge className={getStatusColor(order.status)}>
+                      {order.status}
+                    </Badge>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center text-gray-300">
+                    <Clock size={12} className="mr-1" />
+                    <span className="text-sm">{order.orderTime}</span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 w-8 p-0 text-blue-400 hover:text-blue-300 hover:bg-blue-400/10"
+                      onClick={() => handleEditToggle(order.id)}
+                    >
+                      <Edit size={14} />
+                    </Button>
+                    {!order.isDeleted && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 w-8 p-0 text-red-400 hover:text-red-300 hover:bg-red-400/10"
+                        onClick={() => handleDeleteOrder(order.id)}
+                      >
+                        <Trash2 size={14} />
+                      </Button>
+                    )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
     </div>
   );
 };
