@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Plus, Minus, ShoppingCart, Search, Filter, Phone, PhoneOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,12 +24,26 @@ interface MenuItem {
 
 export const Menu = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { activeCallInfo, endCall, isInCall } = useCall();
-  const { addItemToOrder, currentOrder, setCustomerInfo, customerInfo } = useOrder();
+  const { 
+    addItemToOrder, 
+    currentOrder, 
+    setCustomerInfo, 
+    customerInfo, 
+    setOrderType,
+    orderType,
+    setSelectedTable,
+    clearCurrentOrder,
+    updateItemQuantity,
+    removeItemFromOrder
+  } = useOrder();
   const { toast } = useToast();
   
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [isEditingOrder, setIsEditingOrder] = useState(false);
+  const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([
     {
       id: "1",
@@ -78,21 +91,76 @@ export const Menu = () => {
     { value: "mains", label: "Main Courses" }
   ];
 
+  // Load order for editing if passed from Orders page
+  useEffect(() => {
+    if (location.state?.editingOrder) {
+      const editingOrder = location.state.editingOrder;
+      setIsEditingOrder(true);
+      setEditingOrderId(editingOrder.id);
+      
+      // Clear current order and load the editing order
+      clearCurrentOrder();
+      
+      // Set customer info
+      setCustomerInfo(editingOrder.customerInfo);
+      
+      // Set order type
+      const orderTypeMap: { [key: string]: any } = {
+        'dinein': 'dine-in',
+        'takeout': 'takeout',
+        'delivery': 'delivery'
+      };
+      setOrderType(orderTypeMap[editingOrder.orderType] || 'dine-in');
+      
+      // Set table number if dine-in
+      if (editingOrder.tableNumber) {
+        setSelectedTable(editingOrder.tableNumber);
+      }
+      
+      // Load items into current order
+      setTimeout(() => {
+        editingOrder.items.forEach((item: any) => {
+          for (let i = 0; i < item.quantity; i++) {
+            addItemToOrder({ name: item.name, price: item.price });
+          }
+        });
+      }, 100);
+      
+      toast({ title: `Editing order #${editingOrder.id}` });
+    }
+  }, [location.state]);
+
   // Set customer info from call when component mounts
   useEffect(() => {
-    if (activeCallInfo && !customerInfo) {
+    if (activeCallInfo && !customerInfo && !isEditingOrder) {
       setCustomerInfo({
         name: activeCallInfo.customerName,
         phone: activeCallInfo.phoneNumber,
         address: activeCallInfo.address
       });
     }
-  }, [activeCallInfo, customerInfo, setCustomerInfo]);
+  }, [activeCallInfo, customerInfo, setCustomerInfo, isEditingOrder]);
 
   const handleEndCall = () => {
     endCall();
     toast({ title: "Call ended" });
     navigate("/call-center");
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingOrder(false);
+    setEditingOrderId(null);
+    clearCurrentOrder();
+    navigate("/orders");
+  };
+
+  const handleSaveEdit = () => {
+    // Here you would typically update the order in your backend/context
+    toast({ title: `Order #${editingOrderId} updated successfully!` });
+    setIsEditingOrder(false);
+    setEditingOrderId(null);
+    clearCurrentOrder();
+    navigate("/orders");
   };
 
   const toggleSoldOut = (itemId: string) => {
@@ -119,15 +187,39 @@ export const Menu = () => {
       <div className="lg:col-span-2 space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-white">Menu</h1>
-            {isInCall && activeCallInfo && (
+            <h1 className="text-3xl font-bold text-white">
+              {isEditingOrder ? `Edit Order #${editingOrderId}` : 'Menu'}
+            </h1>
+            {isInCall && activeCallInfo && !isEditingOrder && (
               <p className="text-green-400">
                 📞 Taking order for: {activeCallInfo.customerName} ({activeCallInfo.phoneNumber})
               </p>
             )}
+            {isEditingOrder && (
+              <p className="text-blue-400">
+                ✏️ Editing existing order - modify items and details
+              </p>
+            )}
           </div>
           <div className="flex gap-2">
-            {isInCall && (
+            {isEditingOrder && (
+              <>
+                <Button
+                  onClick={handleCancelEdit}
+                  variant="outline"
+                  className="border-gray-600 text-gray-300"
+                >
+                  Cancel Edit
+                </Button>
+                <Button
+                  onClick={handleSaveEdit}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  Save Changes
+                </Button>
+              </>
+            )}
+            {isInCall && !isEditingOrder && (
               <Button
                 onClick={handleEndCall}
                 variant="outline"
@@ -206,14 +298,16 @@ export const Menu = () => {
                     Add to Order
                   </Button>
                   
-                  <Button
-                    onClick={() => toggleSoldOut(item.id)}
-                    variant="outline"
-                    size="sm"
-                    className={`${item.soldOut ? 'border-green-500 text-green-400' : 'border-red-500 text-red-400'}`}
-                  >
-                    {item.soldOut ? 'Mark Available' : 'Mark Sold Out'}
-                  </Button>
+                  {!isEditingOrder && (
+                    <Button
+                      onClick={() => toggleSoldOut(item.id)}
+                      variant="outline"
+                      size="sm"
+                      className={`${item.soldOut ? 'border-green-500 text-green-400' : 'border-red-500 text-red-400'}`}
+                    >
+                      {item.soldOut ? 'Mark Available' : 'Mark Sold Out'}
+                    </Button>
+                  )}
                 </div>
               </div>
             </Card>

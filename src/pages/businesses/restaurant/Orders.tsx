@@ -1,12 +1,13 @@
+
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Clock, MapPin, Phone, Edit, Trash2, Filter, Plus, Minus } from "lucide-react";
+import { Clock, MapPin, Phone, Edit, Trash2, Filter } from "lucide-react";
 import { useOrder } from "@/contexts/OrderContext";
 
 interface Order {
@@ -55,11 +56,10 @@ const initialOrders: Order[] = [
 ];
 
 export const Orders = () => {
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>(initialOrders);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>(initialOrders);
   const [filter, setFilter] = useState<string>("all");
-  const [editingOrder, setEditingOrder] = useState<Order | null>(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { orders: contextOrders, updateOrderStatus, deleteOrder: deleteContextOrder } = useOrder();
 
   useEffect(() => {
@@ -166,46 +166,28 @@ export const Orders = () => {
   };
 
   const handleEditOrder = (order: Order) => {
-    setEditingOrder({ ...order });
-    setIsEditDialogOpen(true);
-  };
-
-  const handleSaveOrder = () => {
-    if (!editingOrder) return;
-    
-    setOrders(prev => prev.map(order => 
-      order.id === editingOrder.id ? { ...editingOrder, isUpdated: true } : order
-    ));
-    
-    setIsEditDialogOpen(false);
-    setEditingOrder(null);
-  };
-
-  const handleUpdateOrderItem = (index: number, field: 'quantity' | 'price', value: number) => {
-    if (!editingOrder) return;
-    
-    const updatedItems = [...editingOrder.items];
-    updatedItems[index] = { ...updatedItems[index], [field]: value };
-    
-    const newTotal = updatedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    
-    setEditingOrder({
-      ...editingOrder,
-      items: updatedItems,
-      total: newTotal
-    });
-  };
-
-  const handleRemoveOrderItem = (index: number) => {
-    if (!editingOrder) return;
-    
-    const updatedItems = editingOrder.items.filter((_, i) => i !== index);
-    const newTotal = updatedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    
-    setEditingOrder({
-      ...editingOrder,
-      items: updatedItems,
-      total: newTotal
+    // Navigate to menu page with order data in state
+    navigate('/menu', { 
+      state: { 
+        editingOrder: {
+          id: order.id,
+          customerInfo: {
+            name: order.customerName,
+            phone: order.customerPhone,
+            address: order.address
+          },
+          orderType: order.type.toLowerCase().replace('-', '') as 'dinein' | 'takeout' | 'delivery',
+          items: order.items.map(item => ({
+            id: `${order.id}-${item.name}`,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity
+          })),
+          tableNumber: order.tableNumber,
+          status: order.status.toLowerCase(),
+          total: order.total
+        }
+      }
     });
   };
 
@@ -328,169 +310,6 @@ export const Orders = () => {
           </TableBody>
         </Table>
       </Card>
-
-      {/* Edit Order Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="bg-gray-800 border-gray-700 max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-white">Edit Order #{editingOrder?.id}</DialogTitle>
-          </DialogHeader>
-          
-          {editingOrder && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-400">Customer Name</label>
-                  <Input
-                    value={editingOrder.customerName}
-                    onChange={(e) => setEditingOrder({...editingOrder, customerName: e.target.value})}
-                    className="bg-gray-700 border-gray-600 text-white"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-400">Phone</label>
-                  <Input
-                    value={editingOrder.customerPhone}
-                    onChange={(e) => setEditingOrder({...editingOrder, customerPhone: e.target.value})}
-                    className="bg-gray-700 border-gray-600 text-white"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-400">Order Type</label>
-                  <Select 
-                    value={editingOrder.type} 
-                    onValueChange={(value) => setEditingOrder({...editingOrder, type: value as Order["type"]})}
-                  >
-                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-gray-800 border-gray-700">
-                      <SelectItem value="Dine-in">Dine-in</SelectItem>
-                      <SelectItem value="Takeout">Takeout</SelectItem>
-                      <SelectItem value="Delivery">Delivery</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-400">Status</label>
-                  <Select 
-                    value={editingOrder.status} 
-                    onValueChange={(value) => setEditingOrder({...editingOrder, status: value as Order["status"]})}
-                  >
-                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-gray-800 border-gray-700">
-                      <SelectItem value="Pending">Pending</SelectItem>
-                      <SelectItem value="Preparing">Preparing</SelectItem>
-                      <SelectItem value="Ready">Ready</SelectItem>
-                      <SelectItem value="Delivered">Delivered</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {editingOrder.type === "Dine-in" && (
-                <div>
-                  <label className="text-sm font-medium text-gray-400">Table Number</label>
-                  <Input
-                    type="number"
-                    value={editingOrder.tableNumber || ""}
-                    onChange={(e) => setEditingOrder({...editingOrder, tableNumber: parseInt(e.target.value) || undefined})}
-                    className="bg-gray-700 border-gray-600 text-white"
-                  />
-                </div>
-              )}
-
-              {editingOrder.type === "Delivery" && (
-                <div>
-                  <label className="text-sm font-medium text-gray-400">Address</label>
-                  <Input
-                    value={editingOrder.address || ""}
-                    onChange={(e) => setEditingOrder({...editingOrder, address: e.target.value})}
-                    className="bg-gray-700 border-gray-600 text-white"
-                  />
-                </div>
-              )}
-
-              <div>
-                <label className="text-sm font-medium text-gray-400 mb-2 block">Order Items</label>
-                <div className="space-y-2">
-                  {editingOrder.items.map((item, index) => (
-                    <div key={index} className="flex items-center gap-2 bg-gray-700 p-3 rounded">
-                      <div className="flex-1">
-                        <span className="text-white font-medium">{item.name}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-8 w-8 p-0 text-gray-400"
-                          onClick={() => handleUpdateOrderItem(index, 'quantity', Math.max(1, item.quantity - 1))}
-                        >
-                          <Minus size={12} />
-                        </Button>
-                        <span className="text-white w-8 text-center">{item.quantity}</span>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-8 w-8 p-0 text-gray-400"
-                          onClick={() => handleUpdateOrderItem(index, 'quantity', item.quantity + 1)}
-                        >
-                          <Plus size={12} />
-                        </Button>
-                      </div>
-                      <div className="w-20">
-                        <Input
-                          type="number"
-                          step="0.01"
-                          value={item.price}
-                          onChange={(e) => handleUpdateOrderItem(index, 'price', parseFloat(e.target.value) || 0)}
-                          className="bg-gray-600 border-gray-500 text-white text-sm"
-                        />
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-8 w-8 p-0 text-red-400 hover:text-red-300"
-                        onClick={() => handleRemoveOrderItem(index)}
-                      >
-                        <Trash2 size={12} />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center pt-4 border-t border-gray-700">
-                <span className="text-xl font-bold text-white">Total:</span>
-                <span className="text-xl font-bold text-green-400">
-                  ${editingOrder.total.toFixed(2)}
-                </span>
-              </div>
-            </div>
-          )}
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsEditDialogOpen(false)}
-              className="border-gray-600 text-gray-300"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSaveOrder}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              Save Changes
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
