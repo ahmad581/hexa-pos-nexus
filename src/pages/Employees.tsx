@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Edit, Trash2, Search, DollarSign, Clock, QrCode, Fingerprint, LogIn, LogOut } from "lucide-react";
+import { Plus, Edit, Trash2, Search, DollarSign, Clock, QrCode, Fingerprint, LogIn, LogOut, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -8,6 +8,16 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+
+interface WorkDay {
+  date: string;
+  checkInTime: string;
+  checkOutTime: string;
+  hoursWorked: number;
+  dailyEarnings: number;
+}
 
 interface Employee {
   id: number;
@@ -29,6 +39,7 @@ interface Employee {
   fingerprintId: string;
   dailyHours: number;
   todayEarnings: number;
+  workDays: WorkDay[];
 }
 
 interface EmployeeFormData {
@@ -66,7 +77,23 @@ export const Employees = () => {
       qrCode: "QR001-JOHN-DOE",
       fingerprintId: "FP001-JD",
       dailyHours: 0,
-      todayEarnings: 0
+      todayEarnings: 0,
+      workDays: [
+        {
+          date: "2025-01-01",
+          checkInTime: "09:00 AM",
+          checkOutTime: "05:00 PM",
+          hoursWorked: 8,
+          dailyEarnings: 181.82
+        },
+        {
+          date: "2025-01-02",
+          checkInTime: "09:15 AM",
+          checkOutTime: "05:30 PM",
+          hoursWorked: 8.25,
+          dailyEarnings: 187.50
+        }
+      ]
     },
     {
       id: 2,
@@ -86,7 +113,16 @@ export const Employees = () => {
       qrCode: "QR002-JANE-SMITH",
       fingerprintId: "FP002-JS",
       dailyHours: 3.5,
-      todayEarnings: 52.5
+      todayEarnings: 52.5,
+      workDays: [
+        {
+          date: "2025-01-01",
+          checkInTime: "08:45 AM",
+          checkOutTime: "04:45 PM",
+          hoursWorked: 8,
+          dailyEarnings: 150.00
+        }
+      ]
     }
   ]);
 
@@ -95,6 +131,7 @@ export const Employees = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isSalaryDialogOpen, setIsSalaryDialogOpen] = useState(false);
+  const [expandedEmployees, setExpandedEmployees] = useState<Set<number>>(new Set());
   const { toast } = useToast();
 
   const form = useForm<EmployeeFormData>();
@@ -109,6 +146,16 @@ export const Employees = () => {
   const calculateHourlyRate = (employee: Employee) => {
     const totalMonthlyHours = employee.workingDaysPerMonth * employee.workingHoursPerDay;
     return employee.monthlySalary / totalMonthlyHours;
+  };
+
+  const toggleEmployeeExpansion = (employeeId: number) => {
+    const newExpanded = new Set(expandedEmployees);
+    if (newExpanded.has(employeeId)) {
+      newExpanded.delete(employeeId);
+    } else {
+      newExpanded.add(employeeId);
+    }
+    setExpandedEmployees(newExpanded);
   };
 
   const handleCheckIn = (employeeId: number) => {
@@ -127,6 +174,7 @@ export const Employees = () => {
   const handleCheckOut = (employeeId: number) => {
     const now = new Date();
     const timeString = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    const dateString = now.toISOString().split('T')[0];
     
     setEmployees(prev => prev.map(emp => {
       if (emp.id === employeeId && emp.checkInTime) {
@@ -136,13 +184,32 @@ export const Employees = () => {
         const hourlyRate = calculateHourlyRate(emp);
         const dailyEarnings = hoursWorked * hourlyRate;
         
+        const newWorkDay: WorkDay = {
+          date: dateString,
+          checkInTime: emp.checkInTime,
+          checkOutTime: timeString,
+          hoursWorked: hoursWorked,
+          dailyEarnings: dailyEarnings
+        };
+
+        // Check if work day already exists for today
+        const existingDayIndex = emp.workDays.findIndex(day => day.date === dateString);
+        let updatedWorkDays;
+        if (existingDayIndex >= 0) {
+          updatedWorkDays = [...emp.workDays];
+          updatedWorkDays[existingDayIndex] = newWorkDay;
+        } else {
+          updatedWorkDays = [...emp.workDays, newWorkDay];
+        }
+        
         return {
           ...emp,
           isCheckedIn: false,
           checkOutTime: timeString,
           dailyHours: hoursWorked,
           todayEarnings: dailyEarnings,
-          actualHoursWorked: emp.actualHoursWorked + hoursWorked
+          actualHoursWorked: emp.actualHoursWorked + hoursWorked,
+          workDays: updatedWorkDays
         };
       }
       return emp;
@@ -163,7 +230,8 @@ export const Employees = () => {
       qrCode: `QR${String(Math.max(...employees.map(e => e.id)) + 1).padStart(3, '0')}-${data.name.toUpperCase().replace(' ', '-')}`,
       fingerprintId: `FP${String(Math.max(...employees.map(e => e.id)) + 1).padStart(3, '0')}-${data.name.split(' ').map(n => n[0]).join('')}`,
       dailyHours: 0,
-      todayEarnings: 0
+      todayEarnings: 0,
+      workDays: []
     };
 
     setEmployees(prev => [...prev, newEmployee]);
@@ -332,6 +400,57 @@ export const Employees = () => {
                     </Button>
                   </div>
                 </div>
+
+                {/* Monthly Work Days Table */}
+                <Collapsible 
+                  open={expandedEmployees.has(employee.id)} 
+                  onOpenChange={() => toggleEmployeeExpansion(employee.id)}
+                >
+                  <CollapsibleTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      className="w-full mb-4 border-gray-600 text-gray-300"
+                    >
+                      <Calendar size={16} className="mr-2" />
+                      {expandedEmployees.has(employee.id) ? 'Hide' : 'Show'} Monthly Work Days ({employee.workDays.length} days)
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mb-4">
+                    <div className="bg-gray-700 p-4 rounded-lg">
+                      <h4 className="text-white font-semibold mb-3">Work Days - {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}</h4>
+                      {employee.workDays.length > 0 ? (
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="border-gray-600">
+                              <TableHead className="text-gray-300">Date</TableHead>
+                              <TableHead className="text-gray-300">Check In</TableHead>
+                              <TableHead className="text-gray-300">Check Out</TableHead>
+                              <TableHead className="text-gray-300">Hours Worked</TableHead>
+                              <TableHead className="text-gray-300">Daily Earnings</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {employee.workDays.map((workDay, index) => (
+                              <TableRow key={index} className="border-gray-600">
+                                <TableCell className="text-white">
+                                  {new Date(workDay.date).toLocaleDateString()}
+                                </TableCell>
+                                <TableCell className="text-white">{workDay.checkInTime}</TableCell>
+                                <TableCell className="text-white">{workDay.checkOutTime}</TableCell>
+                                <TableCell className="text-white">{workDay.hoursWorked.toFixed(2)}h</TableCell>
+                                <TableCell className="text-green-400 font-semibold">
+                                  ${workDay.dailyEarnings.toFixed(2)}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      ) : (
+                        <p className="text-gray-400 text-center py-4">No work days recorded this month</p>
+                      )}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
 
                 {/* Salary Calculation Section */}
                 <div className="bg-gray-700 p-4 rounded-lg">
