@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Edit, Trash2, Search, DollarSign, Clock, QrCode, Fingerprint, LogIn, LogOut, Calendar } from "lucide-react";
+import { Plus, Edit, Trash2, Search, DollarSign, Clock, QrCode, Fingerprint, LogIn, LogOut, Calendar, Upload, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -11,18 +11,24 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
-interface WorkDay {
-  date: string;
+interface WorkSession {
   checkInTime: string;
   checkOutTime: string;
   hoursWorked: number;
-  dailyEarnings: number;
+  earnings: number;
+}
+
+interface WorkDay {
+  date: string;
+  sessions: WorkSession[];
+  totalHours: number;
+  totalEarnings: number;
 }
 
 interface Employee {
   id: number;
   name: string;
-  email: string;
+  documents: string[]; // Array of PDF file URLs
   role: string;
   status: "Active" | "Inactive";
   phone: string;
@@ -44,7 +50,6 @@ interface Employee {
 
 interface EmployeeFormData {
   name: string;
-  email: string;
   role: string;
   phone: string;
   monthlySalary: number;
@@ -63,7 +68,7 @@ export const Employees = () => {
     {
       id: 1,
       name: "John Doe",
-      email: "john@hexapos.com",
+      documents: ["contract.pdf", "id_copy.pdf"],
       role: "Manager",
       status: "Active",
       phone: "(555) 123-4567",
@@ -81,24 +86,42 @@ export const Employees = () => {
       workDays: [
         {
           date: "2025-01-01",
-          checkInTime: "09:00 AM",
-          checkOutTime: "05:00 PM",
-          hoursWorked: 8,
-          dailyEarnings: 181.82
+          sessions: [
+            {
+              checkInTime: "09:00 AM",
+              checkOutTime: "01:00 PM",
+              hoursWorked: 4,
+              earnings: 90.91
+            },
+            {
+              checkInTime: "02:00 PM",
+              checkOutTime: "05:00 PM",
+              hoursWorked: 3,
+              earnings: 68.18
+            }
+          ],
+          totalHours: 7,
+          totalEarnings: 159.09
         },
         {
           date: "2025-01-02",
-          checkInTime: "09:15 AM",
-          checkOutTime: "05:30 PM",
-          hoursWorked: 8.25,
-          dailyEarnings: 187.50
+          sessions: [
+            {
+              checkInTime: "09:15 AM",
+              checkOutTime: "05:30 PM",
+              hoursWorked: 8.25,
+              earnings: 187.50
+            }
+          ],
+          totalHours: 8.25,
+          totalEarnings: 187.50
         }
       ]
     },
     {
       id: 2,
       name: "Jane Smith",
-      email: "jane@hexapos.com",
+      documents: ["contract.pdf"],
       role: "Cashier",
       status: "Active",
       phone: "(555) 987-6543",
@@ -117,10 +140,16 @@ export const Employees = () => {
       workDays: [
         {
           date: "2025-01-01",
-          checkInTime: "08:45 AM",
-          checkOutTime: "04:45 PM",
-          hoursWorked: 8,
-          dailyEarnings: 150.00
+          sessions: [
+            {
+              checkInTime: "08:45 AM",
+              checkOutTime: "04:45 PM",
+              hoursWorked: 8,
+              earnings: 150.00
+            }
+          ],
+          totalHours: 8,
+          totalEarnings: 150.00
         }
       ]
     }
@@ -139,8 +168,8 @@ export const Employees = () => {
 
   const filteredEmployees = employees.filter(employee =>
     employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    employee.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    employee.role.toLowerCase().includes(searchTerm.toLowerCase())
+    employee.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    employee.phone.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const calculateHourlyRate = (employee: Employee) => {
@@ -182,32 +211,55 @@ export const Employees = () => {
         const checkOutTime = new Date(`1970/01/01 ${timeString}`);
         const hoursWorked = (checkOutTime.getTime() - checkInTime.getTime()) / (1000 * 60 * 60);
         const hourlyRate = calculateHourlyRate(emp);
-        const dailyEarnings = hoursWorked * hourlyRate;
+        const sessionEarnings = hoursWorked * hourlyRate;
         
-        const newWorkDay: WorkDay = {
-          date: dateString,
+        const newSession: WorkSession = {
           checkInTime: emp.checkInTime,
           checkOutTime: timeString,
           hoursWorked: hoursWorked,
-          dailyEarnings: dailyEarnings
+          earnings: sessionEarnings
         };
 
-        // Check if work day already exists for today
+        // Find or create work day for today
         const existingDayIndex = emp.workDays.findIndex(day => day.date === dateString);
         let updatedWorkDays;
+        
         if (existingDayIndex >= 0) {
+          // Add session to existing day
+          const existingDay = emp.workDays[existingDayIndex];
+          const updatedSessions = [...existingDay.sessions, newSession];
+          const totalHours = updatedSessions.reduce((sum, session) => sum + session.hoursWorked, 0);
+          const totalEarnings = updatedSessions.reduce((sum, session) => sum + session.earnings, 0);
+          
           updatedWorkDays = [...emp.workDays];
-          updatedWorkDays[existingDayIndex] = newWorkDay;
+          updatedWorkDays[existingDayIndex] = {
+            ...existingDay,
+            sessions: updatedSessions,
+            totalHours,
+            totalEarnings
+          };
         } else {
+          // Create new work day
+          const newWorkDay: WorkDay = {
+            date: dateString,
+            sessions: [newSession],
+            totalHours: hoursWorked,
+            totalEarnings: sessionEarnings
+          };
           updatedWorkDays = [...emp.workDays, newWorkDay];
         }
+        
+        // Calculate cumulative daily hours and earnings for today
+        const todayWorkDay = updatedWorkDays.find(day => day.date === dateString);
+        const cumulativeDailyHours = todayWorkDay ? todayWorkDay.totalHours : 0;
+        const cumulativeTodayEarnings = todayWorkDay ? todayWorkDay.totalEarnings : 0;
         
         return {
           ...emp,
           isCheckedIn: false,
           checkOutTime: timeString,
-          dailyHours: hoursWorked,
-          todayEarnings: dailyEarnings,
+          dailyHours: cumulativeDailyHours,
+          todayEarnings: cumulativeTodayEarnings,
           actualHoursWorked: emp.actualHoursWorked + hoursWorked,
           workDays: updatedWorkDays
         };
@@ -227,6 +279,7 @@ export const Employees = () => {
       actualHoursWorked: 0,
       currentMonthHours: data.workingDaysPerMonth * data.workingHoursPerDay,
       isCheckedIn: false,
+      documents: [],
       qrCode: `QR${String(Math.max(...employees.map(e => e.id)) + 1).padStart(3, '0')}-${data.name.toUpperCase().replace(' ', '-')}`,
       fingerprintId: `FP${String(Math.max(...employees.map(e => e.id)) + 1).padStart(3, '0')}-${data.name.split(' ').map(n => n[0]).join('')}`,
       dailyHours: 0,
@@ -286,13 +339,46 @@ export const Employees = () => {
   const openEditDialog = (employee: Employee) => {
     setSelectedEmployee(employee);
     form.setValue("name", employee.name);
-    form.setValue("email", employee.email);
     form.setValue("role", employee.role);
     form.setValue("phone", employee.phone);
     form.setValue("monthlySalary", employee.monthlySalary);
     form.setValue("workingDaysPerMonth", employee.workingDaysPerMonth);
     form.setValue("workingHoursPerDay", employee.workingHoursPerDay);
     setIsDialogOpen(true);
+  };
+
+  const handleFileUpload = (employeeId: number, files: FileList | null) => {
+    if (!files) return;
+    
+    const newDocuments: string[] = [];
+    Array.from(files).forEach(file => {
+      if (file.type === 'application/pdf') {
+        // In a real implementation, you would upload to Supabase storage
+        // For now, we'll just store the filename
+        newDocuments.push(file.name);
+      }
+    });
+    
+    if (newDocuments.length > 0) {
+      setEmployees(prev => prev.map(emp => 
+        emp.id === employeeId 
+          ? { ...emp, documents: [...emp.documents, ...newDocuments] }
+          : emp
+      ));
+      toast({ title: `${newDocuments.length} document(s) uploaded successfully` });
+    }
+  };
+
+  const removeDocument = (employeeId: number, documentIndex: number) => {
+    setEmployees(prev => prev.map(emp => 
+      emp.id === employeeId 
+        ? { 
+            ...emp, 
+            documents: emp.documents.filter((_, index) => index !== documentIndex) 
+          }
+        : emp
+    ));
+    toast({ title: "Document removed successfully" });
   };
 
   const openSalaryDialog = (employee: Employee) => {
@@ -345,10 +431,37 @@ export const Employees = () => {
                 
                 <div className="grid grid-cols-2 gap-4 text-gray-300 mb-4">
                   <div>
-                    <p><strong>Email:</strong> {employee.email}</p>
                     <p><strong>Role:</strong> {employee.role}</p>
                     <p><strong>Phone:</strong> {employee.phone}</p>
                     <p><strong>Hire Date:</strong> {employee.hireDate}</p>
+                    <div className="mt-2">
+                      <p><strong>Documents:</strong></p>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {employee.documents.map((doc, index) => (
+                          <div key={index} className="flex items-center gap-1 bg-gray-600 px-2 py-1 rounded text-xs">
+                            <FileText size={12} />
+                            <span>{doc}</span>
+                            <button
+                              onClick={() => removeDocument(employee.id, index)}
+                              className="ml-1 text-red-400 hover:text-red-300"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                        <label className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded text-xs cursor-pointer">
+                          <Upload size={12} />
+                          <span>Upload PDF</span>
+                          <input
+                            type="file"
+                            accept=".pdf"
+                            multiple
+                            className="hidden"
+                            onChange={(e) => handleFileUpload(employee.id, e.target.files)}
+                          />
+                        </label>
+                      </div>
+                    </div>
                   </div>
                   <div>
                     <p><strong>Monthly Salary:</strong> ${employee.monthlySalary.toLocaleString()}</p>
@@ -423,10 +536,9 @@ export const Employees = () => {
                           <TableHeader>
                             <TableRow className="border-gray-600">
                               <TableHead className="text-gray-300">Date</TableHead>
-                              <TableHead className="text-gray-300">Check In</TableHead>
-                              <TableHead className="text-gray-300">Check Out</TableHead>
-                              <TableHead className="text-gray-300">Hours Worked</TableHead>
-                              <TableHead className="text-gray-300">Daily Earnings</TableHead>
+                              <TableHead className="text-gray-300">Sessions</TableHead>
+                              <TableHead className="text-gray-300">Total Hours</TableHead>
+                              <TableHead className="text-gray-300">Total Earnings</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -435,11 +547,21 @@ export const Employees = () => {
                                 <TableCell className="text-white">
                                   {new Date(workDay.date).toLocaleDateString()}
                                 </TableCell>
-                                <TableCell className="text-white">{workDay.checkInTime}</TableCell>
-                                <TableCell className="text-white">{workDay.checkOutTime}</TableCell>
-                                <TableCell className="text-white">{workDay.hoursWorked.toFixed(2)}h</TableCell>
+                                <TableCell className="text-white">
+                                  <div className="space-y-1">
+                                    {workDay.sessions.map((session, sessionIndex) => (
+                                      <div key={sessionIndex} className="text-sm">
+                                        {session.checkInTime} - {session.checkOutTime} 
+                                        <span className="text-gray-400 ml-2">
+                                          ({session.hoursWorked.toFixed(2)}h, ${session.earnings.toFixed(2)})
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-white">{workDay.totalHours.toFixed(2)}h</TableCell>
                                 <TableCell className="text-green-400 font-semibold">
-                                  ${workDay.dailyEarnings.toFixed(2)}
+                                  ${workDay.totalEarnings.toFixed(2)}
                                 </TableCell>
                               </TableRow>
                             ))}
@@ -544,20 +666,6 @@ export const Employees = () => {
               
               <FormField
                 control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-gray-300">Email</FormLabel>
-                    <FormControl>
-                      <Input {...field} className="bg-gray-700 border-gray-600 text-white" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
                 name="role"
                 render={({ field }) => (
                   <FormItem>
@@ -637,20 +745,6 @@ export const Employees = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-gray-300">Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} className="bg-gray-700 border-gray-600 text-white" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-gray-300">Email</FormLabel>
                     <FormControl>
                       <Input {...field} className="bg-gray-700 border-gray-600 text-white" />
                     </FormControl>
