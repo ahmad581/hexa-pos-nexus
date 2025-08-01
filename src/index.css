@@ -94,6 +94,15 @@ All colors MUST be HSL.
   }
 }
 
+/* QR Scanner Styles */
+.barcode-scanner-active {
+  visibility: hidden;
+}
+
+.barcode-scanner-active .barcode-scanner-container {
+  visibility: visible;
+}
+
 @layer base {
   * {
     @apply border-border;

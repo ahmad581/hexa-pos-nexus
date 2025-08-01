@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Edit, Trash2, Search, DollarSign, Clock, QrCode, Fingerprint, LogIn, LogOut, Calendar, Upload, FileText } from "lucide-react";
+import { Plus, Edit, Trash2, Search, DollarSign, Clock, QrCode, Fingerprint, LogIn, LogOut, Calendar, Upload, FileText, Scan, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -10,6 +10,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { QRCodeGenerator } from "@/components/QRCodeGenerator";
+import { QRScanner } from "@/components/QRScanner";
+import { BiometricAuth } from "@/components/BiometricAuth";
 
 interface WorkSession {
   checkInTime: string;
@@ -46,6 +49,7 @@ interface Employee {
   dailyHours: number;
   todayEarnings: number;
   workDays: WorkDay[];
+  biometricRegistered: boolean;
 }
 
 interface EmployeeFormData {
@@ -83,6 +87,7 @@ export const Employees = () => {
       fingerprintId: "FP001-JD",
       dailyHours: 0,
       todayEarnings: 0,
+      biometricRegistered: false,
       workDays: [
         {
           date: "2025-01-01",
@@ -137,6 +142,7 @@ export const Employees = () => {
       fingerprintId: "FP002-JS",
       dailyHours: 3.5,
       todayEarnings: 52.5,
+      biometricRegistered: true,
       workDays: [
         {
           date: "2025-01-01",
@@ -161,6 +167,9 @@ export const Employees = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isSalaryDialogOpen, setIsSalaryDialogOpen] = useState(false);
   const [expandedEmployees, setExpandedEmployees] = useState<Set<number>>(new Set());
+  const [showQRScanner, setShowQRScanner] = useState(false);
+  const [showBiometric, setShowBiometric] = useState<{show: boolean, employeeId: number, mode: 'register' | 'authenticate'}>({show: false, employeeId: 0, mode: 'register'});
+  const [showQRGenerator, setShowQRGenerator] = useState<{show: boolean, employee: Employee | null}>({show: false, employee: null});
   const { toast } = useToast();
 
   const form = useForm<EmployeeFormData>();
@@ -284,6 +293,7 @@ export const Employees = () => {
       fingerprintId: `FP${String(Math.max(...employees.map(e => e.id)) + 1).padStart(3, '0')}-${data.name.split(' ').map(n => n[0]).join('')}`,
       dailyHours: 0,
       todayEarnings: 0,
+      biometricRegistered: false,
       workDays: []
     };
 
@@ -347,6 +357,46 @@ export const Employees = () => {
     setIsDialogOpen(true);
   };
 
+  const handleQRScan = (employeeData: any) => {
+    const employee = employees.find(emp => emp.id === employeeData.employeeId);
+    if (employee) {
+      if (employee.isCheckedIn) {
+        handleCheckOut(employee.id);
+      } else {
+        handleCheckIn(employee.id);
+      }
+    } else {
+      toast({ 
+        title: 'Employee not found',
+        description: 'Invalid QR code or employee not registered',
+        variant: 'destructive'
+      });
+    }
+    setShowQRScanner(false);
+  };
+
+  const handleBiometricAuth = (employeeId: number) => {
+    const employee = employees.find(emp => emp.id === employeeId);
+    if (employee) {
+      if (showBiometric.mode === 'register') {
+        // Register biometric
+        setEmployees(prev => prev.map(emp => 
+          emp.id === employeeId 
+            ? { ...emp, biometricRegistered: true }
+            : emp
+        ));
+      } else {
+        // Authenticate and check in/out
+        if (employee.isCheckedIn) {
+          handleCheckOut(employee.id);
+        } else {
+          handleCheckIn(employee.id);
+        }
+      }
+    }
+    setShowBiometric({show: false, employeeId: 0, mode: 'register'});
+  };
+
   const handleFileUpload = (employeeId: number, files: FileList | null) => {
     if (!files) return;
     
@@ -393,13 +443,22 @@ export const Employees = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Employee Management</h1>
-        <Button 
-          className="bg-green-600 hover:bg-green-700"
-          onClick={() => setIsAddDialogOpen(true)}
-        >
-          <Plus size={20} className="mr-2" />
-          Add Employee
-        </Button>
+        <div className="flex gap-3">
+          <Button 
+            className="bg-purple-600 hover:bg-purple-700"
+            onClick={() => setShowQRScanner(true)}
+          >
+            <Scan size={20} className="mr-2" />
+            Scan QR Code
+          </Button>
+          <Button 
+            className="bg-green-600 hover:bg-green-700"
+            onClick={() => setIsAddDialogOpen(true)}
+          >
+            <Plus size={20} className="mr-2" />
+            Add Employee
+          </Button>
+        </div>
       </div>
 
       <div className="flex gap-4 items-center">
@@ -510,6 +569,22 @@ export const Employees = () => {
                     >
                       <LogOut size={14} className="mr-1" />
                       Check Out
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      onClick={() => setShowBiometric({show: true, employeeId: employee.id, mode: employee.biometricRegistered ? 'authenticate' : 'register'})}
+                      className={employee.biometricRegistered ? "bg-blue-600 hover:bg-blue-700" : "bg-orange-600 hover:bg-orange-700"}
+                    >
+                      <Fingerprint size={14} className="mr-1" />
+                      {employee.biometricRegistered ? 'Biometric Auth' : 'Register Biometric'}
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      onClick={() => setShowQRGenerator({show: true, employee})}
+                      className="bg-purple-600 hover:bg-purple-700"
+                    >
+                      <QrCode size={14} className="mr-1" />
+                      Show QR
                     </Button>
                   </div>
                 </div>
@@ -942,6 +1017,57 @@ export const Employees = () => {
           </Form>
         </DialogContent>
       </Dialog>
+
+      {/* QR Scanner Modal */}
+      {showQRScanner && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-900 p-6 rounded-lg max-w-md w-full mx-4">
+            <QRScanner 
+              onScanResult={handleQRScan}
+              onClose={() => setShowQRScanner(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Biometric Auth Modal */}
+      {showBiometric.show && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-900 p-6 rounded-lg max-w-md w-full mx-4">
+            <BiometricAuth 
+              employeeId={showBiometric.employeeId}
+              employeeName={employees.find(emp => emp.id === showBiometric.employeeId)?.name || ''}
+              mode={showBiometric.mode}
+              onAuthSuccess={handleBiometricAuth}
+              onClose={() => setShowBiometric({show: false, employeeId: 0, mode: 'register'})}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* QR Generator Modal */}
+      {showQRGenerator.show && showQRGenerator.employee && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-900 p-6 rounded-lg max-w-md w-full mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-white">Employee QR Code</h3>
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                onClick={() => setShowQRGenerator({show: false, employee: null})}
+                className="text-gray-400 hover:text-white"
+              >
+                <X size={16} />
+              </Button>
+            </div>
+            <QRCodeGenerator 
+              employeeId={showQRGenerator.employee.id}
+              employeeName={showQRGenerator.employee.name}
+              qrCodeData={showQRGenerator.employee.qrCode}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
