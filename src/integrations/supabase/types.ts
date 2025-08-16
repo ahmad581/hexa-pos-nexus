@@ -14,7 +14,205 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      inventory_items: {
+        Row: {
+          category: string
+          created_at: string
+          current_stock: number
+          description: string | null
+          expiry_date: string | null
+          id: string
+          last_restocked: string | null
+          max_stock: number
+          min_stock: number
+          name: string
+          sku: string
+          status: string
+          supplier: string | null
+          unit_price: number | null
+          updated_at: string
+          warehouse_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          current_stock?: number
+          description?: string | null
+          expiry_date?: string | null
+          id?: string
+          last_restocked?: string | null
+          max_stock?: number
+          min_stock?: number
+          name: string
+          sku: string
+          status?: string
+          supplier?: string | null
+          unit_price?: number | null
+          updated_at?: string
+          warehouse_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          current_stock?: number
+          description?: string | null
+          expiry_date?: string | null
+          id?: string
+          last_restocked?: string | null
+          max_stock?: number
+          min_stock?: number
+          name?: string
+          sku?: string
+          status?: string
+          supplier?: string | null
+          unit_price?: number | null
+          updated_at?: string
+          warehouse_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_items_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_requests: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          approved_quantity: number | null
+          branch_id: string
+          fulfilled_at: string | null
+          id: string
+          inventory_item_id: string
+          request_notes: string | null
+          requested_at: string
+          requested_quantity: number
+          status: string
+          warehouse_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          approved_quantity?: number | null
+          branch_id: string
+          fulfilled_at?: string | null
+          id?: string
+          inventory_item_id: string
+          request_notes?: string | null
+          requested_at?: string
+          requested_quantity: number
+          status?: string
+          warehouse_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          approved_quantity?: number | null
+          branch_id?: string
+          fulfilled_at?: string | null
+          id?: string
+          inventory_item_id?: string
+          request_notes?: string | null
+          requested_at?: string
+          requested_quantity?: number
+          status?: string
+          warehouse_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_requests_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_requests_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_transactions: {
+        Row: {
+          id: string
+          inventory_item_id: string
+          performed_by: string | null
+          quantity: number
+          reason: string | null
+          reference_id: string | null
+          transaction_date: string
+          transaction_type: string
+        }
+        Insert: {
+          id?: string
+          inventory_item_id: string
+          performed_by?: string | null
+          quantity: number
+          reason?: string | null
+          reference_id?: string | null
+          transaction_date?: string
+          transaction_type: string
+        }
+        Update: {
+          id?: string
+          inventory_item_id?: string
+          performed_by?: string | null
+          quantity?: number
+          reason?: string | null
+          reference_id?: string | null
+          transaction_date?: string
+          transaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_transactions_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      warehouses: {
+        Row: {
+          address: string
+          created_at: string
+          id: string
+          is_active: boolean
+          manager_name: string | null
+          name: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          manager_name?: string | null
+          name: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          manager_name?: string | null
+          name?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
