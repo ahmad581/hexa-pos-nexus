@@ -4,40 +4,30 @@ import { Badge } from "@/components/ui/badge";
 import { MapPin } from "lucide-react";
 import { useBranch } from "@/contexts/BranchContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const BranchSelector = () => {
   const { branches, selectedBranch, setSelectedBranch } = useBranch();
   const { selectedBusinessType } = useBusinessType();
+  const { userProfile, userBranchId } = useAuth();
 
   const activeBranches = branches.filter(branch => branch.isActive);
   const branchLabel = selectedBusinessType?.terminology.branch || 'Branch';
 
+  // Find the user's assigned branch from the branch list
+  const userBranch = branches.find(branch => branch.id === userBranchId);
+
   return (
     <div className="flex items-center space-x-2">
       <MapPin size={16} className="text-gray-400" />
-      <Select
-        value={selectedBranch?.id || ''}
-        onValueChange={(branchId) => {
-          const branch = branches.find(b => b.id === branchId);
-          if (branch) setSelectedBranch(branch);
-        }}
-      >
-        <SelectTrigger className="w-48 bg-gray-700 border-gray-600 text-white">
-          <SelectValue placeholder={`Select ${branchLabel}`} />
-        </SelectTrigger>
-        <SelectContent className="bg-gray-800 border-gray-700">
-          {activeBranches.map((branch) => (
-            <SelectItem key={branch.id} value={branch.id} className="text-white hover:bg-gray-700">
-              <div className="flex items-center space-x-2">
-                <span>{branch.name}</span>
-                <Badge variant="outline" className="text-xs">
-                  {branch.address.split(',')[1]?.trim() || branchLabel}
-                </Badge>
-              </div>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <div className="flex items-center space-x-2">
+        <span className="text-white font-medium">
+          {userBranch ? userBranch.name : `${branchLabel} ${userBranchId}`}
+        </span>
+        <Badge variant="outline" className="text-xs">
+          {userProfile?.role || 'Employee'}
+        </Badge>
+      </div>
     </div>
   );
 };

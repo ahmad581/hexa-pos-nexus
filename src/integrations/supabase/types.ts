@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       inventory_items: {
         Row: {
+          branch_id: string | null
           category: string
           created_at: string
           current_stock: number
@@ -34,6 +35,7 @@ export type Database = {
           warehouse_id: string
         }
         Insert: {
+          branch_id?: string | null
           category: string
           created_at?: string
           current_stock?: number
@@ -52,6 +54,7 @@ export type Database = {
           warehouse_id: string
         }
         Update: {
+          branch_id?: string | null
           category?: string
           created_at?: string
           current_stock?: number
@@ -91,6 +94,7 @@ export type Database = {
           request_notes: string | null
           requested_at: string
           requested_quantity: number
+          requesting_branch_id: string | null
           status: string
           warehouse_id: string
         }
@@ -105,6 +109,7 @@ export type Database = {
           request_notes?: string | null
           requested_at?: string
           requested_quantity: number
+          requesting_branch_id?: string | null
           status?: string
           warehouse_id: string
         }
@@ -119,6 +124,7 @@ export type Database = {
           request_notes?: string | null
           requested_at?: string
           requested_quantity?: number
+          requesting_branch_id?: string | null
           status?: string
           warehouse_id?: string
         }
@@ -179,6 +185,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      profiles: {
+        Row: {
+          branch_id: string
+          created_at: string | null
+          email: string
+          first_name: string | null
+          id: string
+          is_active: boolean | null
+          last_name: string | null
+          role: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          branch_id: string
+          created_at?: string | null
+          email: string
+          first_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_name?: string | null
+          role?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          branch_id?: string
+          created_at?: string | null
+          email?: string
+          first_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_name?: string | null
+          role?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       warehouses: {
         Row: {

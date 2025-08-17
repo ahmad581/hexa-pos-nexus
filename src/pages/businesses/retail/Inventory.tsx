@@ -24,9 +24,11 @@ import { InventoryRequests } from "@/components/inventory/InventoryRequests";
 import { InventoryReports } from "@/components/inventory/InventoryReports";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const Inventory = () => {
-  const { items, warehouses, requests, loading, updateStock, addItem, updateItem, deleteItem } = useInventory();
+  const { userBranchId } = useAuth();
+  const { items, warehouses, requests, loading, updateStock, addItem, updateItem, deleteItem } = useInventory(userBranchId || undefined);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [isItemDialogOpen, setIsItemDialogOpen] = useState(false);
   const [isStockDialogOpen, setIsStockDialogOpen] = useState(false);
@@ -247,7 +249,13 @@ export const Inventory = () => {
         }}
         item={selectedItem}
         warehouses={warehouses}
-        onSave={selectedItem ? (data: any) => updateItem(selectedItem.id, data) : addItem}
+        onSave={async (data: any) => {
+          if (selectedItem) {
+            await updateItem(selectedItem.id, data);
+          } else {
+            await addItem(data);
+          }
+        }}
         onDelete={selectedItem ? deleteItem : undefined}
       />
 

@@ -47,11 +47,18 @@ export interface InventoryRequest {
   requested_at: string;
   approved_at?: string;
   fulfilled_at?: string;
-  inventory_item?: InventoryItem;
-  warehouse?: Warehouse;
+  inventory_item?: {
+    id: string;
+    name: string;
+    sku: string;
+  };
+  warehouse?: {
+    id: string;
+    name: string;
+  };
 }
 
-export const useInventory = () => {
+export const useInventory = (branchId?: string) => {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [requests, setRequests] = useState<InventoryRequest[]>([]);
@@ -63,27 +70,37 @@ export const useInventory = () => {
 
   const fetchData = async () => {
     try {
+      let itemsQuery = supabase
+        .from('inventory_items')
+        .select(`
+          *,
+          warehouse:warehouses(id, name)
+        `)
+        .order('name');
+
+      let requestsQuery = supabase
+        .from('inventory_requests')
+        .select(`
+          *,
+          inventory_item:inventory_items(id, name, sku),
+          warehouse:warehouses(id, name)
+        `)
+        .order('requested_at', { ascending: false });
+
+      // Filter by branch if branchId is provided
+      if (branchId) {
+        itemsQuery = itemsQuery.eq('branch_id', branchId);
+        requestsQuery = requestsQuery.eq('requesting_branch_id', branchId);
+      }
+
       const [itemsResponse, warehousesResponse, requestsResponse] = await Promise.all([
-        supabase
-          .from('inventory_items')
-          .select(`
-            *,
-            warehouse:warehouses(id, name)
-          `)
-          .order('name'),
+        itemsQuery,
         supabase
           .from('warehouses')
           .select('*')
           .eq('is_active', true)
           .order('name'),
-        supabase
-          .from('inventory_requests')
-          .select(`
-            *,
-            inventory_item:inventory_items(id, name, sku),
-            warehouse:warehouses(id, name)
-          `)
-          .order('requested_at', { ascending: false })
+        requestsQuery
       ]);
 
       if (itemsResponse.error) throw itemsResponse.error;
@@ -103,9 +120,14 @@ export const useInventory = () => {
 
   const addItem = async (item: Omit<InventoryItem, 'id' | 'created_at' | 'updated_at' | 'status'>) => {
     try {
+      const itemWithBranch = {
+        ...item,
+        branch_id: branchId || '1' // Default to branch 1 if no branchId provided
+      };
+
       const { data, error } = await supabase
         .from('inventory_items')
-        .insert([item])
+        .insert([itemWithBranch])
         .select()
         .single();
 
@@ -192,12 +214,15 @@ export const useInventory = () => {
 
   const requestStock = async (request: Omit<InventoryRequest, 'id' | 'requested_at' | 'status'>) => {
     try {
+      const requestWithBranch = {
+        ...request,
+        requesting_branch_id: branchId || '1',
+        status: 'Pending'
+      };
+
       const { data, error } = await supabase
         .from('inventory_requests')
-        .insert([{
-          ...request,
-          status: 'Pending'
-        }])
+        .insert([requestWithBranch])
         .select()
         .single();
 

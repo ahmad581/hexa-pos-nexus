@@ -22,7 +22,7 @@ export const Login = () => {
     setIsLoading(true);
 
     // Simulate authentication
-    setTimeout(() => {
+    setTimeout(async () => {
       const validCredentials = [
         { email: "restaurant@bizhub.com", password: "demo123" },
         { email: "hotel@bizhub.com", password: "demo123" },
@@ -41,12 +41,20 @@ export const Login = () => {
       );
 
       if (isValid) {
-        login(email);
-        toast({
-          title: "Login Successful",
-          description: "Welcome to BizHub POS!",
-        });
-        navigate("/");
+        try {
+          await login(email);
+          toast({
+            title: "Login Successful",
+            description: "Welcome to BizHub POS!",
+          });
+          navigate("/");
+        } catch (error) {
+          toast({
+            title: "Login Failed",
+            description: "User not found or inactive",
+            variant: "destructive",
+          });
+        }
       } else {
         toast({
           title: "Login Failed",
