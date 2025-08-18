@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      appointments: {
+        Row: {
+          appointment_date: string
+          branch_id: string
+          created_at: string
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string | null
+          duration: number
+          id: string
+          notes: string | null
+          price: number | null
+          service_type: string
+          status: string
+          stylist_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          appointment_date: string
+          branch_id: string
+          created_at?: string
+          customer_email?: string | null
+          customer_name: string
+          customer_phone?: string | null
+          duration?: number
+          id?: string
+          notes?: string | null
+          price?: number | null
+          service_type: string
+          status?: string
+          stylist_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          appointment_date?: string
+          branch_id?: string
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string
+          customer_phone?: string | null
+          duration?: number
+          id?: string
+          notes?: string | null
+          price?: number | null
+          service_type?: string
+          status?: string
+          stylist_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       branches: {
         Row: {
           address: string
@@ -222,6 +273,315 @@ export type Database = {
           },
         ]
       }
+      members: {
+        Row: {
+          branch_id: string
+          created_at: string
+          email: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          end_date: string | null
+          first_name: string
+          id: string
+          last_name: string
+          member_number: string
+          membership_type: string
+          phone: string | null
+          start_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          branch_id: string
+          created_at?: string
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          end_date?: string | null
+          first_name: string
+          id?: string
+          last_name: string
+          member_number: string
+          membership_type: string
+          phone?: string | null
+          start_date: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string
+          created_at?: string
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          end_date?: string | null
+          first_name?: string
+          id?: string
+          last_name?: string
+          member_number?: string
+          membership_type?: string
+          phone?: string | null
+          start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      menu_items: {
+        Row: {
+          allergens: string[] | null
+          branch_id: string
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          ingredients: string[] | null
+          is_available: boolean
+          name: string
+          preparation_time: number | null
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          allergens?: string[] | null
+          branch_id: string
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          ingredients?: string[] | null
+          is_available?: boolean
+          name: string
+          preparation_time?: number | null
+          price: number
+          updated_at?: string
+        }
+        Update: {
+          allergens?: string[] | null
+          branch_id?: string
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          ingredients?: string[] | null
+          is_available?: boolean
+          name?: string
+          preparation_time?: number | null
+          price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      order_items: {
+        Row: {
+          created_at: string
+          id: string
+          menu_item_id: string | null
+          order_id: string
+          product_name: string
+          quantity: number
+          special_instructions: string | null
+          total_price: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          menu_item_id?: string | null
+          order_id: string
+          product_name: string
+          quantity?: number
+          special_instructions?: string | null
+          total_price: number
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          menu_item_id?: string | null
+          order_id?: string
+          product_name?: string
+          quantity?: number
+          special_instructions?: string | null
+          total_price?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          branch_id: string
+          completed_at: string | null
+          created_at: string
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          id: string
+          notes: string | null
+          order_number: string
+          payment_method: string | null
+          payment_status: string
+          status: string
+          table_id: string | null
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          branch_id: string
+          completed_at?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          id?: string
+          notes?: string | null
+          order_number: string
+          payment_method?: string | null
+          payment_status?: string
+          status?: string
+          table_id?: string | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string
+          completed_at?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          id?: string
+          notes?: string | null
+          order_number?: string
+          payment_method?: string | null
+          payment_status?: string
+          status?: string
+          table_id?: string | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      prescriptions: {
+        Row: {
+          branch_id: string
+          created_at: string
+          doctor_name: string
+          dosage: string
+          filled_date: string | null
+          id: string
+          instructions: string | null
+          medication_name: string
+          patient_name: string
+          patient_phone: string | null
+          prescription_number: string
+          quantity: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          branch_id: string
+          created_at?: string
+          doctor_name: string
+          dosage: string
+          filled_date?: string | null
+          id?: string
+          instructions?: string | null
+          medication_name: string
+          patient_name: string
+          patient_phone?: string | null
+          prescription_number: string
+          quantity: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string
+          created_at?: string
+          doctor_name?: string
+          dosage?: string
+          filled_date?: string | null
+          id?: string
+          instructions?: string | null
+          medication_name?: string
+          patient_name?: string
+          patient_phone?: string | null
+          prescription_number?: string
+          quantity?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          branch_id: string
+          brand: string | null
+          category: string
+          cost: number | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          min_stock_level: number
+          name: string
+          price: number
+          sku: string
+          stock_quantity: number
+          updated_at: string
+        }
+        Insert: {
+          branch_id: string
+          brand?: string | null
+          category: string
+          cost?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          min_stock_level?: number
+          name: string
+          price: number
+          sku: string
+          stock_quantity?: number
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string
+          brand?: string | null
+          category?: string
+          cost?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          min_stock_level?: number
+          name?: string
+          price?: number
+          sku?: string
+          stock_quantity?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           branch_id: string
@@ -258,6 +618,165 @@ export type Database = {
           role?: string | null
           updated_at?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      rooms: {
+        Row: {
+          amenities: string[] | null
+          branch_id: string
+          capacity: number
+          created_at: string
+          description: string | null
+          floor_number: number | null
+          id: string
+          price_per_night: number
+          room_number: string
+          room_type: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amenities?: string[] | null
+          branch_id: string
+          capacity?: number
+          created_at?: string
+          description?: string | null
+          floor_number?: number | null
+          id?: string
+          price_per_night: number
+          room_number: string
+          room_type: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amenities?: string[] | null
+          branch_id?: string
+          capacity?: number
+          created_at?: string
+          description?: string | null
+          floor_number?: number | null
+          id?: string
+          price_per_night?: number
+          room_number?: string
+          room_type?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      services: {
+        Row: {
+          branch_id: string
+          category: string
+          created_at: string
+          description: string | null
+          duration: number | null
+          id: string
+          is_active: boolean
+          name: string
+          price: number | null
+          updated_at: string
+        }
+        Insert: {
+          branch_id: string
+          category: string
+          created_at?: string
+          description?: string | null
+          duration?: number | null
+          id?: string
+          is_active?: boolean
+          name: string
+          price?: number | null
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string
+          category?: string
+          created_at?: string
+          description?: string | null
+          duration?: number | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          price?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      stylists: {
+        Row: {
+          branch_id: string
+          created_at: string
+          email: string | null
+          hire_date: string | null
+          id: string
+          is_active: boolean
+          name: string
+          phone: string | null
+          specialties: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          branch_id: string
+          created_at?: string
+          email?: string | null
+          hire_date?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          phone?: string | null
+          specialties?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string
+          created_at?: string
+          email?: string | null
+          hire_date?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          phone?: string | null
+          specialties?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tables: {
+        Row: {
+          branch_id: string
+          capacity: number
+          created_at: string
+          id: string
+          location: string | null
+          qr_code: string | null
+          status: string
+          table_number: string
+          updated_at: string
+        }
+        Insert: {
+          branch_id: string
+          capacity?: number
+          created_at?: string
+          id?: string
+          location?: string | null
+          qr_code?: string | null
+          status?: string
+          table_number: string
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string
+          capacity?: number
+          created_at?: string
+          id?: string
+          location?: string | null
+          qr_code?: string | null
+          status?: string
+          table_number?: string
+          updated_at?: string
         }
         Relationships: []
       }
