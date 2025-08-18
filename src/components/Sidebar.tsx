@@ -37,7 +37,8 @@ export const Sidebar = () => {
   const restaurantItems = [
     { to: "/menu", icon: FileText, label: "Menu" },
     { to: "/tables", icon: Users, label: "Tables" },
-    { to: "/orders", icon: ShoppingBag, label: "Orders" }
+    { to: "/orders", icon: ShoppingBag, label: "Orders" },
+    { to: "/inventory", icon: Package, label: "Inventory" }
   ];
 
   const hotelItems = [
@@ -52,7 +53,7 @@ export const Sidebar = () => {
 
   const retailItems = [
     { to: "/products", icon: ShoppingBag, label: "Products" },
-    { to: "/inventory", icon: File, label: "Inventory" }
+    { to: "/inventory", icon: Package, label: "Inventory" }
   ];
 
   const clinicItems = [
@@ -62,11 +63,11 @@ export const Sidebar = () => {
 
   const pharmacyItems = [
     { to: "/prescriptions", icon: Pill, label: "Prescriptions" },
-    { to: "/pharmacy-inventory", icon: Package, label: "Inventory" }
+    { to: "/inventory", icon: Package, label: "Inventory" }
   ];
 
   const groceryItems = [
-    { to: "/grocery-inventory", icon: Package, label: "Inventory" },
+    { to: "/inventory", icon: Package, label: "Inventory" },
     { to: "/suppliers", icon: Users, label: "Suppliers" }
   ];
 

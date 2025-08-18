@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      branches: {
+        Row: {
+          address: string
+          business_type: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          manager_name: string | null
+          name: string
+          phone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address: string
+          business_type: string
+          created_at?: string | null
+          id: string
+          is_active?: boolean | null
+          manager_name?: string | null
+          name: string
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string
+          business_type?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          manager_name?: string | null
+          name?: string
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       inventory_items: {
         Row: {
           branch_id: string | null

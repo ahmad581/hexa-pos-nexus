@@ -24,6 +24,7 @@ export const Login = () => {
     // Simulate authentication
     setTimeout(async () => {
       const validCredentials = [
+        // Manager accounts
         { email: "restaurant@bizhub.com", password: "demo123" },
         { email: "hotel@bizhub.com", password: "demo123" },
         { email: "salon@bizhub.com", password: "demo123" },
@@ -33,7 +34,24 @@ export const Login = () => {
         { email: "grocery@bizhub.com", password: "demo123" },
         { email: "gym@bizhub.com", password: "demo123" },
         { email: "autorepair@bizhub.com", password: "demo123" },
-        { email: "petcare@bizhub.com", password: "demo123" }
+        { email: "petcare@bizhub.com", password: "demo123" },
+        // Employee accounts
+        { email: "restaurant.server@bizhub.com", password: "demo123" },
+        { email: "restaurant.chef@bizhub.com", password: "demo123" },
+        { email: "hotel.front@bizhub.com", password: "demo123" },
+        { email: "hotel.beach@bizhub.com", password: "demo123" },
+        { email: "salon.stylist@bizhub.com", password: "demo123" },
+        { email: "salon.mall@bizhub.com", password: "demo123" },
+        { email: "clinic.nurse@bizhub.com", password: "demo123" },
+        { email: "clinic.north@bizhub.com", password: "demo123" },
+        { email: "retail.sales@bizhub.com", password: "demo123" },
+        { email: "retail.outlet@bizhub.com", password: "demo123" },
+        { email: "pharmacy.tech@bizhub.com", password: "demo123" },
+        { email: "pharmacy.west@bizhub.com", password: "demo123" },
+        { email: "grocery.cashier@bizhub.com", password: "demo123" },
+        { email: "gym.trainer@bizhub.com", password: "demo123" },
+        { email: "autorepair.tech@bizhub.com", password: "demo123" },
+        { email: "petcare.vet@bizhub.com", password: "demo123" }
       ];
 
       const isValid = validCredentials.some(cred => 
@@ -71,9 +89,27 @@ export const Login = () => {
     setPassword("demo123");
   };
 
+  const employeeAccounts = [
+    // Managers
+    { email: "restaurant@bizhub.com", name: "Alex Thompson", business: "Restaurant", branch: "Mall Branch", role: "Manager", icon: "🍽️" },
+    { email: "hotel@bizhub.com", name: "Sophie Chen", business: "Hotel", branch: "Central Hotel", role: "Manager", icon: "🏨" },
+    { email: "salon@bizhub.com", name: "Rachel Green", business: "Hair Salon", branch: "Uptown Salon", role: "Manager", icon: "💇" },
+    { email: "clinic@bizhub.com", name: "Dr. Emma Johnson", business: "Medical Clinic", branch: "Downtown Clinic", role: "Manager", icon: "🏥" },
+    { email: "retail@bizhub.com", name: "Mike Brown", business: "Retail Store", branch: "Mall Store", role: "Manager", icon: "🛍️" },
+    { email: "pharmacy@bizhub.com", name: "Dr. Lisa Adams", business: "Pharmacy", branch: "Main Pharmacy", role: "Manager", icon: "💊" },
+    
+    // Employees
+    { email: "restaurant.server@bizhub.com", name: "Maria Rodriguez", business: "Restaurant", branch: "Mall Branch", role: "Server", icon: "🍽️" },
+    { email: "hotel.front@bizhub.com", name: "Daniel Kumar", business: "Hotel", branch: "Central Hotel", role: "Front Desk", icon: "🏨" },
+    { email: "salon.stylist@bizhub.com", name: "Marcus Jackson", business: "Hair Salon", branch: "Uptown Salon", role: "Stylist", icon: "💇" },
+    { email: "clinic.nurse@bizhub.com", name: "Nurse Tom Davis", business: "Medical Clinic", branch: "Downtown Clinic", role: "Nurse", icon: "🏥" },
+    { email: "retail.sales@bizhub.com", name: "Ashley Moore", business: "Retail Store", branch: "Mall Store", role: "Sales Associate", icon: "🛍️" },
+    { email: "pharmacy.tech@bizhub.com", name: "Kevin Wright", business: "Pharmacy", branch: "Main Pharmacy", role: "Pharmacy Tech", icon: "💊" },
+  ];
+
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-gray-800 border-gray-700">
+      <Card className="w-full max-w-2xl bg-gray-800 border-gray-700">
         <div className="p-8">
           <div className="flex items-center justify-center mb-8">
             <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center mr-3">
@@ -82,7 +118,7 @@ export const Login = () => {
             <h1 className="text-3xl font-bold text-white">BizHub POS</h1>
           </div>
           
-          <form onSubmit={handleLogin} className="space-y-6">
+          <form onSubmit={handleLogin} className="space-y-6 mb-8">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-gray-300">Email</Label>
               <Input
@@ -125,89 +161,29 @@ export const Login = () => {
             </Button>
           </form>
           
-          <div className="mt-6 text-center text-gray-400 text-sm">
-            <p className="mb-3">Demo credentials (Password: demo123):</p>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => fillCredentials("restaurant@bizhub.com")}
-                className="text-left justify-start p-2 h-auto"
-              >
-                🍽️ Restaurant
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => fillCredentials("hotel@bizhub.com")}
-                className="text-left justify-start p-2 h-auto"
-              >
-                🏨 Hotel
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => fillCredentials("salon@bizhub.com")}
-                className="text-left justify-start p-2 h-auto"
-              >
-                💇 Hair Salon
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => fillCredentials("clinic@bizhub.com")}
-                className="text-left justify-start p-2 h-auto"
-              >
-                🏥 Medical Clinic
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => fillCredentials("retail@bizhub.com")}
-                className="text-left justify-start p-2 h-auto"
-              >
-                🛍️ Retail Store
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => fillCredentials("pharmacy@bizhub.com")}
-                className="text-left justify-start p-2 h-auto"
-              >
-                💊 Pharmacy
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => fillCredentials("grocery@bizhub.com")}
-                className="text-left justify-start p-2 h-auto"
-              >
-                🛒 Grocery Store
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => fillCredentials("gym@bizhub.com")}
-                className="text-left justify-start p-2 h-auto"
-              >
-                💪 Gym & Fitness
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => fillCredentials("autorepair@bizhub.com")}
-                className="text-left justify-start p-2 h-auto"
-              >
-                🔧 Auto Repair
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => fillCredentials("petcare@bizhub.com")}
-                className="text-left justify-start p-2 h-auto"
-              >
-                🐾 Pet Care
-              </Button>
+          <div className="text-center text-gray-400 text-sm">
+            <p className="mb-4 text-lg font-medium text-white">Demo Employee Accounts</p>
+            <p className="mb-4 text-gray-300">Password: demo123 for all accounts</p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-80 overflow-y-auto">
+              {employeeAccounts.map((account) => (
+                <Button
+                  key={account.email}
+                  variant="ghost"
+                  className="text-left justify-start p-4 h-auto bg-gray-700/50 hover:bg-gray-700 border border-gray-600"
+                  onClick={() => fillCredentials(account.email)}
+                >
+                  <div className="flex items-start space-x-3 w-full">
+                    <span className="text-xl">{account.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-white text-sm">{account.name}</div>
+                      <div className="text-xs text-gray-300">{account.role}</div>
+                      <div className="text-xs text-green-400">{account.business}</div>
+                      <div className="text-xs text-gray-400 truncate">{account.branch}</div>
+                    </div>
+                  </div>
+                </Button>
+              ))}
             </div>
           </div>
         </div>
