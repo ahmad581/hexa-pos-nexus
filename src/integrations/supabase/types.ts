@@ -101,6 +101,122 @@ export type Database = {
         }
         Relationships: []
       }
+      employee_documents: {
+        Row: {
+          branch_id: string
+          created_at: string
+          description: string | null
+          document_name: string
+          document_type: string
+          employee_id: string
+          file_size: number | null
+          file_url: string
+          id: string
+          mime_type: string | null
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          branch_id: string
+          created_at?: string
+          description?: string | null
+          document_name: string
+          document_type: string
+          employee_id: string
+          file_size?: number | null
+          file_url: string
+          id?: string
+          mime_type?: string | null
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          branch_id?: string
+          created_at?: string
+          description?: string | null
+          document_name?: string
+          document_type?: string
+          employee_id?: string
+          file_size?: number | null
+          file_url?: string
+          id?: string
+          mime_type?: string | null
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_documents_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employees: {
+        Row: {
+          address: string | null
+          branch_id: string
+          created_at: string
+          department: string | null
+          email: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          employee_number: string
+          first_name: string
+          hire_date: string
+          hourly_rate: number | null
+          id: string
+          is_active: boolean
+          last_name: string
+          phone: string | null
+          position: string
+          salary: number | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          branch_id: string
+          created_at?: string
+          department?: string | null
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          employee_number: string
+          first_name: string
+          hire_date: string
+          hourly_rate?: number | null
+          id?: string
+          is_active?: boolean
+          last_name: string
+          phone?: string | null
+          position: string
+          salary?: number | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          branch_id?: string
+          created_at?: string
+          department?: string | null
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          employee_number?: string
+          first_name?: string
+          hire_date?: string
+          hourly_rate?: number | null
+          id?: string
+          is_active?: boolean
+          last_name?: string
+          phone?: string | null
+          position?: string
+          salary?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       inventory_items: {
         Row: {
           branch_id: string | null
