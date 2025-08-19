@@ -101,6 +101,65 @@ export type Database = {
         }
         Relationships: []
       }
+      employee_daily_summaries: {
+        Row: {
+          branch_id: string
+          break_hours: number | null
+          created_at: string
+          employee_id: string
+          first_check_in: string | null
+          id: string
+          last_check_out: string | null
+          overtime_hours: number | null
+          regular_hours: number | null
+          session_count: number | null
+          total_earnings: number | null
+          total_hours: number | null
+          updated_at: string
+          work_date: string
+        }
+        Insert: {
+          branch_id: string
+          break_hours?: number | null
+          created_at?: string
+          employee_id: string
+          first_check_in?: string | null
+          id?: string
+          last_check_out?: string | null
+          overtime_hours?: number | null
+          regular_hours?: number | null
+          session_count?: number | null
+          total_earnings?: number | null
+          total_hours?: number | null
+          updated_at?: string
+          work_date: string
+        }
+        Update: {
+          branch_id?: string
+          break_hours?: number | null
+          created_at?: string
+          employee_id?: string
+          first_check_in?: string | null
+          id?: string
+          last_check_out?: string | null
+          overtime_hours?: number | null
+          regular_hours?: number | null
+          session_count?: number | null
+          total_earnings?: number | null
+          total_hours?: number | null
+          updated_at?: string
+          work_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_daily_summaries_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employee_documents: {
         Row: {
           branch_id: string
@@ -147,6 +206,56 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "employee_documents_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employee_work_sessions: {
+        Row: {
+          branch_id: string
+          break_duration: number | null
+          check_in_time: string
+          check_out_time: string | null
+          created_at: string
+          employee_id: string
+          id: string
+          location: string | null
+          notes: string | null
+          session_type: string | null
+          updated_at: string
+        }
+        Insert: {
+          branch_id: string
+          break_duration?: number | null
+          check_in_time: string
+          check_out_time?: string | null
+          created_at?: string
+          employee_id: string
+          id?: string
+          location?: string | null
+          notes?: string | null
+          session_type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string
+          break_duration?: number | null
+          check_in_time?: string
+          check_out_time?: string | null
+          created_at?: string
+          employee_id?: string
+          id?: string
+          location?: string | null
+          notes?: string | null
+          session_type?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_work_sessions_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
             referencedRelation: "employees"
@@ -934,7 +1043,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      calculate_session_hours: {
+        Args: { break_minutes?: number; check_in: string; check_out: string }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
