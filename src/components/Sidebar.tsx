@@ -37,7 +37,8 @@ export const Sidebar = () => {
   const restaurantItems = [
     { to: "/menu", icon: FileText, label: "Menu" },
     { to: "/tables", icon: Users, label: "Tables" },
-    { to: "/orders", icon: ShoppingBag, label: "Orders" }
+    { to: "/orders", icon: ShoppingBag, label: "Orders" },
+    { to: "/inventory", icon: Package, label: "Inventory" }
   ];
 
   const hotelItems = [

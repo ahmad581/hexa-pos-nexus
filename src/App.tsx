@@ -23,6 +23,7 @@ import { Settings } from "./pages/Settings";
 import { Menu } from "./pages/businesses/restaurant/Menu";
 import { Tables } from "./pages/businesses/restaurant/Tables";
 import { Orders } from "./pages/businesses/restaurant/Orders";
+import RestaurantInventory from "./pages/businesses/restaurant/Inventory";
 
 // Hotel imports
 import { Rooms } from "./pages/hotel/Rooms";
@@ -127,8 +128,14 @@ const App = () => (
                         </BusinessRoute>
                       } />
                       <Route path="inventory" element={
-                        <BusinessRoute allowedBusinessTypes={['retail-store']}>
-                          <Inventory />
+                        <BusinessRoute allowedBusinessTypes={['retail-store', 'restaurant']}>
+                          {/* Use RestaurantInventory for restaurants, regular Inventory for retail */}
+                          <BusinessRoute allowedBusinessTypes={['restaurant']}>
+                            <RestaurantInventory />
+                          </BusinessRoute>
+                          <BusinessRoute allowedBusinessTypes={['retail-store']}>
+                            <Inventory />
+                          </BusinessRoute>
                         </BusinessRoute>
                       } />
                       
