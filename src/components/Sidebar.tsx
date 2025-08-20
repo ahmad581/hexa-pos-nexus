@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { FileText, LayoutDashboard, ListChecks, Settings, Users, ShoppingBag, File, Home, Hotel, ClipboardList, UserPlus, BarChartBig, Phone, Menu, ChevronLeft, Pill, Package, Calendar, Dumbbell, Car, Heart } from "lucide-react";
+import { FileText, LayoutDashboard, ListChecks, Settings, Users, ShoppingBag, File, Home, Hotel, ClipboardList, UserPlus, BarChartBig, Phone, Menu, ChevronLeft, Pill, Package, Calendar, Dumbbell, Car, Heart, Building } from "lucide-react";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -31,6 +31,7 @@ export const Sidebar = () => {
     { to: "/employees", icon: UserPlus, label: "Employees" },
     { to: "/analytics", icon: BarChartBig, label: "Analytics" },
     { to: "/call-center", icon: Phone, label: "Call Center" },
+    { to: "/business-management", icon: Building, label: "Business Management" },
     { to: "/settings", icon: Settings, label: "Settings" },
   ];
 

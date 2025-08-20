@@ -65,6 +65,33 @@ export type Database = {
         }
         Relationships: []
       }
+      available_features: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id: string
+          name: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       branches: {
         Row: {
           address: string
@@ -98,6 +125,81 @@ export type Database = {
           name?: string
           phone?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      business_features: {
+        Row: {
+          business_id: string | null
+          created_at: string | null
+          feature_id: string | null
+          id: string
+          is_enabled: boolean | null
+        }
+        Insert: {
+          business_id?: string | null
+          created_at?: string | null
+          feature_id?: string | null
+          id?: string
+          is_enabled?: boolean | null
+        }
+        Update: {
+          business_id?: string | null
+          created_at?: string | null
+          feature_id?: string | null
+          id?: string
+          is_enabled?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_features_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "custom_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_features_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "available_features"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      custom_businesses: {
+        Row: {
+          business_type: string
+          category: string
+          created_at: string | null
+          icon: string | null
+          id: string
+          name: string
+          terminology: Json
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          business_type: string
+          category: string
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          terminology?: Json
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          business_type?: string
+          category?: string
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          terminology?: Json
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
