@@ -1152,6 +1152,10 @@ export type Database = {
         Args: { break_minutes?: number; check_in: string; check_out: string }
         Returns: number
       }
+      is_super_admin: {
+        Args: { user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

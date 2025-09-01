@@ -4,7 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { BusinessTypeProvider } from "./contexts/BusinessTypeContext";
 import { BranchProvider } from "./contexts/BranchContext";
 import { OrderProvider } from "./contexts/OrderContext";
@@ -12,6 +12,7 @@ import { CallProvider } from "./contexts/CallContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { BusinessRoute } from "./components/BusinessRoute";
 import { Layout } from "./components/Layout";
+import { Auth } from "./pages/Auth";
 import { Login } from "./pages/Login";
 import { Dashboard } from "./pages/Dashboard";
 import { Employees } from "./pages/Employees";
@@ -57,6 +58,17 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+// Protected Route component for auth redirection
+const AuthRedirect = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated } = useAuth();
+  
+  if (!isAuthenticated) {
+    return <Auth />;
+  }
+  
+  return <>{children}</>;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -69,6 +81,7 @@ const App = () => (
               <CallProvider>
                 <BrowserRouter>
                   <Routes>
+                    <Route path="/auth" element={<Auth />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/" element={
                       <ProtectedRoute>

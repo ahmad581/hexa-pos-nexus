@@ -59,27 +59,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setBusinessType(getBusinessTypeFromEmail(session.user.email));
         }
       } else {
-        // Check localStorage and create demo user if needed
+        // Fallback to localStorage for existing sessions
         const authenticated = localStorage.getItem("isAuthenticated") === "true";
         const email = localStorage.getItem("userEmail");
-        const branchId = localStorage.getItem("userBranchId");
         
         if (authenticated && email) {
-          // Create demo user from localStorage
-          const demoUser = { 
-            id: `demo-${email.replace(/[^a-zA-Z0-9]/g, '-')}`, 
-            email,
-            user_metadata: {},
-            app_metadata: {}
-          } as User;
-          
-          setUser(demoUser);
           setIsAuthenticated(authenticated);
           setUserEmail(email);
-          setUserBranchId(branchId);
-          if (email) {
-            setBusinessType(getBusinessTypeFromEmail(email));
-          }
+          setBusinessType(getBusinessTypeFromEmail(email));
         }
       }
     });
@@ -93,6 +80,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (session.user.email) {
           setBusinessType(getBusinessTypeFromEmail(session.user.email));
         }
+        // Clear localStorage fallback
+        localStorage.removeItem("isAuthenticated");
+        localStorage.removeItem("userEmail");
+        localStorage.removeItem("businessType");
       } else {
         setUser(null);
         setIsAuthenticated(false);
@@ -108,52 +99,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const login = async (email: string) => {
     try {
-      // For demo purposes, sign in with magic link or create a temp user
+      // For production, use proper Supabase auth
       const { data, error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          shouldCreateUser: true
+          shouldCreateUser: true,
+          emailRedirectTo: window.location.origin
         }
       });
 
       if (error) {
-        // Fallback to localStorage for demo
-        const businessTypeFromEmail = getBusinessTypeFromEmail(email);
-        setIsAuthenticated(true);
-        setUserEmail(email);
-        setBusinessType(businessTypeFromEmail);
-        
-        // Create a mock user ID for demo
-        const mockUser = { 
-          id: `demo-${email.replace(/[^a-zA-Z0-9]/g, '-')}`, 
-          email,
-          user_metadata: {},
-          app_metadata: {}
-        } as User;
-        setUser(mockUser);
-        
-        localStorage.setItem("isAuthenticated", "true");
-        localStorage.setItem("userEmail", email);
-        localStorage.setItem("businessType", businessTypeFromEmail);
-        return;
+        console.error('Auth error:', error);
+        throw error;
       }
 
-      // If OTP was sent, create a demo session for immediate access
-      const demoUser = { 
-        id: `demo-${email.replace(/[^a-zA-Z0-9]/g, '-')}`, 
-        email,
-        user_metadata: {},
-        app_metadata: {}
-      } as User;
-      
-      setUser(demoUser);
-      setIsAuthenticated(true);
-      setUserEmail(email);
-      setBusinessType(getBusinessTypeFromEmail(email));
-      
-      localStorage.setItem("isAuthenticated", "true");
-      localStorage.setItem("userEmail", email);
-      localStorage.setItem("businessType", getBusinessTypeFromEmail(email));
+      // The auth state change will handle the rest
+      return;
     } catch (error) {
       console.error('Login error:', error);
       throw error;

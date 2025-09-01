@@ -216,7 +216,9 @@ export const BusinessTypeProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (businessType) {
       const businessTypeObj = businessTypes.find(bt => bt.id === businessType);
-      setSelectedBusinessType(businessTypeObj || businessTypes[0]);
+      setSelectedBusinessType(businessTypeObj || null);
+    } else {
+      setSelectedBusinessType(null);
     }
   }, [businessType, businessTypes]);
 
