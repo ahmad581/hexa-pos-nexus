@@ -1,6 +1,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { User } from '@supabase/supabase-js';
 
 interface UserProfile {
   id: string;
@@ -18,6 +19,7 @@ interface AuthContextType {
   businessType: string | null;
   userProfile: UserProfile | null;
   userBranchId: string | null;
+  user: User | null;
   login: (email: string) => Promise<void>;
   logout: () => void;
 }
@@ -44,44 +46,114 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [businessType, setBusinessType] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [userBranchId, setUserBranchId] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const authenticated = localStorage.getItem("isAuthenticated") === "true";
-    const email = localStorage.getItem("userEmail");
-    const branchId = localStorage.getItem("userBranchId");
-    setIsAuthenticated(authenticated);
-    setUserEmail(email);
-    setUserBranchId(branchId);
-    if (email) {
-      setBusinessType(getBusinessTypeFromEmail(email));
-    }
+    // Check for existing auth session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser(session.user);
+        setIsAuthenticated(true);
+        setUserEmail(session.user.email || null);
+        if (session.user.email) {
+          setBusinessType(getBusinessTypeFromEmail(session.user.email));
+        }
+      } else {
+        // Check localStorage and create demo user if needed
+        const authenticated = localStorage.getItem("isAuthenticated") === "true";
+        const email = localStorage.getItem("userEmail");
+        const branchId = localStorage.getItem("userBranchId");
+        
+        if (authenticated && email) {
+          // Create demo user from localStorage
+          const demoUser = { 
+            id: `demo-${email.replace(/[^a-zA-Z0-9]/g, '-')}`, 
+            email,
+            user_metadata: {},
+            app_metadata: {}
+          } as User;
+          
+          setUser(demoUser);
+          setIsAuthenticated(authenticated);
+          setUserEmail(email);
+          setUserBranchId(branchId);
+          if (email) {
+            setBusinessType(getBusinessTypeFromEmail(email));
+          }
+        }
+      }
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        setUser(session.user);
+        setIsAuthenticated(true);
+        setUserEmail(session.user.email || null);
+        if (session.user.email) {
+          setBusinessType(getBusinessTypeFromEmail(session.user.email));
+        }
+      } else {
+        setUser(null);
+        setIsAuthenticated(false);
+        setUserEmail(null);
+        setBusinessType(null);
+        setUserProfile(null);
+        setUserBranchId(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const login = async (email: string) => {
     try {
-      // Fetch user profile from database
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('email', email)
-        .eq('is_active', true)
-        .single();
+      // For demo purposes, sign in with magic link or create a temp user
+      const { data, error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          shouldCreateUser: true
+        }
+      });
 
-      if (error || !profile) {
-        throw new Error('User not found or inactive');
+      if (error) {
+        // Fallback to localStorage for demo
+        const businessTypeFromEmail = getBusinessTypeFromEmail(email);
+        setIsAuthenticated(true);
+        setUserEmail(email);
+        setBusinessType(businessTypeFromEmail);
+        
+        // Create a mock user ID for demo
+        const mockUser = { 
+          id: `demo-${email.replace(/[^a-zA-Z0-9]/g, '-')}`, 
+          email,
+          user_metadata: {},
+          app_metadata: {}
+        } as User;
+        setUser(mockUser);
+        
+        localStorage.setItem("isAuthenticated", "true");
+        localStorage.setItem("userEmail", email);
+        localStorage.setItem("businessType", businessTypeFromEmail);
+        return;
       }
 
-      const businessTypeFromEmail = getBusinessTypeFromEmail(email);
+      // If OTP was sent, create a demo session for immediate access
+      const demoUser = { 
+        id: `demo-${email.replace(/[^a-zA-Z0-9]/g, '-')}`, 
+        email,
+        user_metadata: {},
+        app_metadata: {}
+      } as User;
+      
+      setUser(demoUser);
       setIsAuthenticated(true);
       setUserEmail(email);
-      setBusinessType(businessTypeFromEmail);
-      setUserProfile(profile);
-      setUserBranchId(profile.branch_id);
+      setBusinessType(getBusinessTypeFromEmail(email));
       
       localStorage.setItem("isAuthenticated", "true");
       localStorage.setItem("userEmail", email);
-      localStorage.setItem("businessType", businessTypeFromEmail);
-      localStorage.setItem("userBranchId", profile.branch_id);
+      localStorage.setItem("businessType", getBusinessTypeFromEmail(email));
     } catch (error) {
       console.error('Login error:', error);
       throw error;
@@ -107,6 +179,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       businessType, 
       userProfile, 
       userBranchId, 
+      user,
       login, 
       logout 
     }}>

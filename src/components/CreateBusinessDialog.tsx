@@ -49,7 +49,7 @@ export const CreateBusinessDialog = ({ open, onOpenChange }: CreateBusinessDialo
   const [businessName, setBusinessName] = useState("");
   const [selectedType, setSelectedType] = useState("");
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
-  const { userProfile } = useAuth();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const { data: availableFeatures } = useQuery({
@@ -74,7 +74,7 @@ export const CreateBusinessDialog = ({ open, onOpenChange }: CreateBusinessDialo
       const { data: business, error: businessError } = await supabase
         .from('custom_businesses')
         .insert({
-          user_id: userProfile?.id,
+          user_id: user?.id,
           name: businessName,
           business_type: selectedType,
           icon: selectedBusinessType.icon,

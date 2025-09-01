@@ -28,7 +28,7 @@ interface CustomBusiness {
 
 export const BusinessManagement = () => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const { userProfile } = useAuth();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const { data: businesses, isLoading } = useQuery({
@@ -44,7 +44,7 @@ export const BusinessManagement = () => {
             )
           )
         `)
-        .eq('user_id', userProfile?.id);
+        .eq('user_id', user?.id);
 
       if (error) throw error;
 
@@ -53,7 +53,7 @@ export const BusinessManagement = () => {
         features: business.business_features?.map(bf => bf.available_features).filter(Boolean) || []
       })) as CustomBusiness[];
     },
-    enabled: !!userProfile?.id
+    enabled: !!user?.id
   });
 
   const deleteMutation = useMutation({
@@ -62,7 +62,7 @@ export const BusinessManagement = () => {
         .from('custom_businesses')
         .delete()
         .eq('id', businessId)
-        .eq('user_id', userProfile?.id);
+        .eq('user_id', user?.id);
 
       if (error) throw error;
     },
