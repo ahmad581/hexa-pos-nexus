@@ -161,9 +161,19 @@ export const Login = () => {
             </Button>
           </form>
           
-          <div className="text-center text-gray-400 text-sm">
+            <div className="text-center text-gray-400 text-sm">
             <p className="mb-4 text-lg font-medium text-white">Demo Employee Accounts</p>
             <p className="mb-4 text-gray-300">Password: demo123 for all accounts</p>
+            
+            <div className="mb-6">
+              <Button 
+                variant="outline" 
+                onClick={() => navigate('/auth')}
+                className="text-sm text-blue-400 border-blue-400 hover:bg-blue-400 hover:text-white"
+              >
+                Or try Magic Link Login
+              </Button>
+            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-80 overflow-y-auto">
               {employeeAccounts.map((account) => (
