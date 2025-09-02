@@ -15,8 +15,11 @@ export const Auth = () => {
   const [error, setError] = useState("");
   const { login, isAuthenticated } = useAuth();
 
+  console.log('Auth page: isAuthenticated =', isAuthenticated);
+
   // Redirect if already authenticated
   if (isAuthenticated) {
+    console.log('Auth page: Redirecting authenticated user to /');
     return <Navigate to="/" replace />;
   }
 

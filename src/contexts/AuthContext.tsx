@@ -49,9 +49,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
+    console.log('AuthProvider: Initializing auth state');
+    
     // Check for existing auth session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('AuthProvider: Initial session check', { session: !!session, user: !!session?.user });
+      
       if (session?.user) {
+        console.log('AuthProvider: Setting authenticated user', session.user.email);
         setUser(session.user);
         setIsAuthenticated(true);
         setUserEmail(session.user.email || null);
@@ -59,11 +64,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setBusinessType(getBusinessTypeFromEmail(session.user.email));
         }
       } else {
+        console.log('AuthProvider: No initial session found');
         // Fallback to localStorage for existing sessions
         const authenticated = localStorage.getItem("isAuthenticated") === "true";
         const email = localStorage.getItem("userEmail");
         
         if (authenticated && email) {
+          console.log('AuthProvider: Using localStorage fallback', email);
           setIsAuthenticated(authenticated);
           setUserEmail(email);
           setBusinessType(getBusinessTypeFromEmail(email));
@@ -73,7 +80,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('AuthProvider: Auth state change', { event, session: !!session, user: !!session?.user });
+      
       if (session?.user) {
+        console.log('AuthProvider: User authenticated via state change', session.user.email);
         setUser(session.user);
         setIsAuthenticated(true);
         setUserEmail(session.user.email || null);
@@ -85,6 +95,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         localStorage.removeItem("userEmail");
         localStorage.removeItem("businessType");
       } else {
+        console.log('AuthProvider: User signed out via state change');
         setUser(null);
         setIsAuthenticated(false);
         setUserEmail(null);
