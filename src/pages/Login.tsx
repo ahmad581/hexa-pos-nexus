@@ -15,7 +15,7 @@ export const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { login } = useAuth();
+  const { demoLogin } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,7 +60,7 @@ export const Login = () => {
 
       if (isValid) {
         try {
-          await login(email);
+          await demoLogin(email);
           toast({
             title: "Login Successful",
             description: "Welcome to BizHub POS!",
@@ -69,7 +69,7 @@ export const Login = () => {
         } catch (error) {
           toast({
             title: "Login Failed",
-            description: "User not found or inactive",
+            description: "Demo login failed",
             variant: "destructive",
           });
         }

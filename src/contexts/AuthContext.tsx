@@ -21,6 +21,7 @@ interface AuthContextType {
   userBranchId: string | null;
   user: User | null;
   login: (email: string) => Promise<void>;
+  demoLogin: (email: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -132,6 +133,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const demoLogin = async (email: string) => {
+    try {
+      console.log('AuthProvider: Demo login for', email);
+      // Set authentication state directly for demo accounts
+      setIsAuthenticated(true);
+      setUserEmail(email);
+      setBusinessType(getBusinessTypeFromEmail(email));
+      
+      // Store in localStorage as fallback
+      localStorage.setItem("isAuthenticated", "true");
+      localStorage.setItem("userEmail", email);
+      localStorage.setItem("businessType", getBusinessTypeFromEmail(email));
+      
+      console.log('AuthProvider: Demo login successful for', email);
+    } catch (error) {
+      console.error('Demo login error:', error);
+      throw error;
+    }
+  };
+
   const logout = async () => {
     await supabase.auth.signOut();
     setIsAuthenticated(false);
@@ -155,6 +176,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       userBranchId, 
       user,
       login, 
+      demoLogin,
       logout 
     }}>
       {children}
