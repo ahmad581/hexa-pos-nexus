@@ -21,7 +21,7 @@ interface AuthContextType {
   userBranchId: string | null;
   user: User | null;
   login: (email: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -104,7 +104,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         email,
         options: {
           shouldCreateUser: true,
-          emailRedirectTo: window.location.origin
+          emailRedirectTo: `${window.location.origin}/`
         }
       });
 
@@ -121,12 +121,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     setIsAuthenticated(false);
     setUserEmail(null);
     setBusinessType(null);
     setUserProfile(null);
     setUserBranchId(null);
+    setUser(null);
     localStorage.removeItem("isAuthenticated");
     localStorage.removeItem("userEmail");
     localStorage.removeItem("businessType");
