@@ -129,6 +129,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setIsAuthenticated(authenticated);
           setUserEmail(email);
           setBusinessType(getBusinessTypeFromEmail(email));
+          
+          // Also restore branch ID from localStorage
+          const storedBranchId = localStorage.getItem("userBranchId");
+          if (storedBranchId) {
+            setUserBranchId(storedBranchId);
+          }
         }
       }
     });
@@ -198,10 +204,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUserEmail(email);
       setBusinessType(getBusinessTypeFromEmail(email));
       
+      // Set a default branch ID for demo accounts
+      const defaultBranchId = 'demo-branch-1';
+      setUserBranchId(defaultBranchId);
+      
+      // Set a mock user profile for demo accounts
+      const mockProfile: UserProfile = {
+        id: 'demo-user-id',
+        email: email,
+        first_name: 'Demo',
+        last_name: 'User',
+        branch_id: defaultBranchId,
+        primary_role: 'Manager',
+        is_active: true
+      };
+      setUserProfile(mockProfile);
+      setPrimaryRole('Manager');
+      
       // Store in localStorage as fallback
       localStorage.setItem("isAuthenticated", "true");
       localStorage.setItem("userEmail", email);
       localStorage.setItem("businessType", getBusinessTypeFromEmail(email));
+      localStorage.setItem("userBranchId", defaultBranchId);
       
       console.log('AuthProvider: Demo login successful for', email);
     } catch (error) {
