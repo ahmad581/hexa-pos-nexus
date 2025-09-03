@@ -1,8 +1,9 @@
 
 import { useState } from "react";
-import { FileText, LayoutDashboard, ListChecks, Settings, Users, ShoppingBag, File, Home, Hotel, ClipboardList, UserPlus, BarChartBig, Phone, Menu, ChevronLeft, Pill, Package, Calendar, Dumbbell, Car, Heart, Building } from "lucide-react";
+import { FileText, LayoutDashboard, ListChecks, Settings, Users, ShoppingBag, File, Home, Hotel, ClipboardList, UserPlus, BarChartBig, Phone, Menu, ChevronLeft, Pill, Package, Calendar, Dumbbell, Car, Heart, Building, Shield } from "lucide-react";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRole } from "@/hooks/useRole";
 import {
   Sheet,
   SheetContent,
@@ -22,6 +23,7 @@ interface NavItem {
 export const Sidebar = () => {
   const { selectedBusinessType } = useBusinessType();
   const { logout } = useAuth();
+  const { canManageUsers } = useRole();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
@@ -32,6 +34,7 @@ export const Sidebar = () => {
     { to: "/analytics", icon: BarChartBig, label: "Analytics" },
     { to: "/call-center", icon: Phone, label: "Call Center" },
     { to: "/business-management", icon: Building, label: "Business Management" },
+    ...(canManageUsers() ? [{ to: "/role-management", icon: Shield, label: "Role Management" }] : []),
     { to: "/settings", icon: Settings, label: "Settings" },
   ];
 

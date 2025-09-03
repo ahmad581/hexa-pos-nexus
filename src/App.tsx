@@ -20,6 +20,7 @@ import { Analytics } from "./pages/Analytics";
 import { CallCenter } from "./pages/CallCenter";
 import { Settings } from "./pages/Settings";
 import { BusinessManagement } from "./pages/BusinessManagement";
+import { RoleManagement } from "./pages/RoleManagement";
 
 // Restaurant imports
 import { Menu } from "./pages/businesses/restaurant/Menu";
@@ -93,6 +94,7 @@ const App = () => (
                       <Route path="analytics" element={<Analytics />} />
                       <Route path="call-center" element={<CallCenter />} />
                       <Route path="business-management" element={<BusinessManagement />} />
+                      <Route path="role-management" element={<RoleManagement />} />
                       <Route path="settings" element={<Settings />} />
                       
                       {/* Restaurant routes */}

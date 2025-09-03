@@ -3,13 +3,22 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from '@supabase/supabase-js';
 
+type UserRole = 'SuperManager' | 'Manager' | 'Cashier' | 'HallManager' | 'HrManager' | 'CallCenterEmp' | 'Employee';
+
 interface UserProfile {
   id: string;
   email: string;
   first_name: string | null;
   last_name: string | null;
   branch_id: string;
-  role: string;
+  primary_role: UserRole | null;
+  is_active: boolean;
+}
+
+interface UserRoleInfo {
+  id: string;
+  role: UserRole;
+  branch_id: string | null;
   is_active: boolean;
 }
 
@@ -20,6 +29,9 @@ interface AuthContextType {
   userProfile: UserProfile | null;
   userBranchId: string | null;
   user: User | null;
+  userRoles: UserRoleInfo[];
+  primaryRole: UserRole | null;
+  hasRole: (role: UserRole, branchId?: string) => boolean;
   login: (email: string) => Promise<void>;
   demoLogin: (email: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -48,6 +60,47 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [userBranchId, setUserBranchId] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [userRoles, setUserRoles] = useState<UserRoleInfo[]>([]);
+  const [primaryRole, setPrimaryRole] = useState<UserRole | null>(null);
+
+  // Fetch user profile and roles
+  const fetchUserData = async (userId: string) => {
+    try {
+      // Fetch user profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (profile) {
+        setUserProfile(profile);
+        setUserBranchId(profile.branch_id);
+        setPrimaryRole(profile.primary_role);
+      }
+
+      // Fetch user roles
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('is_active', true);
+
+      if (roles) {
+        setUserRoles(roles);
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    }
+  };
+
+  const hasRole = (role: UserRole, branchId?: string): boolean => {
+    return userRoles.some(userRole => 
+      userRole.role === role && 
+      userRole.is_active &&
+      (!branchId || userRole.branch_id === branchId || userRole.branch_id === null)
+    );
+  };
 
   useEffect(() => {
     console.log('AuthProvider: Initializing auth state');
@@ -64,6 +117,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (session.user.email) {
           setBusinessType(getBusinessTypeFromEmail(session.user.email));
         }
+        fetchUserData(session.user.id);
       } else {
         console.log('AuthProvider: No initial session found');
         // Fallback to localStorage for existing sessions
@@ -91,6 +145,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (session.user.email) {
           setBusinessType(getBusinessTypeFromEmail(session.user.email));
         }
+        fetchUserData(session.user.id);
         // Clear localStorage fallback
         localStorage.removeItem("isAuthenticated");
         localStorage.removeItem("userEmail");
@@ -103,6 +158,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setBusinessType(null);
         setUserProfile(null);
         setUserBranchId(null);
+        setUserRoles([]);
+        setPrimaryRole(null);
       }
     });
 
@@ -175,6 +232,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       userProfile, 
       userBranchId, 
       user,
+      userRoles,
+      primaryRole,
+      hasRole,
       login, 
       demoLogin,
       logout 

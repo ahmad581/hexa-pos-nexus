@@ -919,7 +919,9 @@ export type Database = {
           is_active: boolean | null
           is_super_admin: boolean | null
           last_name: string | null
+          primary_role: Database["public"]["Enums"]["app_role"] | null
           role: string | null
+          role_updated_at: string | null
           updated_at: string | null
           user_id: string | null
         }
@@ -932,7 +934,9 @@ export type Database = {
           is_active?: boolean | null
           is_super_admin?: boolean | null
           last_name?: string | null
+          primary_role?: Database["public"]["Enums"]["app_role"] | null
           role?: string | null
+          role_updated_at?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
@@ -945,7 +949,9 @@ export type Database = {
           is_active?: boolean | null
           is_super_admin?: boolean | null
           last_name?: string | null
+          primary_role?: Database["public"]["Enums"]["app_role"] | null
           role?: string | null
+          role_updated_at?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
@@ -1110,6 +1116,50 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          branch_id: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          branch_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          branch_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       warehouses: {
         Row: {
           address: string
@@ -1152,13 +1202,39 @@ export type Database = {
         Args: { break_minutes?: number; check_in: string; check_out: string }
         Returns: number
       }
+      get_user_primary_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      has_role_in_branch: {
+        Args: {
+          _branch_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       is_super_admin: {
         Args: { user_id: string }
         Returns: boolean
       }
     }
     Enums: {
-      [_ in never]: never
+      app_role:
+        | "SuperManager"
+        | "Manager"
+        | "Cashier"
+        | "HallManager"
+        | "HrManager"
+        | "CallCenterEmp"
+        | "Employee"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1285,6 +1361,16 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: [
+        "SuperManager",
+        "Manager",
+        "Cashier",
+        "HallManager",
+        "HrManager",
+        "CallCenterEmp",
+        "Employee",
+      ],
+    },
   },
 } as const

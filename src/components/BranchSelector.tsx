@@ -25,7 +25,7 @@ export const BranchSelector = () => {
           {userBranch ? userBranch.name : `${branchLabel} ${userBranchId}`}
         </span>
         <Badge variant="outline" className="text-xs">
-          {userProfile?.role || 'Employee'}
+          {userProfile?.primary_role || 'Employee'}
         </Badge>
       </div>
     </div>
