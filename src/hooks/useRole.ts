@@ -1,9 +1,9 @@
 import { useAuth } from "@/contexts/AuthContext";
 
-type UserRole = 'SuperManager' | 'Manager' | 'Cashier' | 'HallManager' | 'HrManager' | 'CallCenterEmp' | 'Employee';
+type UserRole = 'SystemMaster' | 'SuperManager' | 'Manager' | 'Cashier' | 'HallManager' | 'HrManager' | 'CallCenterEmp' | 'Employee';
 
 export const useRole = () => {
-  const { hasRole, primaryRole, userRoles } = useAuth();
+  const { primaryRole, userRoles, hasRole } = useAuth();
 
   const checkRole = (role: UserRole, branchId?: string): boolean => {
     return hasRole(role, branchId);
@@ -13,38 +13,55 @@ export const useRole = () => {
     return roles.some(role => hasRole(role, branchId));
   };
 
-  const isSuperManager = (): boolean => hasRole('SuperManager');
-  const isManager = (branchId?: string): boolean => hasRole('Manager', branchId);
-  const isHrManager = (branchId?: string): boolean => hasRole('HrManager', branchId);
-  const isHallManager = (branchId?: string): boolean => hasRole('HallManager', branchId);
-  const isCashier = (branchId?: string): boolean => hasRole('Cashier', branchId);
-  const isCallCenterEmp = (branchId?: string): boolean => hasRole('CallCenterEmp', branchId);
-  const isEmployee = (branchId?: string): boolean => hasRole('Employee', branchId);
+  // Individual role checks
+  const isSystemMaster = (): boolean => checkRole('SystemMaster');
+  const isSuperManager = (branchId?: string): boolean => checkRole('SuperManager', branchId);
+  const isManager = (branchId?: string): boolean => checkRole('Manager', branchId);
+  const isCashier = (branchId?: string): boolean => checkRole('Cashier', branchId);
+  const isHallManager = (branchId?: string): boolean => checkRole('HallManager', branchId);
+  const isHrManager = (branchId?: string): boolean => checkRole('HrManager', branchId);
+  const isCallCenterEmp = (branchId?: string): boolean => checkRole('CallCenterEmp', branchId);
+  const isEmployee = (branchId?: string): boolean => checkRole('Employee', branchId);
 
-  // Check if user can manage other users (SuperManager, Manager, HrManager)
+  // Permission-based checks
+  const canAccessBusinessManagement = (): boolean => {
+    return isSystemMaster();
+  };
+
   const canManageUsers = (branchId?: string): boolean => {
-    return isSuperManager() || isManager(branchId) || isHrManager(branchId);
+    return isSystemMaster() || checkMultipleRoles(['SuperManager', 'Manager', 'HrManager'], branchId);
   };
 
-  // Check if user can view analytics (SuperManager, Manager)
   const canViewAnalytics = (branchId?: string): boolean => {
-    return isSuperManager() || isManager(branchId);
+    return isSystemMaster() || checkMultipleRoles(['SuperManager'], branchId);
   };
 
-  // Check if user can manage inventory (SuperManager, Manager, HallManager)
   const canManageInventory = (branchId?: string): boolean => {
-    return isSuperManager() || isManager(branchId) || isHallManager(branchId);
+    return isSystemMaster() || checkMultipleRoles(['SuperManager', 'Manager', 'HallManager'], branchId);
   };
 
-  // Check if user can handle orders (everyone except CallCenterEmp for direct orders)
+  const canAccessMenu = (branchId?: string): boolean => {
+    return isSystemMaster() || checkMultipleRoles(['SuperManager', 'Manager', 'Cashier', 'HallManager', 'CallCenterEmp'], branchId);
+  };
+
   const canHandleOrders = (branchId?: string): boolean => {
-    return isSuperManager() || isManager(branchId) || isCashier(branchId) || 
-           isHallManager(branchId) || isEmployee(branchId);
+    return isSystemMaster() || checkMultipleRoles(['SuperManager', 'Manager', 'Cashier', 'CallCenterEmp'], branchId);
   };
 
-  // Check if user can handle calls (SuperManager, Manager, CallCenterEmp)
+  const canAccessTables = (branchId?: string): boolean => {
+    return isSystemMaster() || checkMultipleRoles(['SuperManager', 'Manager', 'Cashier', 'HallManager', 'CallCenterEmp'], branchId);
+  };
+
   const canHandleCalls = (branchId?: string): boolean => {
-    return isSuperManager() || isManager(branchId) || isCallCenterEmp(branchId);
+    return isSystemMaster() || checkMultipleRoles(['SuperManager', 'Manager', 'CallCenterEmp'], branchId);
+  };
+
+  const canAccessEmployees = (branchId?: string): boolean => {
+    return isSystemMaster() || checkMultipleRoles(['SuperManager', 'Manager', 'HrManager'], branchId);
+  };
+
+  const canOnlyCheckInOut = (branchId?: string): boolean => {
+    return isEmployee(branchId) && !checkMultipleRoles(['SystemMaster', 'SuperManager', 'Manager', 'Cashier', 'HallManager', 'HrManager', 'CallCenterEmp'], branchId);
   };
 
   return {
@@ -52,17 +69,23 @@ export const useRole = () => {
     userRoles,
     checkRole,
     checkMultipleRoles,
+    isSystemMaster,
     isSuperManager,
     isManager,
-    isHrManager,
-    isHallManager,
     isCashier,
+    isHallManager,
+    isHrManager,
     isCallCenterEmp,
     isEmployee,
+    canAccessBusinessManagement,
     canManageUsers,
     canViewAnalytics,
     canManageInventory,
+    canAccessMenu,
     canHandleOrders,
-    canHandleCalls
+    canAccessTables,
+    canHandleCalls,
+    canAccessEmployees,
+    canOnlyCheckInOut,
   };
 };

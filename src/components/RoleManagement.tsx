@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Users, Shield, Plus } from "lucide-react";
 
-type UserRole = 'SuperManager' | 'Manager' | 'Cashier' | 'HallManager' | 'HrManager' | 'CallCenterEmp' | 'Employee';
+type UserRole = 'SystemMaster' | 'SuperManager' | 'Manager' | 'Cashier' | 'HallManager' | 'HrManager' | 'CallCenterEmp' | 'Employee';
 
 interface UserWithRoles {
   id: string;
@@ -25,6 +25,7 @@ interface UserWithRoles {
 }
 
 const ROLE_HIERARCHY: Record<UserRole, number> = {
+  'SystemMaster': 0,
   'SuperManager': 1,
   'Manager': 2,
   'HrManager': 3,
@@ -35,13 +36,14 @@ const ROLE_HIERARCHY: Record<UserRole, number> = {
 };
 
 const ROLE_COLORS: Record<UserRole, string> = {
-  'SuperManager': 'bg-red-100 text-red-800',
-  'Manager': 'bg-blue-100 text-blue-800',
-  'HrManager': 'bg-purple-100 text-purple-800',
-  'HallManager': 'bg-green-100 text-green-800',
-  'CallCenterEmp': 'bg-orange-100 text-orange-800',
-  'Cashier': 'bg-yellow-100 text-yellow-800',
-  'Employee': 'bg-gray-100 text-gray-800',
+  'SystemMaster': 'bg-purple-100 text-purple-800 border-purple-200',
+  'SuperManager': 'bg-red-100 text-red-800 border-red-200',
+  'Manager': 'bg-blue-100 text-blue-800 border-blue-200',
+  'HrManager': 'bg-indigo-100 text-indigo-800 border-indigo-200',
+  'HallManager': 'bg-green-100 text-green-800 border-green-200',
+  'CallCenterEmp': 'bg-orange-100 text-orange-800 border-orange-200',
+  'Cashier': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+  'Employee': 'bg-gray-100 text-gray-800 border-gray-200',
 };
 
 export const RoleManagement = () => {
@@ -54,7 +56,7 @@ export const RoleManagement = () => {
   const { toast } = useToast();
 
   // Check permissions
-  const canManageRoles = hasRole('SuperManager') || hasRole('Manager') || hasRole('HrManager');
+  const canManageRoles = hasRole('SystemMaster') || hasRole('SuperManager') || hasRole('Manager') || hasRole('HrManager');
 
   useEffect(() => {
     if (canManageRoles) {
@@ -218,11 +220,14 @@ export const RoleManagement = () => {
                 <SelectItem value="CallCenterEmp">Call Center Employee</SelectItem>
                 <SelectItem value="HallManager">Hall Manager</SelectItem>
                 <SelectItem value="HrManager">HR Manager</SelectItem>
-                {hasRole('SuperManager') && (
+                {(hasRole('SuperManager') || hasRole('SystemMaster')) && (
                   <SelectItem value="Manager">Manager</SelectItem>
                 )}
-                {hasRole('SuperManager') && (
+                {hasRole('SystemMaster') && (
                   <SelectItem value="SuperManager">Super Manager</SelectItem>
+                )}
+                {hasRole('SystemMaster') && (
+                  <SelectItem value="SystemMaster">System Master</SelectItem>
                 )}
               </SelectContent>
             </Select>
@@ -279,7 +284,9 @@ export const RoleManagement = () => {
                               {role.role}
                               {role.branch_id && ` (${role.branch_id})`}
                             </Badge>
-                            {(hasRole('SuperManager') || (hasRole('Manager') && ROLE_HIERARCHY[role.role] > ROLE_HIERARCHY['Manager'])) && (
+                            {(hasRole('SystemMaster') || 
+                              (hasRole('SuperManager') && ROLE_HIERARCHY[role.role] > ROLE_HIERARCHY['SuperManager']) ||
+                              (hasRole('Manager') && ROLE_HIERARCHY[role.role] > ROLE_HIERARCHY['Manager'])) && (
                               <Button
                                 size="sm"
                                 variant="ghost"

@@ -13,11 +13,15 @@ export const RoleManagement = () => {
     canViewAnalytics, 
     canManageInventory,
     canHandleOrders,
-    canHandleCalls 
+    canHandleCalls,
+    canAccessBusinessManagement,
+    canAccessMenu,
+    canAccessTables,
+    canAccessEmployees
   } = useRole();
 
   return (
-    <RoleBasedRoute allowedRoles={['SuperManager', 'Manager', 'HrManager']}>
+    <RoleBasedRoute allowedRoles={['SystemMaster', 'SuperManager', 'Manager', 'HrManager']}>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -74,6 +78,13 @@ export const RoleManagement = () => {
                 </div>
               </div>
 
+              <div className={`p-3 rounded-lg border ${canAccessBusinessManagement() ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
+                <Shield className={`h-5 w-5 mb-2 ${canAccessBusinessManagement() ? 'text-green-600' : 'text-gray-400'}`} />
+                <div className="text-sm font-medium">Business Management</div>
+                <div className="text-xs text-muted-foreground">
+                  {canAccessBusinessManagement() ? 'Allowed' : 'Not Allowed'}
+                </div>
+              </div>
               <div className={`p-3 rounded-lg border ${canHandleCalls() ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
                 <Users className={`h-5 w-5 mb-2 ${canHandleCalls() ? 'text-green-600' : 'text-gray-400'}`} />
                 <div className="text-sm font-medium">Handle Calls</div>
@@ -96,48 +107,54 @@ export const RoleManagement = () => {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-3">
+                <div className="border-l-4 border-purple-500 pl-4">
+                  <h4 className="font-semibold text-purple-700">SystemMaster</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Complete system access, can manage all businesses and assign any role
+                  </p>
+                </div>
                 <div className="border-l-4 border-red-500 pl-4">
                   <h4 className="font-semibold text-red-700">SuperManager</h4>
                   <p className="text-sm text-muted-foreground">
-                    Full system access, can manage all branches and assign any role
+                    Full business access, can manage all features except business management and cross-business access
                   </p>
                 </div>
                 <div className="border-l-4 border-blue-500 pl-4">
                   <h4 className="font-semibold text-blue-700">Manager</h4>
                   <p className="text-sm text-muted-foreground">
-                    Branch management, can assign most roles within their branch
+                    Most features access, cannot view analytics or manage businesses
                   </p>
                 </div>
                 <div className="border-l-4 border-purple-500 pl-4">
                   <h4 className="font-semibold text-purple-700">HR Manager</h4>
                   <p className="text-sm text-muted-foreground">
-                    Employee management, can assign basic roles and manage staff
-                  </p>
-                </div>
-                <div className="border-l-4 border-green-500 pl-4">
-                  <h4 className="font-semibold text-green-700">Hall Manager</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Floor operations, inventory management, and staff coordination
+                    Employee management only
                   </p>
                 </div>
               </div>
               <div className="space-y-3">
+                <div className="border-l-4 border-green-500 pl-4">
+                  <h4 className="font-semibold text-green-700">Hall Manager</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Menu and tables access, inventory management
+                  </p>
+                </div>
                 <div className="border-l-4 border-orange-500 pl-4">
                   <h4 className="font-semibold text-orange-700">Call Center Employee</h4>
                   <p className="text-sm text-muted-foreground">
-                    Handle customer calls, phone orders, and customer service
+                    Menu, orders, tables, and call center access
                   </p>
                 </div>
                 <div className="border-l-4 border-yellow-500 pl-4">
                   <h4 className="font-semibold text-yellow-700">Cashier</h4>
                   <p className="text-sm text-muted-foreground">
-                    Process transactions, handle POS operations
+                    Menu, orders, and tables access
                   </p>
                 </div>
                 <div className="border-l-4 border-gray-500 pl-4">
                   <h4 className="font-semibold text-gray-700">Employee</h4>
                   <p className="text-sm text-muted-foreground">
-                    Basic access to assigned tasks and daily operations
+                    Check-in/check-out only
                   </p>
                 </div>
               </div>
