@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogIn } from "lucide-react";
+import { LogIn, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -165,13 +165,21 @@ export const Login = () => {
             <p className="mb-4 text-lg font-medium text-white">Demo Employee Accounts</p>
             <p className="mb-4 text-gray-300">Password: demo123 for all accounts</p>
             
-            <div className="mb-6">
+            <div className="mb-6 space-y-2">
               <Button 
                 variant="outline" 
                 onClick={() => navigate('/auth')}
-                className="text-sm text-blue-400 border-blue-400 hover:bg-blue-400 hover:text-white"
+                className="text-sm text-blue-400 border-blue-400 hover:bg-blue-400 hover:text-white w-full"
               >
                 Or try Magic Link Login
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => navigate('/auth?master=true')}
+                className="text-sm text-purple-400 border-purple-400 hover:bg-purple-400 hover:text-white w-full"
+              >
+                <Crown className="mr-2 h-4 w-4" />
+                Log in as a Master
               </Button>
             </div>
             

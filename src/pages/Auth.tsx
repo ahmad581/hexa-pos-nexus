@@ -5,19 +5,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, LogIn, Building2 } from "lucide-react";
+import { Loader2, LogIn, Building2, Crown } from "lucide-react";
 import { toast } from "sonner";
-import { Navigate } from "react-router-dom";
+import { Navigate, useSearchParams } from "react-router-dom";
 
 export const Auth = () => {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const { login, isAuthenticated } = useAuth();
+  const [searchParams] = useSearchParams();
+  const isMasterLogin = searchParams.get('master') === 'true';
 
   // Redirect if already authenticated
   if (isAuthenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={isMasterLogin ? "/system-master" : "/"} replace />;
   }
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -28,6 +30,13 @@ export const Auth = () => {
     setError("");
 
     try {
+      // Validate SystemMaster email if this is a master login
+      if (isMasterLogin && !email.includes('systemmaster')) {
+        setError("Only SystemMaster accounts can use this login method.");
+        setIsLoading(false);
+        return;
+      }
+      
       await login(email);
       toast.success("Magic link sent! Check your email to complete login.");
     } catch (error: any) {
@@ -42,12 +51,23 @@ export const Auth = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/20 via-background to-secondary/20">
       <Card className="w-full max-w-md mx-4">
         <CardHeader className="space-y-1 text-center">
-          <div className="mx-auto w-12 h-12 bg-primary rounded-lg flex items-center justify-center mb-4">
-            <Building2 className="w-6 h-6 text-primary-foreground" />
+          <div className={`mx-auto w-12 h-12 rounded-lg flex items-center justify-center mb-4 ${
+            isMasterLogin ? 'bg-purple-600' : 'bg-primary'
+          }`}>
+            {isMasterLogin ? (
+              <Crown className="w-6 h-6 text-white" />
+            ) : (
+              <Building2 className="w-6 h-6 text-primary-foreground" />
+            )}
           </div>
-          <CardTitle className="text-2xl font-bold">Welcome to BizHub</CardTitle>
+          <CardTitle className="text-2xl font-bold">
+            {isMasterLogin ? 'SystemMaster Login' : 'Welcome to BizHub'}
+          </CardTitle>
           <CardDescription>
-            Enter your email to access your business management dashboard
+            {isMasterLogin 
+              ? 'Enter your SystemMaster email to access the master dashboard'
+              : 'Enter your email to access your business management dashboard'
+            }
           </CardDescription>
         </CardHeader>
         <CardContent>

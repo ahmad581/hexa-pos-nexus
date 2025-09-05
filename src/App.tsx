@@ -21,6 +21,7 @@ import { CallCenter } from "./pages/CallCenter";
 import { Settings } from "./pages/Settings";
 import { BusinessManagement } from "./pages/BusinessManagement";
 import { RoleManagement } from "./pages/RoleManagement";
+import { SystemMasterDashboard } from "./pages/SystemMasterDashboard";
 
 // Restaurant imports
 import { Menu } from "./pages/businesses/restaurant/Menu";
@@ -84,6 +85,11 @@ const App = () => (
                   <Routes>
                     <Route path="/auth" element={<Auth />} />
                     <Route path="/login" element={<Login />} />
+                    <Route path="/system-master" element={
+                      <ProtectedRoute>
+                        <SystemMasterDashboard />
+                      </ProtectedRoute>
+                    } />
                     <Route path="/" element={
                       <ProtectedRoute>
                         <Layout />
