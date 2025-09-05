@@ -132,17 +132,18 @@ export const Login = () => {
         return;
       }
 
-      // If validation passes, send magic link
-      await login(masterEmail);
+      // If validation passes, use demo login for SystemMaster
+      await demoLogin(masterEmail);
       
       toast({
-        title: "Magic Link Sent",
-        description: "Check your email to complete SystemMaster login.",
+        title: "Login Successful",
+        description: "Welcome to SystemMaster Dashboard!",
       });
 
       setMasterDialogOpen(false);
       setMasterEmail("");
       setMasterError("");
+      navigate("/system-master");
     } catch (error: any) {
       console.error('SystemMaster login error:', error);
       setMasterError(error.message || "Failed to process login. Please try again.");
@@ -234,14 +235,6 @@ export const Login = () => {
             <p className="mb-4 text-gray-300">Password: demo123 for all accounts</p>
             
             <div className="mb-6 space-y-2">
-              <Button 
-                variant="outline" 
-                onClick={() => navigate('/auth')}
-                className="text-sm text-blue-400 border-blue-400 hover:bg-blue-400 hover:text-white w-full"
-              >
-                Or try Magic Link Login
-              </Button>
-              
               <Dialog open={masterDialogOpen} onOpenChange={setMasterDialogOpen}>
                 <DialogTrigger asChild>
                   <Button 
@@ -259,7 +252,7 @@ export const Login = () => {
                       SystemMaster Login
                     </DialogTitle>
                     <DialogDescription>
-                      Enter your SystemMaster email address to verify access and receive a magic link.
+                      Enter your SystemMaster email address to verify access and login.
                     </DialogDescription>
                   </DialogHeader>
                   

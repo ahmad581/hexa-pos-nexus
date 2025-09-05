@@ -10,9 +10,9 @@ import { BranchProvider } from "./contexts/BranchContext";
 import { OrderProvider } from "./contexts/OrderContext";
 import { CallProvider } from "./contexts/CallContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { RoleBasedRoute } from "./components/RoleBasedRoute";
 import { BusinessRoute } from "./components/BusinessRoute";
 import { Layout } from "./components/Layout";
-import { Auth } from "./pages/Auth";
 import { Login } from "./pages/Login";
 import { Dashboard } from "./pages/Dashboard";
 import { Employees } from "./pages/Employees";
@@ -65,7 +65,7 @@ const AuthRedirect = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated } = useAuth();
   
   if (!isAuthenticated) {
-    return <Auth />;
+    return <Login />;
   }
   
   return <>{children}</>;
@@ -83,12 +83,11 @@ const App = () => (
               <CallProvider>
                 <BrowserRouter>
                   <Routes>
-                    <Route path="/auth" element={<Auth />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/system-master" element={
-                      <ProtectedRoute>
+                      <RoleBasedRoute allowedRoles={['SystemMaster']}>
                         <SystemMasterDashboard />
-                      </ProtectedRoute>
+                      </RoleBasedRoute>
                     } />
                     <Route path="/" element={
                       <ProtectedRoute>
