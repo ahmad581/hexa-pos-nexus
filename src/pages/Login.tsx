@@ -1,21 +1,28 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogIn, Crown } from "lucide-react";
+import { LogIn, Crown, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [masterDialogOpen, setMasterDialogOpen] = useState(false);
+  const [masterEmail, setMasterEmail] = useState("");
+  const [masterLoading, setMasterLoading] = useState(false);
+  const [masterError, setMasterError] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { demoLogin } = useAuth();
+  const { demoLogin, login } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,6 +94,67 @@ export const Login = () => {
   const fillCredentials = (businessEmail: string) => {
     setEmail(businessEmail);
     setPassword("demo123");
+  };
+
+  const handleMasterLogin = async () => {
+    if (!masterEmail) {
+      setMasterError("Please enter your email address");
+      return;
+    }
+
+    setMasterLoading(true);
+    setMasterError("");
+
+    try {
+      // Check if the email exists in profiles and has SystemMaster role
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('email, primary_role')
+        .eq('email', masterEmail)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error('Profile lookup error:', profileError);
+        setMasterError("Error validating email. Please try again.");
+        setMasterLoading(false);
+        return;
+      }
+
+      if (!profile) {
+        setMasterError("Email not found in the system.");
+        setMasterLoading(false);
+        return;
+      }
+
+      if (profile.primary_role !== 'SystemMaster') {
+        setMasterError("This email is not authorized for SystemMaster access.");
+        setMasterLoading(false);
+        return;
+      }
+
+      // If validation passes, send magic link
+      await login(masterEmail);
+      
+      toast({
+        title: "Magic Link Sent",
+        description: "Check your email to complete SystemMaster login.",
+      });
+
+      setMasterDialogOpen(false);
+      setMasterEmail("");
+      setMasterError("");
+    } catch (error: any) {
+      console.error('SystemMaster login error:', error);
+      setMasterError(error.message || "Failed to process login. Please try again.");
+    } finally {
+      setMasterLoading(false);
+    }
+  };
+
+  const handleMasterDialogClose = () => {
+    setMasterDialogOpen(false);
+    setMasterEmail("");
+    setMasterError("");
   };
 
   const employeeAccounts = [
@@ -173,14 +241,74 @@ export const Login = () => {
               >
                 Or try Magic Link Login
               </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => navigate('/auth?master=true')}
-                className="text-sm text-purple-400 border-purple-400 hover:bg-purple-400 hover:text-white w-full"
-              >
-                <Crown className="mr-2 h-4 w-4" />
-                Log in as a Master
-              </Button>
+              
+              <Dialog open={masterDialogOpen} onOpenChange={setMasterDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="text-sm text-purple-400 border-purple-400 hover:bg-purple-400 hover:text-white w-full"
+                  >
+                    <Crown className="mr-2 h-4 w-4" />
+                    Log in as a Master
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <Crown className="w-5 h-5 text-purple-600" />
+                      SystemMaster Login
+                    </DialogTitle>
+                    <DialogDescription>
+                      Enter your SystemMaster email address to verify access and receive a magic link.
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  <div className="grid gap-4 py-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="master-email">Email Address</Label>
+                      <Input
+                        id="master-email"
+                        type="email"
+                        placeholder="systemmaster@bizhub.com"
+                        value={masterEmail}
+                        onChange={(e) => setMasterEmail(e.target.value)}
+                        className="col-span-3"
+                        disabled={masterLoading}
+                      />
+                    </div>
+                    
+                    {masterError && (
+                      <Alert variant="destructive">
+                        <AlertDescription>{masterError}</AlertDescription>
+                      </Alert>
+                    )}
+                  </div>
+                  
+                  <DialogFooter className="gap-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={handleMasterDialogClose}
+                      disabled={masterLoading}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={handleMasterLogin}
+                      disabled={masterLoading || !masterEmail}
+                      className="bg-purple-600 hover:bg-purple-700"
+                    >
+                      {masterLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Verifying...
+                        </>
+                      ) : (
+                        "Next"
+                      )}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-80 overflow-y-auto">
