@@ -199,33 +199,60 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const demoLogin = async (email: string) => {
     try {
       console.log('AuthProvider: Demo login for', email);
-      // Set authentication state directly for demo accounts
+      
+      // First, try to fetch the actual user profile from the database
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('email', email)
+        .single();
+
+      if (profile) {
+        // User exists in database, use their actual data
+        console.log('AuthProvider: Found existing profile for', email, 'with role:', profile.primary_role);
+        setUserProfile(profile);
+        setUserBranchId(profile.branch_id);
+        setPrimaryRole(profile.primary_role);
+        
+        // Fetch user roles
+        const { data: roles } = await supabase
+          .from('user_roles')
+          .select('*')
+          .eq('user_id', profile.user_id)
+          .eq('is_active', true);
+
+        if (roles) {
+          setUserRoles(roles);
+        }
+      } else {
+        // Fallback to demo profile for non-existing users
+        console.log('AuthProvider: Creating demo profile for', email);
+        const defaultBranchId = 'demo-branch-1';
+        setUserBranchId(defaultBranchId);
+        
+        const mockProfile: UserProfile = {
+          id: 'demo-user-id',
+          email: email,
+          first_name: 'Demo',
+          last_name: 'User',
+          branch_id: defaultBranchId,
+          primary_role: 'Manager',
+          is_active: true
+        };
+        setUserProfile(mockProfile);
+        setPrimaryRole('Manager');
+      }
+      
+      // Set authentication state
       setIsAuthenticated(true);
       setUserEmail(email);
       setBusinessType(getBusinessTypeFromEmail(email));
-      
-      // Set a default branch ID for demo accounts
-      const defaultBranchId = 'demo-branch-1';
-      setUserBranchId(defaultBranchId);
-      
-      // Set a mock user profile for demo accounts
-      const mockProfile: UserProfile = {
-        id: 'demo-user-id',
-        email: email,
-        first_name: 'Demo',
-        last_name: 'User',
-        branch_id: defaultBranchId,
-        primary_role: 'Manager',
-        is_active: true
-      };
-      setUserProfile(mockProfile);
-      setPrimaryRole('Manager');
       
       // Store in localStorage as fallback
       localStorage.setItem("isAuthenticated", "true");
       localStorage.setItem("userEmail", email);
       localStorage.setItem("businessType", getBusinessTypeFromEmail(email));
-      localStorage.setItem("userBranchId", defaultBranchId);
+      localStorage.setItem("userBranchId", profile?.branch_id || 'demo-branch-1');
       
       console.log('AuthProvider: Demo login successful for', email);
     } catch (error) {
