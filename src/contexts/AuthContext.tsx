@@ -95,6 +95,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const hasRole = (role: UserRole, branchId?: string): boolean => {
+    // Check primary role first
+    if (primaryRole === role) {
+      return true;
+    }
+    
+    // Then check user roles array
     return userRoles.some(userRole => 
       userRole.role === role && 
       userRole.is_active &&
