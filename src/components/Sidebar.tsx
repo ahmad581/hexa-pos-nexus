@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { FileText, LayoutDashboard, ListChecks, Settings, Users, ShoppingBag, File, Home, Hotel, ClipboardList, UserPlus, BarChartBig, Phone, Menu, ChevronLeft, Pill, Package, Calendar, Dumbbell, Car, Heart, Building, Shield } from "lucide-react";
+import { FileText, LayoutDashboard, ListChecks, Settings, Users, ShoppingBag, File, Home, Hotel, ClipboardList, UserPlus, BarChartBig, Phone, Menu, ChevronLeft, Pill, Package, Calendar, Dumbbell, Car, Heart, Building, Shield, Crown } from "lucide-react";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRole } from "@/hooks/useRole";
@@ -33,7 +33,8 @@ export const Sidebar = () => {
     canAccessTables,
     canHandleOrders,
     canManageInventory,
-    canOnlyCheckInOut
+    canOnlyCheckInOut,
+    isSystemMaster
   } = useRole();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -152,6 +153,7 @@ export const Sidebar = () => {
 
   const filteredNavigationItems = [
     { to: "/", icon: LayoutDashboard, label: "Dashboard" },
+    ...(isSystemMaster() ? [{ to: "/system-master", icon: Crown, label: "SystemMaster Dashboard" }] : []),
     ...(canAccessEmployees() ? [{ to: "/employees", icon: UserPlus, label: "Employees" }] : []),
     ...(canViewAnalytics() ? [{ to: "/analytics", icon: BarChartBig, label: "Analytics" }] : []),
     ...(canHandleCalls() ? [{ to: "/call-center", icon: Phone, label: "Call Center" }] : []),
