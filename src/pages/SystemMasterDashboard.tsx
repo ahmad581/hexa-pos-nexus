@@ -10,8 +10,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Building2, Plus, Settings, Trash2, Users, BarChart3, Crown, Shield } from "lucide-react";
+import { Building2, Plus, Settings, Trash2, Users, BarChart3, Crown, Shield, LogOut } from "lucide-react";
 import { toast } from "sonner";
+import { BusinessManagement } from "@/pages/BusinessManagement";
+import { RoleManagement } from "@/components/RoleManagement";
 
 interface Client {
   id: string;
@@ -24,7 +26,7 @@ interface Client {
 }
 
 export const SystemMasterDashboard = () => {
-  const { userProfile, isAuthenticated } = useAuth();
+  const { userProfile, isAuthenticated, logout } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const queryClient = useQueryClient();
   
@@ -146,7 +148,13 @@ export const SystemMasterDashboard = () => {
           </p>
         </div>
         
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={logout} className="gap-2">
+            <LogOut className="w-4 h-4" />
+            Logout
+          </Button>
+          
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button className="gap-2">
               <Plus className="w-4 h-4" />
@@ -204,6 +212,7 @@ export const SystemMasterDashboard = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <Tabs defaultValue="clients" className="space-y-4">
@@ -216,9 +225,13 @@ export const SystemMasterDashboard = () => {
             <BarChart3 className="w-4 h-4" />
             System Analytics
           </TabsTrigger>
-          <TabsTrigger value="users" className="gap-2">
-            <Users className="w-4 h-4" />
-            User Management
+          <TabsTrigger value="business-management" className="gap-2">
+            <Building2 className="w-4 h-4" />
+            Business Management
+          </TabsTrigger>
+          <TabsTrigger value="role-management" className="gap-2">
+            <Shield className="w-4 h-4" />
+            Role Management
           </TabsTrigger>
         </TabsList>
 
@@ -342,21 +355,12 @@ export const SystemMasterDashboard = () => {
           </div>
         </TabsContent>
 
-        <TabsContent value="users" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>User Management</CardTitle>
-              <CardDescription>
-                Manage system users and their permissions
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                User management features will be available here. This includes managing SystemMaster accounts, 
-                client administrators, and system-wide permissions.
-              </p>
-            </CardContent>
-          </Card>
+        <TabsContent value="business-management" className="space-y-4">
+          <BusinessManagement />
+        </TabsContent>
+
+        <TabsContent value="role-management" className="space-y-4">
+          <RoleManagement />
         </TabsContent>
       </Tabs>
     </div>

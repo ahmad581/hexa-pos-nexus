@@ -19,8 +19,6 @@ import { Employees } from "./pages/Employees";
 import { Analytics } from "./pages/Analytics";
 import { CallCenter } from "./pages/CallCenter";
 import { Settings } from "./pages/Settings";
-import { BusinessManagement } from "./pages/BusinessManagement";
-import { RoleManagement } from "./pages/RoleManagement";
 import { SystemMasterDashboard } from "./pages/SystemMasterDashboard";
 
 // Restaurant imports
@@ -98,8 +96,6 @@ const App = () => (
                       <Route path="employees" element={<Employees />} />
                       <Route path="analytics" element={<Analytics />} />
                       <Route path="call-center" element={<CallCenter />} />
-                      <Route path="business-management" element={<BusinessManagement />} />
-                      <Route path="role-management" element={<RoleManagement />} />
                       <Route path="settings" element={<Settings />} />
                       
                       {/* Restaurant routes */}

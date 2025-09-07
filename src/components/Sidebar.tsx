@@ -157,8 +157,6 @@ export const Sidebar = () => {
     ...(canAccessEmployees() ? [{ to: "/employees", icon: UserPlus, label: "Employees" }] : []),
     ...(canViewAnalytics() ? [{ to: "/analytics", icon: BarChartBig, label: "Analytics" }] : []),
     ...(canHandleCalls() ? [{ to: "/call-center", icon: Phone, label: "Call Center" }] : []),
-    ...(canAccessBusinessManagement() ? [{ to: "/business-management", icon: Building, label: "Business Management" }] : []),
-    ...(canManageUsers() ? [{ to: "/role-management", icon: Shield, label: "Role Management" }] : []),
     { to: "/settings", icon: Settings, label: "Settings" },
   ];
 
