@@ -179,7 +179,7 @@ export const Sidebar = () => {
 
   const retailItems = [
     { to: "/products", icon: ShoppingBag, label: "Products" },
-    { to: "/inventory", icon: Package, label: "Inventory" }
+    { to: "/retail-inventory", icon: Package, label: "Inventory" }
   ];
 
   const clinicItems = [

@@ -145,15 +145,12 @@ const App = () => (
                           <Products />
                         </BusinessRoute>
                       } />
-                      <Route path="inventory" element={
-                        <BusinessRoute allowedBusinessTypes={['retail-store', 'restaurant']}>
-                          {/* Use RestaurantInventory for restaurants, regular Inventory for retail */}
-                          <BusinessRoute allowedBusinessTypes={['restaurant']}>
-                            <RestaurantInventory />
-                          </BusinessRoute>
-                          <BusinessRoute allowedBusinessTypes={['retail-store']}>
-                            <Inventory />
-                          </BusinessRoute>
+                      <Route path="inventory" element={<RestaurantInventory />} />
+                      
+                      {/* Retail inventory route */}
+                      <Route path="retail-inventory" element={
+                        <BusinessRoute allowedBusinessTypes={['retail-store']}>
+                          <Inventory />
                         </BusinessRoute>
                       } />
                       
