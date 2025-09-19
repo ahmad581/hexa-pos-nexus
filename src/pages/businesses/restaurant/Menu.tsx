@@ -226,8 +226,8 @@ export const Menu = () => {
 
       {/* Menu Content */}
       {menuDesign === 'simple' ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
+        <div className={currentOrder.length > 0 ? "grid grid-cols-1 lg:grid-cols-3 gap-6" : ""}>
+          <div className={currentOrder.length > 0 ? "lg:col-span-2" : ""}>
             <MenuSimple 
               menuItems={menuItems}
               categories={categories}
@@ -235,13 +235,15 @@ export const Menu = () => {
               isEditingOrder={isEditingOrder}
             />
           </div>
-          <div className="space-y-6">
-            <OrderSummary />
-          </div>
+          {currentOrder.length > 0 && (
+            <div className="space-y-6">
+              <OrderSummary />
+            </div>
+          )}
         </div>
       ) : (
         <>
-          <div className="lg:col-span-2">
+          <div className={currentOrder.length > 0 ? "lg:col-span-2" : ""}>
             <MenuModern 
               menuItems={menuItems}
               categories={categories}
@@ -249,9 +251,11 @@ export const Menu = () => {
               isEditingOrder={isEditingOrder}
             />
           </div>
-          <div className="space-y-6">
-            <OrderSummary />
-          </div>
+          {currentOrder.length > 0 && (
+            <div className="space-y-6">
+              <OrderSummary />
+            </div>
+          )}
         </>
       )}
     </div>
