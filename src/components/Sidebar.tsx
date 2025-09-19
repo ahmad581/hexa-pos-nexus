@@ -4,6 +4,7 @@ import { FileText, LayoutDashboard, ListChecks, Settings, Users, ShoppingBag, Fi
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRole } from "@/hooks/useRole";
+import { useTranslation } from "@/contexts/TranslationContext";
 import {
   Sheet,
   SheetContent,
@@ -23,6 +24,7 @@ interface NavItem {
 export const Sidebar = () => {
   const { selectedBusinessType } = useBusinessType();
   const { logout } = useAuth();
+  const { t } = useTranslation();
   const { 
     canManageUsers, 
     canViewAnalytics, 
@@ -43,8 +45,8 @@ export const Sidebar = () => {
   // For employees who can only check in/out, show minimal menu
   if (canOnlyCheckInOut()) {
     const employeeNavigationItems: NavItem[] = [
-      { to: "/", icon: LayoutDashboard, label: "Dashboard" },
-      { to: "/settings", icon: Settings, label: "Settings" },
+      { to: "/", icon: LayoutDashboard, label: t('nav.dashboard') },
+      { to: "/settings", icon: Settings, label: t('nav.settings') },
     ];
     
     return (
@@ -59,7 +61,7 @@ export const Sidebar = () => {
           </SheetTrigger>
           <SheetContent side="left" className="w-3/4 sm:w-60 bg-gray-900 text-white">
             <SheetHeader className="text-left">
-              <SheetTitle className="text-white">Menu</SheetTitle>
+              <SheetTitle className="text-white">{t('nav.menu')}</SheetTitle>
             </SheetHeader>
             <div className="py-4">
               {employeeNavigationItems.map((item) => (
@@ -83,7 +85,7 @@ export const Sidebar = () => {
               className="text-red-500 hover:bg-red-500/10 justify-start w-full"
               onClick={logout}
             >
-              Logout
+              {t('auth.logout')}
             </Button>
           </SheetContent>
         </Sheet>
@@ -141,9 +143,9 @@ export const Sidebar = () => {
                 isCollapsed ? 'px-2' : 'justify-start'
               }`}
               onClick={logout}
-              title={isCollapsed ? 'Logout' : undefined}
+              title={isCollapsed ? t('auth.logout') : undefined}
             >
-              {isCollapsed ? '⟲' : 'Logout'}
+              {isCollapsed ? '⟲' : t('auth.logout')}
             </Button>
           </div>
         </aside>
@@ -152,63 +154,63 @@ export const Sidebar = () => {
   }
 
   const filteredNavigationItems = [
-    { to: "/", icon: LayoutDashboard, label: "Dashboard" },
+    { to: "/", icon: LayoutDashboard, label: t('nav.dashboard') },
     ...(isSystemMaster() ? [{ to: "/system-master", icon: Crown, label: "SystemMaster Dashboard" }] : []),
-    ...(canAccessEmployees() ? [{ to: "/employees", icon: UserPlus, label: "Employees" }] : []),
-    ...(canViewAnalytics() ? [{ to: "/analytics", icon: BarChartBig, label: "Analytics" }] : []),
-    ...(canHandleCalls() ? [{ to: "/call-center", icon: Phone, label: "Call Center" }] : []),
-    { to: "/settings", icon: Settings, label: "Settings" },
+    ...(canAccessEmployees() ? [{ to: "/employees", icon: UserPlus, label: t('nav.employees') }] : []),
+    ...(canViewAnalytics() ? [{ to: "/analytics", icon: BarChartBig, label: t('nav.analytics') }] : []),
+    ...(canHandleCalls() ? [{ to: "/call-center", icon: Phone, label: t('nav.callCenter') }] : []),
+    { to: "/settings", icon: Settings, label: t('nav.settings') },
   ];
 
   const filteredRestaurantItems = [
-    ...(canAccessMenu() ? [{ to: "/menu", icon: FileText, label: "Menu" }] : []),
-    ...(canAccessTables() ? [{ to: "/tables", icon: Users, label: "Tables" }] : []),
-    ...(canHandleOrders() ? [{ to: "/orders", icon: ShoppingBag, label: "Orders" }] : []),
-    ...(canManageInventory() ? [{ to: "/inventory", icon: Package, label: "Inventory" }] : [])
+    ...(canAccessMenu() ? [{ to: "/menu", icon: FileText, label: t('nav.menu') }] : []),
+    ...(canAccessTables() ? [{ to: "/tables", icon: Users, label: t('nav.tables') }] : []),
+    ...(canHandleOrders() ? [{ to: "/orders", icon: ShoppingBag, label: t('nav.orders') }] : []),
+    ...(canManageInventory() ? [{ to: "/inventory", icon: Package, label: t('nav.inventory') }] : [])
   ];
 
   const hotelItems = [
-    { to: "/rooms", icon: Home, label: "Rooms" },
-    { to: "/hotel-services", icon: ListChecks, label: "Services" }
+    { to: "/rooms", icon: Home, label: t('nav.rooms') },
+    { to: "/hotel-services", icon: ListChecks, label: t('nav.services') }
   ];
 
   const salonItems = [
-    { to: "/appointments", icon: ClipboardList, label: "Appointments" },
-    { to: "/stylists", icon: Users, label: "Stylists" }
+    { to: "/appointments", icon: ClipboardList, label: t('nav.appointments') },
+    { to: "/stylists", icon: Users, label: t('nav.stylists') }
   ];
 
   const retailItems = [
-    { to: "/products", icon: ShoppingBag, label: "Products" },
-    { to: "/retail-inventory", icon: Package, label: "Inventory" }
+    { to: "/products", icon: ShoppingBag, label: t('nav.products') },
+    { to: "/retail-inventory", icon: Package, label: t('nav.inventory') }
   ];
 
   const clinicItems = [
     { to: "/patients", icon: Users, label: "Patients" },
-    { to: "/appointments", icon: ClipboardList, label: "Appointments" }
+    { to: "/appointments", icon: ClipboardList, label: t('nav.appointments') }
   ];
 
   const pharmacyItems = [
-    { to: "/prescriptions", icon: Pill, label: "Prescriptions" }
+    { to: "/prescriptions", icon: Pill, label: t('nav.prescriptions') }
   ];
 
   const groceryItems = [
-    { to: "/grocery-inventory", icon: Package, label: "Inventory" },
+    { to: "/grocery-inventory", icon: Package, label: t('nav.inventory') },
     { to: "/suppliers", icon: Users, label: "Suppliers" }
   ];
 
   const gymItems = [
-    { to: "/members", icon: Users, label: "Members" },
+    { to: "/members", icon: Users, label: t('nav.members') },
     { to: "/classes", icon: Calendar, label: "Classes" },
     { to: "/equipment", icon: Dumbbell, label: "Equipment" }
   ];
 
   const autoRepairItems = [
-    { to: "/auto-services", icon: Car, label: "Services" },
+    { to: "/auto-services", icon: Car, label: t('nav.services') },
     { to: "/vehicles", icon: Car, label: "Vehicles" }
   ];
 
   const petCareItems = [
-    { to: "/pet-appointments", icon: Calendar, label: "Appointments" },
+    { to: "/pet-appointments", icon: Calendar, label: t('nav.appointments') },
     { to: "/pets", icon: Heart, label: "Pets" }
   ];
 
@@ -255,7 +257,7 @@ export const Sidebar = () => {
         </SheetTrigger>
         <SheetContent side="left" className="w-3/4 sm:w-60 bg-gray-900 text-white">
           <SheetHeader className="text-left">
-            <SheetTitle className="text-white">Menu</SheetTitle>
+            <SheetTitle className="text-white">{t('nav.menu')}</SheetTitle>
           </SheetHeader>
           <div className="py-4">
             {filteredNavigationItems.map((item) => (
@@ -294,7 +296,7 @@ export const Sidebar = () => {
             className="text-red-500 hover:bg-red-500/10 justify-start w-full"
             onClick={logout}
           >
-            Logout
+            {t('auth.logout')}
           </Button>
         </SheetContent>
       </Sheet>

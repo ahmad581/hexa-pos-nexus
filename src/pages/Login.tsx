@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTranslation } from "@/contexts/TranslationContext";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Login = () => {
@@ -23,6 +24,7 @@ export const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { demoLogin, login } = useAuth();
+  const { t } = useTranslation();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,20 +71,20 @@ export const Login = () => {
         try {
           await demoLogin(email);
           toast({
-            title: "Login Successful",
+            title: t('auth.login') + " Successful",
             description: "Welcome to BizHub POS!",
           });
           navigate("/");
         } catch (error) {
           toast({
-            title: "Login Failed",
+            title: t('auth.login') + " Failed",
             description: "Demo login failed",
             variant: "destructive",
           });
         }
       } else {
         toast({
-          title: "Login Failed",
+          title: t('auth.login') + " Failed",
           description: "Invalid email or password",
           variant: "destructive",
         });
@@ -136,7 +138,7 @@ export const Login = () => {
       await demoLogin(masterEmail);
       
       toast({
-        title: "Login Successful",
+        title: t('auth.login') + " Successful",
         description: "Welcome to SystemMaster Dashboard!",
       });
 
@@ -189,7 +191,7 @@ export const Login = () => {
           
           <form onSubmit={handleLogin} className="space-y-6 mb-8">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-300">Email</Label>
+              <Label htmlFor="email" className="text-gray-300">{t('auth.username')}</Label>
               <Input
                 id="email"
                 type="email"
@@ -202,7 +204,7 @@ export const Login = () => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-gray-300">Password</Label>
+              <Label htmlFor="password" className="text-gray-300">{t('auth.password')}</Label>
               <Input
                 id="password"
                 type="password"
@@ -224,14 +226,14 @@ export const Login = () => {
               ) : (
                 <>
                   <LogIn className="mr-2" size={16} />
-                  Sign In
+                  {t('auth.login')}
                 </>
               )}
             </Button>
           </form>
           
             <div className="text-center text-gray-400 text-sm">
-            <p className="mb-4 text-lg font-medium text-white">Demo Employee Accounts</p>
+            <p className="mb-4 text-lg font-medium text-white">{t('auth.demoCredentials')}</p>
             <p className="mb-4 text-gray-300">Password: demo123 for all accounts</p>
             
             <div className="mb-6 space-y-2">
@@ -242,7 +244,7 @@ export const Login = () => {
                     className="text-sm text-purple-400 border-purple-400 hover:bg-purple-400 hover:text-white w-full"
                   >
                     <Crown className="mr-2 h-4 w-4" />
-                    Log in as a Master
+                    {t('auth.loginAsMaster')}
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md">
@@ -283,7 +285,7 @@ export const Login = () => {
                       onClick={handleMasterDialogClose}
                       disabled={masterLoading}
                     >
-                      Cancel
+                      {t('common.cancel')}
                     </Button>
                     <Button 
                       onClick={handleMasterLogin}

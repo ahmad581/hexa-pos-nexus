@@ -8,6 +8,7 @@ import { DollarSign, ShoppingBag, Users, TrendingUp, Download, Filter } from "lu
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { useBranch } from "@/contexts/BranchContext";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/contexts/TranslationContext";
 
 // Data type definitions
 type BaseDataItem = {
@@ -97,6 +98,7 @@ export const Dashboard = () => {
   const { selectedBusinessType } = useBusinessType();
   const { branches } = useBranch();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [selectedMetric, setSelectedMetric] = useState("sales");
   const [selectedProduct, setSelectedProduct] = useState("all");
   const [selectedBranch, setSelectedBranch] = useState("all");
@@ -165,8 +167,8 @@ export const Dashboard = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Dashboard</h1>
-          <p className="text-gray-400">Comprehensive business overview and analytics</p>
+          <h1 className="text-3xl font-bold text-white mb-2">{t('dashboard.title')}</h1>
+          <p className="text-gray-400">{t('dashboard.overview')}</p>
         </div>
         <Button onClick={exportReport} className="bg-green-600 hover:bg-green-700">
           <Download size={16} className="mr-2" />
@@ -234,7 +236,7 @@ export const Dashboard = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
-          title="Earnings"
+          title={t('dashboard.totalRevenue')}
           value="$12,234.99"
           change="+2.5%"
           changeType="increase"
@@ -242,7 +244,7 @@ export const Dashboard = () => {
           color="bg-green-500"
         />
         <StatCard
-          title="Number of Sales"
+          title={t('dashboard.totalOrders')}
           value="3,847"
           change="+1.8%"
           changeType="increase"
