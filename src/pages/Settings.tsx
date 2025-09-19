@@ -1,13 +1,18 @@
 
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
+import { useSettings } from "@/contexts/SettingsContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Settings as SettingsIcon, User, Bell, Shield, Database } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Settings as SettingsIcon, User, Bell, Shield, Database, Layout } from "lucide-react";
 
 export const Settings = () => {
+  const { menuDesign, setMenuDesign } = useSettings();
+
   return (
     <div className="space-y-6">
       <div>
@@ -173,8 +178,36 @@ export const Settings = () => {
           </div>
         </Card>
 
+        {/* Interface Settings */}
+        <Card className="bg-gray-800 border-gray-700 p-6">
+          <div className="flex items-center mb-4">
+            <Layout className="mr-2 text-orange-400" size={20} />
+            <h3 className="text-lg font-semibold text-white">Interface Settings</h3>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="menuDesign">Menu Design</Label>
+              <Select value={menuDesign} onValueChange={setMenuDesign}>
+                <SelectTrigger className="bg-gray-700 border-gray-600">
+                  <SelectValue placeholder="Select menu design" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-800 border-gray-700">
+                  <SelectItem value="modern">Modern Design</SelectItem>
+                  <SelectItem value="simple">Simple Design</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-gray-400 mt-1">
+                {menuDesign === "modern" 
+                  ? "Category-first navigation with modern card layout" 
+                  : "Split-screen design with categories at bottom"
+                }
+              </p>
+            </div>
+          </div>
+        </Card>
+
         {/* System Settings */}
-        <Card className="bg-gray-800 border-gray-700 p-6 lg:col-span-2">
+        <Card className="bg-gray-800 border-gray-700 p-6">
           <div className="flex items-center mb-4">
             <Database className="mr-2 text-purple-400" size={20} />
             <h3 className="text-lg font-semibold text-white">System Settings</h3>

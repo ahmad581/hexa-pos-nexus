@@ -1,15 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Plus, Minus, ShoppingCart, Search, Filter, Phone, PhoneOff } from "lucide-react";
+import { PhoneOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useOrder } from "@/contexts/OrderContext";
 import { useCall } from "@/contexts/CallContext";
 import { useToast } from "@/hooks/use-toast";
+import { useSettings } from "@/contexts/SettingsContext";
 import { OrderSummary } from "@/components/OrderSummary";
+import { MenuModern } from "./MenuModern";
+import { MenuSimple } from "./MenuSimple";
 
 interface MenuItem {
   id: string;
@@ -39,9 +38,8 @@ export const Menu = () => {
     removeItemFromOrder
   } = useOrder();
   const { toast } = useToast();
+  const { menuDesign } = useSettings();
   
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
   const [isEditingOrder, setIsEditingOrder] = useState(false);
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([
@@ -174,18 +172,11 @@ export const Menu = () => {
     });
   };
 
-  const filteredItems = menuItems.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === "all" || item.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
-
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Menu Items - Takes up 2 columns */}
-      <div className="lg:col-span-2 space-y-6">
-        <div className="flex justify-between items-center">
+    <div className={menuDesign === 'simple' ? 'space-y-6' : 'grid grid-cols-1 lg:grid-cols-3 gap-6'}>
+      {/* Header */}
+      <div className={menuDesign === 'simple' ? 'col-span-full' : 'lg:col-span-2'}>
+        <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-3xl font-bold text-white">
               {isEditingOrder ? `Edit Order #${editingOrderId}` : 'Menu'}
@@ -231,100 +222,38 @@ export const Menu = () => {
             )}
           </div>
         </div>
+      </div>
 
-        {/* Search and Filter Controls */}
-        <Card className="bg-gray-800 border-gray-700 p-6">
-          <div className="flex flex-wrap gap-4 items-center">
-            <div className="flex items-center space-x-2">
-              <Filter size={16} className="text-gray-400" />
-              <span className="text-white font-medium">Filters:</span>
-            </div>
-            
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-              <Input
-                placeholder="Search menu items..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-gray-700 border-gray-600"
-              />
-            </div>
-
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="w-48 bg-gray-700 border-gray-600">
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent className="bg-gray-800 border-gray-700">
-                {categories.map(category => (
-                  <SelectItem key={category.value} value={category.value}>
-                    {category.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      {/* Menu Content */}
+      {menuDesign === 'simple' ? (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <MenuSimple 
+              menuItems={menuItems}
+              categories={categories}
+              toggleSoldOut={toggleSoldOut}
+              isEditingOrder={isEditingOrder}
+            />
           </div>
-        </Card>
-
-        {/* Menu Items Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {filteredItems.map((item) => (
-            <Card key={item.id} className="bg-gray-800 border-gray-700 overflow-hidden">
-              <div className="p-6">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="text-lg font-semibold text-white">{item.name}</h3>
-                  <div className="flex gap-2">
-                    {item.soldOut && (
-                      <Badge className="bg-red-600 text-white">Sold Out</Badge>
-                    )}
-                    <Badge className={item.available ? "bg-green-600" : "bg-red-600"}>
-                      {item.available ? "Available" : "Unavailable"}
-                    </Badge>
-                  </div>
-                </div>
-                
-                <p className="text-gray-400 text-sm mb-4">{item.description}</p>
-                
-                <div className="flex justify-between items-center mb-4">
-                  <span className="text-2xl font-bold text-green-400">${item.price}</span>
-                </div>
-
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => addItemToOrder({ name: item.name, price: item.price })}
-                    disabled={!item.available || item.soldOut}
-                    className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600"
-                  >
-                    <Plus size={16} className="mr-2" />
-                    Add to Order
-                  </Button>
-                  
-                  {!isEditingOrder && (
-                    <Button
-                      onClick={() => toggleSoldOut(item.id)}
-                      variant="outline"
-                      size="sm"
-                      className={`${item.soldOut ? 'border-green-500 text-green-400' : 'border-red-500 text-red-400'}`}
-                    >
-                      {item.soldOut ? 'Mark Available' : 'Mark Sold Out'}
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </Card>
-          ))}
+          <div className="space-y-6">
+            <OrderSummary />
+          </div>
         </div>
-
-        {filteredItems.length === 0 && (
-          <Card className="bg-gray-800 border-gray-700 p-8 text-center">
-            <p className="text-gray-400">No menu items found matching your criteria.</p>
-          </Card>
-        )}
-      </div>
-
-      {/* Order Summary - Takes up 1 column */}
-      <div className="space-y-6">
-        <OrderSummary />
-      </div>
+      ) : (
+        <>
+          <div className="lg:col-span-2">
+            <MenuModern 
+              menuItems={menuItems}
+              categories={categories}
+              toggleSoldOut={toggleSoldOut}
+              isEditingOrder={isEditingOrder}
+            />
+          </div>
+          <div className="space-y-6">
+            <OrderSummary />
+          </div>
+        </>
+      )}
     </div>
   );
 };
