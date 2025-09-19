@@ -9,6 +9,7 @@ import { BranchProvider } from "./contexts/BranchContext";
 import { OrderProvider } from "./contexts/OrderContext";
 import { CallProvider } from "./contexts/CallContext";
 import { SettingsProvider } from "./contexts/SettingsContext";
+import { TranslationProvider } from "./contexts/TranslationContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { RoleBasedRoute } from "./components/RoleBasedRoute";
 import { BusinessRoute } from "./components/BusinessRoute";
@@ -78,8 +79,9 @@ const App = () => (
         <BusinessTypeProvider>
           <BranchProvider>
             <SettingsProvider>
-              <OrderProvider>
-                <CallProvider>
+              <TranslationProvider>
+                <OrderProvider>
+                  <CallProvider>
                   <BrowserRouter>
                     <Routes>
                       <Route path="/login" element={<Login />} />
@@ -193,8 +195,9 @@ const App = () => (
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </BrowserRouter>
-                </CallProvider>
-              </OrderProvider>
+                  </CallProvider>
+                </OrderProvider>
+              </TranslationProvider>
             </SettingsProvider>
           </BranchProvider>
         </BusinessTypeProvider>

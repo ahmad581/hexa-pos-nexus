@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useOrder } from "@/contexts/OrderContext";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/contexts/TranslationContext";
 
 interface MenuItem {
   id: string;
@@ -35,6 +36,8 @@ export const MenuSimple = ({ menuItems, categories, toggleSoldOut, isEditingOrde
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const { addItemToOrder } = useOrder();
+  const { toast } = useToast();
+  const { t } = useTranslation();
 
   const filteredItems = menuItems.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -43,7 +46,7 @@ export const MenuSimple = ({ menuItems, categories, toggleSoldOut, isEditingOrde
     return matchesSearch && matchesCategory;
   });
 
-  const selectedCategoryLabel = categories.find(cat => cat.value === selectedCategory)?.label || 'All Items';
+  const selectedCategoryLabel = categories.find(cat => cat.value === selectedCategory)?.label || t('menu.allItems');
 
   return (
     <div className="flex flex-col h-[calc(100vh-12rem)]">
@@ -60,7 +63,7 @@ export const MenuSimple = ({ menuItems, categories, toggleSoldOut, isEditingOrde
                       <h3 className="text-base font-semibold text-white truncate">{item.name}</h3>
                       <div className="flex gap-1 ml-2">
                         {item.soldOut && (
-                          <Badge className="bg-red-600 text-white text-xs">Sold Out</Badge>
+                          <Badge className="bg-red-600 text-white text-xs">{t('menu.soldOut')}</Badge>
                         )}
                       </div>
                     </div>
@@ -79,7 +82,7 @@ export const MenuSimple = ({ menuItems, categories, toggleSoldOut, isEditingOrde
                         className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-xs"
                       >
                         <Plus size={14} className="mr-1" />
-                        Add
+                        {t('common.add')}
                       </Button>
                       
                       {!isEditingOrder && (
@@ -100,7 +103,7 @@ export const MenuSimple = ({ menuItems, categories, toggleSoldOut, isEditingOrde
 
             {filteredItems.length === 0 && (
               <div className="flex items-center justify-center h-full">
-                <p className="text-gray-400">No items found matching your criteria.</p>
+                <p className="text-gray-400">{t('menu.noItemsFound')}</p>
               </div>
             )}
           </div>

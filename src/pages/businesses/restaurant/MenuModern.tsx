@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useOrder } from "@/contexts/OrderContext";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/contexts/TranslationContext";
 
 interface MenuItem {
   id: string;
@@ -36,6 +37,7 @@ export const MenuModern = ({ menuItems, categories, toggleSoldOut, isEditingOrde
   const [searchTerm, setSearchTerm] = useState("");
   const { addItemToOrder } = useOrder();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const handleCategorySelect = (categoryValue: string) => {
     setSelectedCategory(categoryValue);
@@ -59,8 +61,8 @@ export const MenuModern = ({ menuItems, categories, toggleSoldOut, isEditingOrde
     return (
       <div className="space-y-6">
         <div>
-          <h2 className="text-2xl font-bold text-white mb-2">Menu Categories</h2>
-          <p className="text-gray-400">Select a category to browse items</p>
+          <h2 className="text-2xl font-bold text-white mb-2">{t('menu.categories')}</h2>
+          <p className="text-gray-400">{t('menu.selectCategory')}</p>
         </div>
         
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -80,7 +82,7 @@ export const MenuModern = ({ menuItems, categories, toggleSoldOut, isEditingOrde
                     {category.value === 'mains' && '🍽️'}
                   </div>
                   <h3 className="text-lg font-semibold text-white mb-1">{category.label}</h3>
-                  <p className="text-sm text-gray-400">{itemCount} items</p>
+                  <p className="text-sm text-gray-400">{itemCount} {t('menu.items')}</p>
                 </div>
               </Card>
             );
@@ -91,11 +93,11 @@ export const MenuModern = ({ menuItems, categories, toggleSoldOut, isEditingOrde
             className="bg-gray-800 border-gray-700 hover:bg-gray-700 cursor-pointer transition-colors p-6"
             onClick={() => handleCategorySelect('all')}
           >
-            <div className="text-center">
-              <div className="text-4xl mb-3">📋</div>
-              <h3 className="text-lg font-semibold text-white mb-1">All Items</h3>
-              <p className="text-sm text-gray-400">{menuItems.length} items</p>
-            </div>
+              <div className="text-center">
+                <div className="text-4xl mb-3">📋</div>
+                <h3 className="text-lg font-semibold text-white mb-1">{t('menu.allItems')}</h3>
+                <p className="text-sm text-gray-400">{menuItems.length} {t('menu.items')}</p>
+              </div>
           </Card>
         </div>
       </div>
@@ -103,7 +105,7 @@ export const MenuModern = ({ menuItems, categories, toggleSoldOut, isEditingOrde
   }
 
   // Show items for selected category
-  const selectedCategoryLabel = categories.find(cat => cat.value === selectedCategory)?.label || 'All Items';
+  const selectedCategoryLabel = categories.find(cat => cat.value === selectedCategory)?.label || t('menu.allItems');
 
   return (
     <div className="space-y-6">
@@ -114,11 +116,11 @@ export const MenuModern = ({ menuItems, categories, toggleSoldOut, isEditingOrde
           className="border-gray-600 text-gray-300 hover:bg-gray-700"
         >
           <ArrowLeft size={16} className="mr-2" />
-          Back to Categories
+          {t('menu.backToCategories')}
         </Button>
         <div>
           <h2 className="text-2xl font-bold text-white">{selectedCategoryLabel}</h2>
-          <p className="text-gray-400">{filteredItems.length} items available</p>
+          <p className="text-gray-400">{filteredItems.length} {t('menu.itemsAvailable')}</p>
         </div>
       </div>
 
@@ -127,7 +129,7 @@ export const MenuModern = ({ menuItems, categories, toggleSoldOut, isEditingOrde
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
           <Input
-            placeholder="Search items in this category..."
+            placeholder={t('menu.searchInCategory')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10 bg-gray-700 border-gray-600"
@@ -144,10 +146,10 @@ export const MenuModern = ({ menuItems, categories, toggleSoldOut, isEditingOrde
                 <h3 className="text-lg font-semibold text-white">{item.name}</h3>
                 <div className="flex gap-2">
                   {item.soldOut && (
-                    <Badge className="bg-red-600 text-white">Sold Out</Badge>
+                    <Badge className="bg-red-600 text-white">{t('menu.soldOut')}</Badge>
                   )}
                   <Badge className={item.available ? "bg-green-600" : "bg-red-600"}>
-                    {item.available ? "Available" : "Unavailable"}
+                    {item.available ? t('menu.available') : t('menu.unavailable')}
                   </Badge>
                 </div>
               </div>
@@ -165,7 +167,7 @@ export const MenuModern = ({ menuItems, categories, toggleSoldOut, isEditingOrde
                   className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600"
                 >
                   <Plus size={16} className="mr-2" />
-                  Add to Order
+                  {t('menu.addToOrder')}
                 </Button>
                 
                 {!isEditingOrder && (
@@ -175,7 +177,7 @@ export const MenuModern = ({ menuItems, categories, toggleSoldOut, isEditingOrde
                     size="sm"
                     className={`${item.soldOut ? 'border-green-500 text-green-400' : 'border-red-500 text-red-400'}`}
                   >
-                    {item.soldOut ? 'Mark Available' : 'Mark Sold Out'}
+                    {item.soldOut ? t('menu.markAvailable') : t('menu.markSoldOut')}
                   </Button>
                 )}
               </div>
@@ -186,7 +188,7 @@ export const MenuModern = ({ menuItems, categories, toggleSoldOut, isEditingOrde
 
       {filteredItems.length === 0 && (
         <Card className="bg-gray-800 border-gray-700 p-8 text-center">
-          <p className="text-gray-400">No items found in this category.</p>
+          <p className="text-gray-400">{t('menu.noItemsFound')}</p>
         </Card>
       )}
     </div>

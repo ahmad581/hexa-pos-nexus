@@ -6,6 +6,7 @@ import { useOrder } from "@/contexts/OrderContext";
 import { useCall } from "@/contexts/CallContext";
 import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/contexts/SettingsContext";
+import { useTranslation } from "@/contexts/TranslationContext";
 import { OrderSummary } from "@/components/OrderSummary";
 import { MenuModern } from "./MenuModern";
 import { MenuSimple } from "./MenuSimple";
@@ -39,6 +40,7 @@ export const Menu = () => {
   } = useOrder();
   const { toast } = useToast();
   const { menuDesign } = useSettings();
+  const { t } = useTranslation();
   
   const [isEditingOrder, setIsEditingOrder] = useState(false);
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
@@ -82,11 +84,11 @@ export const Menu = () => {
   ]);
 
   const categories = [
-    { value: "all", label: "All Items" },
-    { value: "burgers", label: "Burgers" },
-    { value: "pizza", label: "Pizza" },
-    { value: "salads", label: "Salads" },
-    { value: "mains", label: "Main Courses" }
+    { value: "all", label: t('menu.allItems') },
+    { value: "burgers", label: t('category.burgers') },
+    { value: "pizza", label: t('category.pizza') },
+    { value: "salads", label: t('category.salads') },
+    { value: "mains", label: t('category.mains') }
   ];
 
   // Load order for editing if passed from Orders page
@@ -124,7 +126,7 @@ export const Menu = () => {
         });
       }, 100);
       
-      toast({ title: `Editing order #${editingOrder.id}` });
+      toast({ title: t('order.editOrder') + ` #${editingOrder.id}` });
     }
   }, [location.state]);
 
@@ -141,7 +143,7 @@ export const Menu = () => {
 
   const handleEndCall = () => {
     endCall();
-    toast({ title: "Call ended" });
+    toast({ title: t('order.endCall') });
     navigate("/call-center");
   };
 
@@ -154,7 +156,7 @@ export const Menu = () => {
 
   const handleSaveEdit = () => {
     // Here you would typically update the order in your backend/context
-    toast({ title: `Order #${editingOrderId} updated successfully!` });
+    toast({ title: t('order.saveChanges') + ` #${editingOrderId} ` + t('common.save') });
     setIsEditingOrder(false);
     setEditingOrderId(null);
     clearCurrentOrder();
@@ -175,52 +177,52 @@ export const Menu = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-white">
-            {isEditingOrder ? `Edit Order #${editingOrderId}` : 'Menu'}
-          </h1>
-          {isInCall && activeCallInfo && !isEditingOrder && (
-            <p className="text-green-400">
-              📞 Taking order for: {activeCallInfo.customerName} ({activeCallInfo.phoneNumber})
-            </p>
-          )}
-          {isEditingOrder && (
-            <p className="text-blue-400">
-              ✏️ Editing existing order - modify items and details
-            </p>
-          )}
-        </div>
-        <div className="flex gap-2">
-          {isEditingOrder && (
-            <>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-white">
+              {isEditingOrder ? `${t('order.editOrder')} #${editingOrderId}` : t('menu.title')}
+            </h1>
+            {isInCall && activeCallInfo && !isEditingOrder && (
+              <p className="text-green-400">
+                📞 {t('order.takingOrderFor')}: {activeCallInfo.customerName} ({activeCallInfo.phoneNumber})
+              </p>
+            )}
+            {isEditingOrder && (
+              <p className="text-blue-400">
+                ✏️ {t('order.editingExisting')}
+              </p>
+            )}
+          </div>
+          <div className="flex gap-2">
+            {isEditingOrder && (
+              <>
+                <Button
+                  onClick={handleCancelEdit}
+                  variant="outline"
+                  className="border-gray-600 text-gray-300"
+                >
+                  {t('order.cancelEdit')}
+                </Button>
+                <Button
+                  onClick={handleSaveEdit}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  {t('order.saveChanges')}
+                </Button>
+              </>
+            )}
+            {isInCall && !isEditingOrder && (
               <Button
-                onClick={handleCancelEdit}
+                onClick={handleEndCall}
                 variant="outline"
-                className="border-gray-600 text-gray-300"
+                className="border-red-500 text-red-400 hover:bg-red-500/10"
               >
-                Cancel Edit
+                <PhoneOff size={16} className="mr-2" />
+                {t('order.endCall')}
               </Button>
-              <Button
-                onClick={handleSaveEdit}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                Save Changes
-              </Button>
-            </>
-          )}
-          {isInCall && !isEditingOrder && (
-            <Button
-              onClick={handleEndCall}
-              variant="outline"
-              className="border-red-500 text-red-400 hover:bg-red-500/10"
-            >
-              <PhoneOff size={16} className="mr-2" />
-              End Call
-            </Button>
-          )}
+            )}
+          </div>
         </div>
-      </div>
 
       {/* Menu Content */}
       {menuDesign === 'simple' ? (

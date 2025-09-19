@@ -9,15 +9,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Settings as SettingsIcon, User, Bell, Shield, Database, Layout, Globe } from "lucide-react";
+import { useTranslation } from "@/contexts/TranslationContext";
 
 export const Settings = () => {
   const { menuDesign, setMenuDesign, language, setLanguage } = useSettings();
+  const { t } = useTranslation();
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-white mb-2">Settings</h1>
-        <p className="text-gray-400">Configure your POS system</p>
+        <h1 className="text-3xl font-bold text-white mb-2">{t('settings.title')}</h1>
+        <p className="text-gray-400">{t('settings.configure')}</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -25,7 +27,7 @@ export const Settings = () => {
         <Card className="bg-gray-800 border-gray-700 p-6">
           <div className="flex items-center mb-4">
             <SettingsIcon className="mr-2 text-blue-400" size={20} />
-            <h3 className="text-lg font-semibold text-white">General Settings</h3>
+            <h3 className="text-lg font-semibold text-white">{t('settings.general')}</h3>
           </div>
           <div className="space-y-4">
             <div>
@@ -182,42 +184,42 @@ export const Settings = () => {
         <Card className="bg-gray-800 border-gray-700 p-6">
           <div className="flex items-center mb-4">
             <Layout className="mr-2 text-orange-400" size={20} />
-            <h3 className="text-lg font-semibold text-white">Interface Settings</h3>
+            <h3 className="text-lg font-semibold text-white">{t('settings.interface')}</h3>
           </div>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="menuDesign">Menu Design</Label>
+              <Label htmlFor="menuDesign">{t('settings.menuDesign')}</Label>
               <Select value={menuDesign} onValueChange={setMenuDesign}>
                 <SelectTrigger className="bg-gray-700 border-gray-600">
                   <SelectValue placeholder="Select menu design" />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-800 border-gray-700">
-                  <SelectItem value="modern">Modern Design</SelectItem>
-                  <SelectItem value="simple">Simple Design</SelectItem>
+                  <SelectItem value="modern">{t('settings.modernDesign')}</SelectItem>
+                  <SelectItem value="simple">{t('settings.simpleDesign')}</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-sm text-gray-400 mt-1">
                 {menuDesign === "modern" 
-                  ? "Category-first navigation with modern card layout" 
-                  : "Split-screen design with categories at bottom"
+                  ? t('settings.modernDesc')
+                  : t('settings.simpleDesc')
                 }
               </p>
             </div>
             <div>
-              <Label htmlFor="language">Language</Label>
+              <Label htmlFor="language">{t('settings.language')}</Label>
               <Select value={language} onValueChange={setLanguage}>
                 <SelectTrigger className="bg-gray-700 border-gray-600">
                   <SelectValue placeholder="Select language" />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-800 border-gray-700">
                   <SelectItem value="en">🇺🇸 English</SelectItem>
-                  <SelectItem value="ar">🇸🇦 Arabic</SelectItem>
+                  <SelectItem value="ar">🇸🇦 العربية</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-sm text-gray-400 mt-1">
                 {language === "ar" 
-                  ? "العربية - واجهة من اليمين إلى اليسار" 
-                  : "English - Left to right interface"
+                  ? t('settings.arabicDesc')
+                  : t('settings.englishDesc')
                 }
               </p>
             </div>
@@ -296,7 +298,7 @@ export const Settings = () => {
       {/* Save Button */}
       <div className="flex justify-end">
         <Button className="bg-green-600 hover:bg-green-700 px-8">
-          Save All Settings
+          {t('settings.saveAll')}
         </Button>
       </div>
     </div>
