@@ -52,8 +52,8 @@ export const CreateBusinessDialog = ({ open, onOpenChange }: CreateBusinessDialo
   const { user, userProfile, isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
 
-  // Check both authentication and SystemMaster role
-  const isSystemMaster = userProfile?.primary_role === 'SystemMaster';
+  // Check both authentication and SystemMaster role or specific email
+  const isSystemMaster = userProfile?.primary_role === 'SystemMaster' || user?.email === 'ahmadalodat530@gmail.com';
   const canCreateBusiness = isAuthenticated && user?.id && isSystemMaster;
 
   useEffect(() => {
@@ -85,7 +85,6 @@ export const CreateBusinessDialog = ({ open, onOpenChange }: CreateBusinessDialo
       if (!isAuthenticated || !user?.id) {
         throw new Error("You must be logged in to create a business");
       }
-      
       if (!isSystemMaster) {
         throw new Error("Only SystemMaster accounts can create businesses");
       }

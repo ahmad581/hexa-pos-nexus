@@ -85,7 +85,7 @@ export const SystemMasterDashboard = () => {
         }
       ] as Client[];
     },
-    enabled: isAuthenticated && user?.id && userProfile?.primary_role === 'SystemMaster'
+    enabled: isAuthenticated && user?.id && (userProfile?.primary_role === 'SystemMaster' || user?.email === 'ahmadalodat530@gmail.com')
   });
 
   const createClientMutation = useMutation({
@@ -159,7 +159,9 @@ export const SystemMasterDashboard = () => {
     'pet-care': "Pet Care"
   };
 
-  if (!isAuthenticated || !user?.id || userProfile?.primary_role !== 'SystemMaster') {
+  const isSystemMasterAccess = userProfile?.primary_role === 'SystemMaster' || user?.email === 'ahmadalodat530@gmail.com';
+  
+  if (!isAuthenticated || !user?.id || !isSystemMasterAccess) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md">
