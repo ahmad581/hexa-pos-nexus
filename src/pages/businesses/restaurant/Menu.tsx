@@ -173,54 +173,52 @@ export const Menu = () => {
   };
 
   return (
-    <div className={menuDesign === 'simple' ? 'space-y-6' : 'grid grid-cols-1 lg:grid-cols-3 gap-6'}>
+    <div className="space-y-6">
       {/* Header */}
-      <div className={menuDesign === 'simple' ? 'col-span-full' : 'lg:col-span-2'}>
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-white">
-              {isEditingOrder ? `Edit Order #${editingOrderId}` : 'Menu'}
-            </h1>
-            {isInCall && activeCallInfo && !isEditingOrder && (
-              <p className="text-green-400">
-                📞 Taking order for: {activeCallInfo.customerName} ({activeCallInfo.phoneNumber})
-              </p>
-            )}
-            {isEditingOrder && (
-              <p className="text-blue-400">
-                ✏️ Editing existing order - modify items and details
-              </p>
-            )}
-          </div>
-          <div className="flex gap-2">
-            {isEditingOrder && (
-              <>
-                <Button
-                  onClick={handleCancelEdit}
-                  variant="outline"
-                  className="border-gray-600 text-gray-300"
-                >
-                  Cancel Edit
-                </Button>
-                <Button
-                  onClick={handleSaveEdit}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  Save Changes
-                </Button>
-              </>
-            )}
-            {isInCall && !isEditingOrder && (
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-white">
+            {isEditingOrder ? `Edit Order #${editingOrderId}` : 'Menu'}
+          </h1>
+          {isInCall && activeCallInfo && !isEditingOrder && (
+            <p className="text-green-400">
+              📞 Taking order for: {activeCallInfo.customerName} ({activeCallInfo.phoneNumber})
+            </p>
+          )}
+          {isEditingOrder && (
+            <p className="text-blue-400">
+              ✏️ Editing existing order - modify items and details
+            </p>
+          )}
+        </div>
+        <div className="flex gap-2">
+          {isEditingOrder && (
+            <>
               <Button
-                onClick={handleEndCall}
+                onClick={handleCancelEdit}
                 variant="outline"
-                className="border-red-500 text-red-400 hover:bg-red-500/10"
+                className="border-gray-600 text-gray-300"
               >
-                <PhoneOff size={16} className="mr-2" />
-                End Call
+                Cancel Edit
               </Button>
-            )}
-          </div>
+              <Button
+                onClick={handleSaveEdit}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                Save Changes
+              </Button>
+            </>
+          )}
+          {isInCall && !isEditingOrder && (
+            <Button
+              onClick={handleEndCall}
+              variant="outline"
+              className="border-red-500 text-red-400 hover:bg-red-500/10"
+            >
+              <PhoneOff size={16} className="mr-2" />
+              End Call
+            </Button>
+          )}
         </div>
       </div>
 
@@ -242,7 +240,7 @@ export const Menu = () => {
           )}
         </div>
       ) : (
-        <>
+        <div className={currentOrder.length > 0 ? "grid grid-cols-1 lg:grid-cols-3 gap-6" : ""}>
           <div className={currentOrder.length > 0 ? "lg:col-span-2" : ""}>
             <MenuModern 
               menuItems={menuItems}
@@ -256,7 +254,7 @@ export const Menu = () => {
               <OrderSummary />
             </div>
           )}
-        </>
+        </div>
       )}
     </div>
   );
