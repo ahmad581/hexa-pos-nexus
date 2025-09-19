@@ -49,17 +49,22 @@ export const CreateBusinessDialog = ({ open, onOpenChange }: CreateBusinessDialo
   const [businessName, setBusinessName] = useState("");
   const [selectedType, setSelectedType] = useState("");
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
 
-  // Check SystemMaster role
+  // Check both authentication and SystemMaster role
   const isSystemMaster = userProfile?.primary_role === 'SystemMaster';
+  const canCreateBusiness = isAuthenticated && user?.id && isSystemMaster;
 
   useEffect(() => {
-    if (open && !isSystemMaster) {
-      toast.error("Only SystemMaster accounts can create businesses");
+    if (open) {
+      if (!isAuthenticated || !user?.id) {
+        toast.error("You must be logged in to create businesses");
+      } else if (!isSystemMaster) {
+        toast.error("Only SystemMaster accounts can create businesses");
+      }
     }
-  }, [open, isSystemMaster]);
+  }, [open, isAuthenticated, user?.id, isSystemMaster]);
 
   const { data: availableFeatures } = useQuery({
     queryKey: ['available-features'],
@@ -71,11 +76,16 @@ export const CreateBusinessDialog = ({ open, onOpenChange }: CreateBusinessDialo
 
       if (error) throw error;
       return data as AvailableFeature[];
-    }
+    },
+    enabled: isAuthenticated && !!user?.id // Only fetch when authenticated
   });
 
   const createMutation = useMutation({
     mutationFn: async () => {
+      if (!isAuthenticated || !user?.id) {
+        throw new Error("You must be logged in to create a business");
+      }
+      
       if (!isSystemMaster) {
         throw new Error("Only SystemMaster accounts can create businesses");
       }
@@ -83,11 +93,13 @@ export const CreateBusinessDialog = ({ open, onOpenChange }: CreateBusinessDialo
       const selectedBusinessType = businessTypes.find(bt => bt.id === selectedType);
       if (!selectedBusinessType) throw new Error("Business type not found");
 
+      console.log('Creating business with user_id:', user.id); // Debug log
+
       // Create the business
       const { data: business, error: businessError } = await supabase
         .from('custom_businesses')
         .insert({
-          user_id: user?.id,
+          user_id: user.id, // Ensure this is not null
           name: businessName,
           business_type: selectedType,
           icon: selectedBusinessType.icon,
@@ -166,7 +178,12 @@ export const CreateBusinessDialog = ({ open, onOpenChange }: CreateBusinessDialo
           <DialogTitle>Create New Business</DialogTitle>
           <DialogDescription>
             Set up a custom business with the features you need
-            {!isSystemMaster && (
+            {(!isAuthenticated || !user?.id) && (
+              <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-red-800 text-sm">
+                ⚠️ You must be logged in to create businesses
+              </div>
+            )}
+            {isAuthenticated && user?.id && !isSystemMaster && (
               <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-yellow-800 text-sm">
                 ⚠️ Only SystemMaster accounts can create businesses
               </div>
@@ -215,9 +232,11 @@ export const CreateBusinessDialog = ({ open, onOpenChange }: CreateBusinessDialo
               </Button>
               <Button 
                 onClick={() => setStep(2)}
-                disabled={!businessName.trim() || !selectedType || !isSystemMaster}
+                disabled={!businessName.trim() || !selectedType || !canCreateBusiness}
               >
-                {!isSystemMaster ? "SystemMaster access required" : "Next: Select Features"}
+                {!isAuthenticated || !user?.id ? "Please log in first" : 
+                 !isSystemMaster ? "SystemMaster access required" : 
+                 "Next: Select Features"}
               </Button>
             </div>
           </div>
@@ -269,9 +288,11 @@ export const CreateBusinessDialog = ({ open, onOpenChange }: CreateBusinessDialo
               </Button>
               <Button 
                 onClick={() => createMutation.mutate()}
-                disabled={createMutation.isPending || !isSystemMaster}
+                disabled={createMutation.isPending || !canCreateBusiness}
               >
-                {!isSystemMaster ? "SystemMaster access required" : createMutation.isPending ? "Creating..." : "Create Business"}
+                {!isAuthenticated || !user?.id ? "Please log in first" : 
+                 !isSystemMaster ? "SystemMaster access required" : 
+                 createMutation.isPending ? "Creating..." : "Create Business"}
               </Button>
             </div>
           </div>

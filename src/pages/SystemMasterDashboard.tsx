@@ -29,7 +29,7 @@ interface Client {
 }
 
 export const SystemMasterDashboard = () => {
-  const { userProfile, logout } = useAuth();
+  const { userProfile, isAuthenticated, user, logout } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
@@ -85,7 +85,7 @@ export const SystemMasterDashboard = () => {
         }
       ] as Client[];
     },
-    enabled: userProfile?.primary_role === 'SystemMaster'
+    enabled: isAuthenticated && user?.id && userProfile?.primary_role === 'SystemMaster'
   });
 
   const createClientMutation = useMutation({
@@ -159,7 +159,7 @@ export const SystemMasterDashboard = () => {
     'pet-care': "Pet Care"
   };
 
-  if (userProfile?.primary_role !== 'SystemMaster') {
+  if (!isAuthenticated || !user?.id || userProfile?.primary_role !== 'SystemMaster') {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md">
@@ -167,12 +167,15 @@ export const SystemMasterDashboard = () => {
             <Shield className="w-12 h-12 text-destructive mx-auto mb-4" />
             <CardTitle>Access Denied</CardTitle>
             <CardDescription>
-              Only SystemMaster accounts can access this dashboard
+              {!isAuthenticated || !user?.id ? 
+                "Please log in to access the SystemMaster dashboard" : 
+                "Only SystemMaster accounts can access this dashboard"
+              }
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center">
             <Button onClick={() => window.location.href = '/login'}>
-              Back to Login
+              {!isAuthenticated || !user?.id ? "Go to Login" : "Back to Login"}
             </Button>
           </CardContent>
         </Card>
