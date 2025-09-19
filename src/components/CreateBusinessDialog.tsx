@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -52,6 +52,16 @@ export const CreateBusinessDialog = ({ open, onOpenChange }: CreateBusinessDialo
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+  // Debug authentication status
+  useEffect(() => {
+    if (open) {
+      console.log('CreateBusinessDialog opened, user:', user?.id ? 'authenticated' : 'not authenticated');
+      if (!user?.id) {
+        toast.error("Please log in to create a business");
+      }
+    }
+  }, [open, user]);
+
   const { data: availableFeatures } = useQuery({
     queryKey: ['available-features'],
     queryFn: async () => {
@@ -67,6 +77,10 @@ export const CreateBusinessDialog = ({ open, onOpenChange }: CreateBusinessDialo
 
   const createMutation = useMutation({
     mutationFn: async () => {
+      if (!user?.id) {
+        throw new Error("User must be authenticated to create a business");
+      }
+
       const selectedBusinessType = businessTypes.find(bt => bt.id === selectedType);
       if (!selectedBusinessType) throw new Error("Business type not found");
 
@@ -74,7 +88,7 @@ export const CreateBusinessDialog = ({ open, onOpenChange }: CreateBusinessDialo
       const { data: business, error: businessError } = await supabase
         .from('custom_businesses')
         .insert({
-          user_id: user?.id,
+          user_id: user.id,
           name: businessName,
           business_type: selectedType,
           icon: selectedBusinessType.icon,
@@ -117,9 +131,9 @@ export const CreateBusinessDialog = ({ open, onOpenChange }: CreateBusinessDialo
       onOpenChange(false);
       resetForm();
     },
-    onError: (error) => {
-      toast.error("Failed to create business");
-      console.error(error);
+    onError: (error: any) => {
+      console.error('Create business error:', error);
+      toast.error(error.message || "Failed to create business");
     }
   });
 
@@ -153,6 +167,11 @@ export const CreateBusinessDialog = ({ open, onOpenChange }: CreateBusinessDialo
           <DialogTitle>Create New Business</DialogTitle>
           <DialogDescription>
             Set up a custom business with the features you need
+            {!user?.id && (
+              <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-yellow-800 text-sm">
+                ⚠️ Please log in first to create a business
+              </div>
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -197,9 +216,9 @@ export const CreateBusinessDialog = ({ open, onOpenChange }: CreateBusinessDialo
               </Button>
               <Button 
                 onClick={() => setStep(2)}
-                disabled={!businessName.trim() || !selectedType}
+                disabled={!businessName.trim() || !selectedType || !user?.id}
               >
-                Next: Select Features
+                {!user?.id ? "Please login first" : "Next: Select Features"}
               </Button>
             </div>
           </div>
@@ -251,9 +270,9 @@ export const CreateBusinessDialog = ({ open, onOpenChange }: CreateBusinessDialo
               </Button>
               <Button 
                 onClick={() => createMutation.mutate()}
-                disabled={createMutation.isPending}
+                disabled={createMutation.isPending || !user?.id}
               >
-                {createMutation.isPending ? "Creating..." : "Create Business"}
+                {!user?.id ? "Please login first" : createMutation.isPending ? "Creating..." : "Create Business"}
               </Button>
             </div>
           </div>

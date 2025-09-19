@@ -97,7 +97,10 @@ export const SystemMasterDashboard = () => {
         ...clientData,
         branches_count: 0,
         status: 'active' as const,
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        owner: 'System Generated',
+        subscription: 'Standard',
+        features: ['Dashboard', 'User Management', 'Basic Analytics']
       };
       return newClientData;
     },
@@ -121,10 +124,21 @@ export const SystemMasterDashboard = () => {
   };
 
   const handleManageClient = (client: Client) => {
-    // In a real system, this would open the client's system with SystemMaster privileges
+    // Create a simulated management interface URL
+    const managementUrl = `/dashboard?client=${client.id}&systemmaster=true`;
+    
+    // In a real system, you would:
+    // 1. Set up client context/session
+    // 2. Grant SystemMaster privileges for this client
+    // 3. Redirect to their dashboard
+    
     toast.success(`Opening management interface for ${client.name}...`);
-    // You could redirect to a client-specific route or open in a new tab
-    // window.open(`/client/${client.id}/dashboard`, '_blank');
+    
+    // For now, redirect to the main dashboard with client context
+    // In a real implementation, this would set up proper client switching
+    setTimeout(() => {
+      window.location.href = managementUrl;
+    }, 1000);
   };
 
   const handleClientInfo = (client: Client) => {
@@ -153,9 +167,17 @@ export const SystemMasterDashboard = () => {
             <Shield className="w-12 h-12 text-destructive mx-auto mb-4" />
             <CardTitle>Access Denied</CardTitle>
             <CardDescription>
-              Only SystemMaster accounts can access this dashboard
+              {!isAuthenticated 
+                ? "Please log in to access the SystemMaster dashboard" 
+                : "Only SystemMaster accounts can access this dashboard"
+              }
             </CardDescription>
           </CardHeader>
+          <CardContent className="text-center">
+            <Button onClick={() => window.location.href = '/login'}>
+              Go to Login
+            </Button>
+          </CardContent>
         </Card>
       </div>
     );
