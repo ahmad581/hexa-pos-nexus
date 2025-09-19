@@ -8,10 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Settings as SettingsIcon, User, Bell, Shield, Database, Layout } from "lucide-react";
+import { Settings as SettingsIcon, User, Bell, Shield, Database, Layout, Globe } from "lucide-react";
 
 export const Settings = () => {
-  const { menuDesign, setMenuDesign } = useSettings();
+  const { menuDesign, setMenuDesign, language, setLanguage } = useSettings();
 
   return (
     <div className="space-y-6">
@@ -200,6 +200,24 @@ export const Settings = () => {
                 {menuDesign === "modern" 
                   ? "Category-first navigation with modern card layout" 
                   : "Split-screen design with categories at bottom"
+                }
+              </p>
+            </div>
+            <div>
+              <Label htmlFor="language">Language</Label>
+              <Select value={language} onValueChange={setLanguage}>
+                <SelectTrigger className="bg-gray-700 border-gray-600">
+                  <SelectValue placeholder="Select language" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-800 border-gray-700">
+                  <SelectItem value="en">🇺🇸 English</SelectItem>
+                  <SelectItem value="ar">🇸🇦 Arabic</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-gray-400 mt-1">
+                {language === "ar" 
+                  ? "العربية - واجهة من اليمين إلى اليسار" 
+                  : "English - Left to right interface"
                 }
               </p>
             </div>
