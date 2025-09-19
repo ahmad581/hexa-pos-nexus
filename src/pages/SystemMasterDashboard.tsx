@@ -29,7 +29,7 @@ interface Client {
 }
 
 export const SystemMasterDashboard = () => {
-  const { userProfile, isAuthenticated, user, logout } = useAuth();
+  const { userProfile, isAuthenticated, user, userEmail, logout } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
@@ -85,7 +85,7 @@ export const SystemMasterDashboard = () => {
         }
       ] as Client[];
     },
-    enabled: isAuthenticated && user?.id && (userProfile?.primary_role === 'SystemMaster' || user?.email === 'ahmadalodat530@gmail.com')
+    enabled: isAuthenticated && (userProfile?.primary_role === 'SystemMaster' || userEmail === 'ahmadalodat530@gmail.com')
   });
 
   const createClientMutation = useMutation({
@@ -163,15 +163,15 @@ export const SystemMasterDashboard = () => {
   console.log('SystemMaster Dashboard Auth Check:', {
     isAuthenticated,
     userId: user?.id,
-    userEmail: user?.email,
+    userEmail: userEmail,
     userProfile: userProfile,
     primaryRole: userProfile?.primary_role
   });
 
-  const isSystemMasterAccess = userProfile?.primary_role === 'SystemMaster' || user?.email === 'ahmadalodat530@gmail.com';
+  const isSystemMasterAccess = userProfile?.primary_role === 'SystemMaster' || userEmail === 'ahmadalodat530@gmail.com';
   
   // Show loading while profile is being fetched
-  if (isAuthenticated && user?.id && !userProfile) {
+  if (isAuthenticated && !userProfile) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md">
@@ -184,7 +184,7 @@ export const SystemMasterDashboard = () => {
     );
   }
   
-  if (!isAuthenticated || !user?.id || !isSystemMasterAccess) {
+  if (!isAuthenticated || !isSystemMasterAccess) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md">
@@ -192,7 +192,7 @@ export const SystemMasterDashboard = () => {
             <Shield className="w-12 h-12 text-destructive mx-auto mb-4" />
             <CardTitle>Access Denied</CardTitle>
             <CardDescription>
-              {!isAuthenticated || !user?.id ? 
+              {!isAuthenticated ? 
                 "Please log in to access the SystemMaster dashboard" : 
                 "Only SystemMaster accounts can access this dashboard"
               }
@@ -200,7 +200,7 @@ export const SystemMasterDashboard = () => {
           </CardHeader>
           <CardContent className="text-center">
             <Button onClick={() => window.location.href = '/login'}>
-              {!isAuthenticated || !user?.id ? "Go to Login" : "Back to Login"}
+              {!isAuthenticated ? "Go to Login" : "Back to Login"}
             </Button>
           </CardContent>
         </Card>

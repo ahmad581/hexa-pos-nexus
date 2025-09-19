@@ -16,11 +16,11 @@ export const RoleBasedRoute = ({
   requireBranch,
   fallbackPath = "/" 
 }: RoleBasedRouteProps) => {
-  const { isAuthenticated, hasRole, primaryRole, userBranchId } = useAuth();
+  const { isAuthenticated, hasRole, primaryRole, userBranchId, userEmail } = useAuth();
 
   // Must be authenticated first
   if (!isAuthenticated) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   // Check if user has any of the allowed roles
@@ -29,8 +29,9 @@ export const RoleBasedRoute = ({
   // SystemMaster and SuperManager can access everything
   const isSystemMaster = hasRole('SystemMaster');
   const isSuperManager = hasRole('SuperManager');
+  const isWhitelistedEmail = userEmail === 'ahmadalodat530@gmail.com';
 
-  if (!hasAllowedRole && !isSuperManager && !isSystemMaster) {
+  if (!hasAllowedRole && !isSuperManager && !isSystemMaster && !isWhitelistedEmail) {
     return <Navigate to={fallbackPath} replace />;
   }
 
