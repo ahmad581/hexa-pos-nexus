@@ -159,7 +159,30 @@ export const SystemMasterDashboard = () => {
     'pet-care': "Pet Care"
   };
 
+  // Debug logging
+  console.log('SystemMaster Dashboard Auth Check:', {
+    isAuthenticated,
+    userId: user?.id,
+    userEmail: user?.email,
+    userProfile: userProfile,
+    primaryRole: userProfile?.primary_role
+  });
+
   const isSystemMasterAccess = userProfile?.primary_role === 'SystemMaster' || user?.email === 'ahmadalodat530@gmail.com';
+  
+  // Show loading while profile is being fetched
+  if (isAuthenticated && user?.id && !userProfile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="flex flex-col items-center justify-center p-6">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
+            <p>Loading profile...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
   
   if (!isAuthenticated || !user?.id || !isSystemMasterAccess) {
     return (
