@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Building2, Plus, Settings, Trash2, Users, BarChart3, Crown, Shield, LogOut } from "lucide-react";
+import { Building2, Plus, Settings, Trash2, Users, BarChart3, Crown, Shield, LogOut, Info, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { BusinessManagement } from "@/pages/BusinessManagement";
 import { RoleManagement } from "@/components/RoleManagement";
@@ -23,11 +23,16 @@ interface Client {
   branches_count?: number;
   status: 'active' | 'inactive';
   created_at: string;
+  owner: string;
+  subscription: string;
+  features: string[];
 }
 
 export const SystemMasterDashboard = () => {
   const { userProfile, isAuthenticated, logout } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
   const queryClient = useQueryClient();
   
   const [newClient, setNewClient] = useState({
@@ -49,7 +54,10 @@ export const SystemMasterDashboard = () => {
           business_type: 'restaurant',
           branches_count: 5,
           status: 'active' as const,
-          created_at: '2024-01-15T00:00:00Z'
+          created_at: '2024-01-15T00:00:00Z',
+          owner: 'John Smith',
+          subscription: 'Premium',
+          features: ['Order Management', 'Inventory Tracking', 'Staff Management', 'Analytics Dashboard', 'Multi-branch Support']
         },
         {
           id: '2', 
@@ -58,7 +66,10 @@ export const SystemMasterDashboard = () => {
           business_type: 'hotel',
           branches_count: 3,
           status: 'active' as const,
-          created_at: '2024-02-10T00:00:00Z'
+          created_at: '2024-02-10T00:00:00Z',
+          owner: 'Sarah Johnson',
+          subscription: 'Enterprise',
+          features: ['Room Management', 'Booking System', 'Guest Services', 'Housekeeping Management', 'Revenue Analytics']
         },
         {
           id: '3',
@@ -67,7 +78,10 @@ export const SystemMasterDashboard = () => {
           business_type: 'hair-salon',
           branches_count: 8,
           status: 'inactive' as const,
-          created_at: '2024-03-05T00:00:00Z'
+          created_at: '2024-03-05T00:00:00Z',
+          owner: 'Maria Rodriguez',
+          subscription: 'Standard',
+          features: ['Appointment Scheduling', 'Staff Management', 'Customer Database', 'Service Management']
         }
       ] as Client[];
     },
@@ -104,6 +118,18 @@ export const SystemMasterDashboard = () => {
       return;
     }
     createClientMutation.mutate(newClient);
+  };
+
+  const handleManageClient = (client: Client) => {
+    // In a real system, this would open the client's system with SystemMaster privileges
+    toast.success(`Opening management interface for ${client.name}...`);
+    // You could redirect to a client-specific route or open in a new tab
+    // window.open(`/client/${client.id}/dashboard`, '_blank');
+  };
+
+  const handleClientInfo = (client: Client) => {
+    setSelectedClient(client);
+    setIsInfoDialogOpen(true);
   };
 
   const businessTypeLabels = {
@@ -215,6 +241,88 @@ export const SystemMasterDashboard = () => {
         </div>
       </div>
 
+      {/* Client Info Dialog */}
+      <Dialog open={isInfoDialogOpen} onOpenChange={setIsInfoDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Building2 className="w-5 h-5" />
+              Client Information
+            </DialogTitle>
+            <DialogDescription>
+              Detailed information about {selectedClient?.name}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedClient && (
+            <div className="grid gap-6 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Business Name</Label>
+                  <p className="text-lg font-semibold">{selectedClient.name}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Status</Label>
+                  <div className="mt-1">
+                    <Badge variant={selectedClient.status === 'active' ? 'default' : 'secondary'}>
+                      {selectedClient.status}
+                    </Badge>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Business Type</Label>
+                  <p className="text-base">{businessTypeLabels[selectedClient.business_type as keyof typeof businessTypeLabels]}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Owner</Label>
+                  <p className="text-base">{selectedClient.owner}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Email</Label>
+                  <p className="text-base">{selectedClient.email}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Subscription Plan</Label>
+                  <p className="text-base font-medium">{selectedClient.subscription}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Total Branches</Label>
+                  <p className="text-base">{selectedClient.branches_count || 0}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Member Since</Label>
+                  <p className="text-base">{new Date(selectedClient.created_at).toLocaleDateString()}</p>
+                </div>
+              </div>
+              
+              <div>
+                <Label className="text-sm font-medium text-muted-foreground">Subscribed Features</Label>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {selectedClient.features.map((feature, index) => (
+                    <Badge key={index} variant="outline" className="text-xs">
+                      {feature}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsInfoDialogOpen(false)}>
+              Close
+            </Button>
+            <Button onClick={() => {
+              if (selectedClient) {
+                handleManageClient(selectedClient);
+                setIsInfoDialogOpen(false);
+              }
+            }} className="gap-2">
+              <ExternalLink className="w-4 h-4" />
+              Open Management Interface
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Tabs defaultValue="clients" className="space-y-4">
         <TabsList>
           <TabsTrigger value="clients" className="gap-2">
@@ -282,7 +390,20 @@ export const SystemMasterDashboard = () => {
                         </span>
                       </div>
                       <div className="flex gap-2 pt-2">
-                        <Button variant="outline" size="sm" className="flex-1">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => handleClientInfo(client)}
+                        >
+                          <Info className="w-3 h-3 mr-1" />
+                          Info
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="flex-1"
+                          onClick={() => handleManageClient(client)}
+                        >
                           <Settings className="w-3 h-3 mr-1" />
                           Manage
                         </Button>

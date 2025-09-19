@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { Users, Shield, Plus } from "lucide-react";
+import { toast } from "sonner";
 
 type UserRole = 'SystemMaster' | 'SuperManager' | 'Manager' | 'Cashier' | 'HallManager' | 'HrManager' | 'CallCenterEmp' | 'Employee';
 
@@ -53,10 +53,9 @@ export const RoleManagement = () => {
   const [selectedRole, setSelectedRole] = useState<UserRole>("Employee");
   const [branchId, setBranchId] = useState<string>("");
   const { userProfile, hasRole, user } = useAuth();
-  const { toast } = useToast();
 
-  // Check permissions
-  const canManageRoles = hasRole('SystemMaster') || hasRole('SuperManager') || hasRole('Manager') || hasRole('HrManager');
+  // Check permissions - SystemMaster should have access
+  const canManageRoles = userProfile?.primary_role === 'SystemMaster' || hasRole('SystemMaster') || hasRole('SuperManager') || hasRole('Manager') || hasRole('HrManager');
 
   useEffect(() => {
     if (canManageRoles) {
@@ -96,11 +95,7 @@ export const RoleManagement = () => {
       setUsers(usersWithRoles);
     } catch (error) {
       console.error('Error fetching users:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch users",
-        variant: "destructive",
-      });
+      toast.error("Failed to fetch users");
     } finally {
       setLoading(false);
     }
@@ -108,11 +103,7 @@ export const RoleManagement = () => {
 
   const assignRole = async () => {
     if (!selectedUserId || !selectedRole) {
-      toast({
-        title: "Error",
-        description: "Please select a user and role",
-        variant: "destructive",
-      });
+      toast.error("Please select a user and role");
       return;
     }
 
@@ -128,10 +119,7 @@ export const RoleManagement = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Success",
-        description: "Role assigned successfully",
-      });
+      toast.success("Role assigned successfully");
 
       fetchUsers();
       setSelectedUserId("");
@@ -139,11 +127,7 @@ export const RoleManagement = () => {
       setBranchId("");
     } catch (error: any) {
       console.error('Error assigning role:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to assign role",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Failed to assign role");
     }
   };
 
@@ -156,19 +140,12 @@ export const RoleManagement = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Success",
-        description: "Role deactivated successfully",
-      });
+      toast.success("Role deactivated successfully");
 
       fetchUsers();
     } catch (error: any) {
       console.error('Error deactivating role:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to deactivate role",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Failed to deactivate role");
     }
   };
 
