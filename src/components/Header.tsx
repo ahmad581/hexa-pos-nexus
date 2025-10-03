@@ -5,10 +5,12 @@ import { Badge } from "@/components/ui/badge";
 import { BranchSelector } from "./BranchSelector";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
+import { useTranslation } from "@/contexts/TranslationContext";
 
 export const Header = () => {
   const { logout, userEmail } = useAuth();
   const { selectedBusinessType } = useBusinessType();
+  const { t } = useTranslation();
 
   return (
     <header className="bg-gray-800 border-b border-gray-700 px-6 py-4 flex items-center justify-between">

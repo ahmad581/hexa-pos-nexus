@@ -13,6 +13,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { QRCodeGenerator } from "@/components/QRCodeGenerator";
 import { QRScanner } from "@/components/QRScanner";
 import { BiometricAuth } from "@/components/BiometricAuth";
+import { useTranslation } from "@/contexts/TranslationContext";
 
 interface WorkSession {
   checkInTime: string;
@@ -171,6 +172,7 @@ export const Employees = () => {
   const [showBiometric, setShowBiometric] = useState<{show: boolean, employeeId: number, mode: 'register' | 'authenticate'}>({show: false, employeeId: 0, mode: 'register'});
   const [showQRGenerator, setShowQRGenerator] = useState<{show: boolean, employee: Employee | null}>({show: false, employee: null});
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const form = useForm<EmployeeFormData>();
   const salaryForm = useForm<SalaryFormData>();
@@ -206,7 +208,7 @@ export const Employees = () => {
         : emp
     ));
     
-    toast({ title: "Employee checked in successfully" });
+    toast({ title: t('employeesPage.checkedInSuccess') });
   };
 
   const handleCheckOut = (employeeId: number) => {
@@ -276,7 +278,7 @@ export const Employees = () => {
       return emp;
     }));
     
-    toast({ title: "Employee checked out successfully" });
+    toast({ title: t('employeesPage.checkedOutSuccess') });
   };
 
   const handleAddEmployee = (data: EmployeeFormData) => {
@@ -300,7 +302,7 @@ export const Employees = () => {
     setEmployees(prev => [...prev, newEmployee]);
     setIsAddDialogOpen(false);
     form.reset();
-    toast({ title: "Employee added successfully" });
+    toast({ title: t('employeesPage.employeeAdded') });
   };
 
   const handleEditEmployee = (data: EmployeeFormData) => {
@@ -319,12 +321,12 @@ export const Employees = () => {
     setIsDialogOpen(false);
     setSelectedEmployee(null);
     form.reset();
-    toast({ title: "Employee updated successfully" });
+    toast({ title: t('employeesPage.employeeUpdated') });
   };
 
   const handleDeleteEmployee = (employeeId: number) => {
     setEmployees(prev => prev.filter(emp => emp.id !== employeeId));
-    toast({ title: "Employee deleted successfully" });
+    toast({ title: t('employeesPage.employeeDeleted') });
   };
 
   const handleSalaryUpdate = (data: SalaryFormData) => {
@@ -442,21 +444,21 @@ export const Employees = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Employee Management</h1>
+        <h1 className="text-3xl font-bold">{t('employeesPage.title')}</h1>
         <div className="flex gap-3">
           <Button 
             className="bg-purple-600 hover:bg-purple-700"
             onClick={() => setShowQRScanner(true)}
           >
             <Scan size={20} className="mr-2" />
-            Scan QR Code
+            {t('employeesPage.scanQR')}
           </Button>
           <Button 
             className="bg-green-600 hover:bg-green-700"
             onClick={() => setIsAddDialogOpen(true)}
           >
             <Plus size={20} className="mr-2" />
-            Add Employee
+            {t('employeesPage.addEmployee')}
           </Button>
         </div>
       </div>
@@ -465,7 +467,7 @@ export const Employees = () => {
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
           <Input
-            placeholder="Search employees..."
+            placeholder={t('employeesPage.searchEmployees')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10 bg-gray-700 border-gray-600"

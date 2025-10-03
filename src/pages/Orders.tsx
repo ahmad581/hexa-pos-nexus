@@ -9,10 +9,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Search, Edit, Trash2, Eye, Download, Filter, Undo } from "lucide-react";
 import { useOrder, Order } from "@/contexts/OrderContext";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/contexts/TranslationContext";
 
 export const Orders = () => {
   const { orders, updateOrderStatus, deleteOrder } = useOrder();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [showDeletedOrders, setShowDeletedOrders] = useState(false);
@@ -25,19 +27,19 @@ export const Orders = () => {
     if (orderToDelete) {
       setDeletedOrders(prev => [...prev, { ...orderToDelete, status: 'deleted' as any }]);
       deleteOrder(orderId);
-      toast({ title: "Order moved to deleted orders" });
+      toast({ title: t('ordersPage.orderMoved') });
     }
   };
 
   const handleRestoreOrder = (order: Order) => {
     // This would typically restore the order back to orders list
     setDeletedOrders(prev => prev.filter(o => o.id !== order.id));
-    toast({ title: "Order restored" });
+    toast({ title: t('ordersPage.orderRestored') });
   };
 
   const handlePermanentDelete = (orderId: string) => {
     setDeletedOrders(prev => prev.filter(order => order.id !== orderId));
-    toast({ title: "Order permanently deleted" });
+    toast({ title: t('ordersPage.orderDeleted') });
   };
 
   const displayOrders = showDeletedOrders ? deletedOrders : orders;
@@ -65,12 +67,12 @@ export const Orders = () => {
 
   const exportOrders = () => {
     const csvContent = [
-      ["Order ID", "Branch", "Type", "Customer", "Items", "Total", "Status", "Date"],
+      [t('ordersPage.orderId'), t('ordersPage.branch'), t('ordersPage.type'), t('ordersPage.customer'), t('ordersPage.items'), t('common.total'), t('common.status'), t('common.date')],
       ...filteredOrders.map(order => [
         order.id,
         order.branchName,
         order.orderType,
-        order.customerInfo?.name || "N/A",
+        order.customerInfo?.name || t('ordersPage.walkIn'),
         order.items.length,
         order.total,
         order.status,
@@ -84,7 +86,8 @@ export const Orders = () => {
     a.href = url;
     a.download = `${showDeletedOrders ? 'deleted-' : ''}orders-export-${Date.now()}.csv`;
     a.click();
-    toast({ title: `${showDeletedOrders ? 'Deleted orders' : 'Orders'} exported successfully!` });
+    const messageKey = showDeletedOrders ? 'ordersPage.deletedOrders' : 'orders.title';
+    toast({ title: `${t(messageKey)} ${t('ordersPage.exported')}` });
   };
 
   const openOrderDetail = (order: Order) => {
@@ -97,10 +100,10 @@ export const Orders = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-white">
-            {showDeletedOrders ? 'Deleted Orders' : 'Orders Management'}
+            {showDeletedOrders ? t('ordersPage.deletedOrders') : t('ordersPage.title')}
           </h1>
           <p className="text-gray-400">
-            {showDeletedOrders ? 'View and manage deleted orders' : 'Track and manage all restaurant orders'}
+            {showDeletedOrders ? t('ordersPage.viewDeleted') : t('ordersPage.track')}
           </p>
         </div>
         <div className="flex gap-2">
@@ -109,11 +112,11 @@ export const Orders = () => {
             variant="outline"
             className="border-gray-600 text-gray-300"
           >
-            {showDeletedOrders ? 'View Active Orders' : 'View Deleted Orders'}
+            {showDeletedOrders ? t('ordersPage.viewActive') : t('ordersPage.viewDeleted')}
           </Button>
           <Button onClick={exportOrders} className="bg-green-600 hover:bg-green-700">
             <Download size={16} className="mr-2" />
-            Export {showDeletedOrders ? 'Deleted' : ''} Orders
+            {t('common.export')} {showDeletedOrders ? t('ordersPage.deletedOrders') : ''}
           </Button>
         </div>
       </div>
@@ -123,13 +126,13 @@ export const Orders = () => {
         <div className="flex flex-wrap gap-4 items-center">
           <div className="flex items-center space-x-2">
             <Filter size={16} className="text-gray-400" />
-            <span className="text-white font-medium">Filters:</span>
+            <span className="text-white font-medium">{t('common.filter')}:</span>
           </div>
           
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
             <Input
-              placeholder="Search orders..."
+              placeholder={t('ordersPage.searchOrders')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 bg-gray-700 border-gray-600"
@@ -139,14 +142,14 @@ export const Orders = () => {
           {!showDeletedOrders && (
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-48 bg-gray-700 border-gray-600">
-                <SelectValue placeholder="Filter by status" />
+                <SelectValue placeholder={t('ordersPage.filterByStatus')} />
               </SelectTrigger>
               <SelectContent className="bg-gray-800 border-gray-700">
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="preparing">Preparing</SelectItem>
-                <SelectItem value="ready">Ready</SelectItem>
-                <SelectItem value="served">Served</SelectItem>
+                <SelectItem value="all">{t('ordersPage.allStatuses')}</SelectItem>
+                <SelectItem value="pending">{t('orders.pending')}</SelectItem>
+                <SelectItem value="preparing">{t('orders.preparing')}</SelectItem>
+                <SelectItem value="ready">{t('orders.ready')}</SelectItem>
+                <SelectItem value="served">{t('orders.delivered')}</SelectItem>
               </SelectContent>
             </Select>
           )}
@@ -159,15 +162,15 @@ export const Orders = () => {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-700">
-                <th className="text-left py-3 text-gray-400 font-medium">Order ID</th>
-                <th className="text-left py-3 text-gray-400 font-medium">Branch</th>
-                <th className="text-left py-3 text-gray-400 font-medium">Customer</th>
-                <th className="text-left py-3 text-gray-400 font-medium">Type</th>
-                <th className="text-left py-3 text-gray-400 font-medium">Items</th>
-                <th className="text-left py-3 text-gray-400 font-medium">Total</th>
-                <th className="text-left py-3 text-gray-400 font-medium">Status</th>
-                <th className="text-left py-3 text-gray-400 font-medium">Time</th>
-                <th className="text-left py-3 text-gray-400 font-medium">Actions</th>
+                <th className="text-left py-3 text-gray-400 font-medium">{t('ordersPage.orderId')}</th>
+                <th className="text-left py-3 text-gray-400 font-medium">{t('ordersPage.branch')}</th>
+                <th className="text-left py-3 text-gray-400 font-medium">{t('ordersPage.customer')}</th>
+                <th className="text-left py-3 text-gray-400 font-medium">{t('ordersPage.type')}</th>
+                <th className="text-left py-3 text-gray-400 font-medium">{t('ordersPage.items')}</th>
+                <th className="text-left py-3 text-gray-400 font-medium">{t('common.total')}</th>
+                <th className="text-left py-3 text-gray-400 font-medium">{t('common.status')}</th>
+                <th className="text-left py-3 text-gray-400 font-medium">{t('common.time')}</th>
+                <th className="text-left py-3 text-gray-400 font-medium">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -176,14 +179,14 @@ export const Orders = () => {
                   <td className="py-3 text-white font-mono">{order.id}</td>
                   <td className="py-3 text-gray-300">{order.branchName}</td>
                   <td className="py-3 text-gray-300">
-                    {order.customerInfo?.name || "Walk-in"}
+                    {order.customerInfo?.name || t('ordersPage.walkIn')}
                   </td>
                   <td className="py-3">
                     <Badge className="bg-blue-500/20 text-blue-400">
                       {order.orderType}
                     </Badge>
                   </td>
-                  <td className="py-3 text-gray-300">{order.items.length} items</td>
+                  <td className="py-3 text-gray-300">{order.items.length} {t('ordersPage.itemsCount')}</td>
                   <td className="py-3 text-green-400 font-semibold">${order.total.toFixed(2)}</td>
                   <td className="py-3">
                     <Badge className={getStatusColor(order.status)}>
@@ -251,7 +254,7 @@ export const Orders = () => {
         {filteredOrders.length === 0 && (
           <div className="text-center py-8">
             <p className="text-gray-400">
-              {showDeletedOrders ? 'No deleted orders found.' : 'No orders found matching your criteria.'}
+              {showDeletedOrders ? t('ordersPage.noOrders') : t('ordersPage.noOrders')}
             </p>
           </div>
         )}
@@ -261,28 +264,28 @@ export const Orders = () => {
       <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
         <DialogContent className="bg-gray-800 border-gray-700 max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-white">Order Details - {selectedOrder?.id}</DialogTitle>
+            <DialogTitle className="text-white">{t('ordersPage.orderDetails')} - {selectedOrder?.id}</DialogTitle>
           </DialogHeader>
           
           {selectedOrder && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <h4 className="text-sm font-medium text-gray-400 mb-1">Branch</h4>
+                  <h4 className="text-sm font-medium text-gray-400 mb-1">{t('ordersPage.branch')}</h4>
                   <p className="text-white">{selectedOrder.branchName}</p>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-400 mb-1">Order Type</h4>
+                  <h4 className="text-sm font-medium text-gray-400 mb-1">{t('ordersPage.type')}</h4>
                   <Badge className="bg-blue-500/20 text-blue-400">
                     {selectedOrder.orderType}
                   </Badge>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-400 mb-1">Customer</h4>
-                  <p className="text-white">{selectedOrder.customerInfo?.name || "Walk-in"}</p>
+                  <h4 className="text-sm font-medium text-gray-400 mb-1">{t('ordersPage.customer')}</h4>
+                  <p className="text-white">{selectedOrder.customerInfo?.name || t('ordersPage.walkIn')}</p>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-400 mb-1">Status</h4>
+                  <h4 className="text-sm font-medium text-gray-400 mb-1">{t('common.status')}</h4>
                   <Badge className={getStatusColor(selectedOrder.status)}>
                     {selectedOrder.status}
                   </Badge>
@@ -290,13 +293,13 @@ export const Orders = () => {
               </div>
 
               <div>
-                <h4 className="text-sm font-medium text-gray-400 mb-2">Order Items</h4>
+                <h4 className="text-sm font-medium text-gray-400 mb-2">{t('ordersPage.orderItems')}</h4>
                 <div className="space-y-2">
                   {selectedOrder.items.map((item, index) => (
                     <div key={index} className="flex justify-between items-center bg-gray-700 p-3 rounded">
                       <div>
                         <p className="text-white font-medium">{item.name}</p>
-                        <p className="text-gray-400 text-sm">Quantity: {item.quantity}</p>
+                        <p className="text-gray-400 text-sm">{t('common.quantity')}: {item.quantity}</p>
                       </div>
                       <p className="text-green-400 font-semibold">
                         ${(item.price * item.quantity).toFixed(2)}
@@ -307,7 +310,7 @@ export const Orders = () => {
               </div>
 
               <div className="flex justify-between items-center pt-4 border-t border-gray-700">
-                <span className="text-xl font-bold text-white">Total:</span>
+                <span className="text-xl font-bold text-white">{t('common.total')}:</span>
                 <span className="text-xl font-bold text-green-400">
                   ${selectedOrder.total.toFixed(2)}
                 </span>
