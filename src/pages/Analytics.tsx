@@ -8,6 +8,7 @@ import { Download, Filter } from "lucide-react";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { useBranch } from "@/contexts/BranchContext";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/contexts/TranslationContext";
 
 // Daily data only
 const dailySalesData = [
@@ -60,6 +61,7 @@ export const Analytics = () => {
   const { selectedBusinessType } = useBusinessType();
   const { branches } = useBranch();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [selectedMetric, setSelectedMetric] = useState("sales");
   const [selectedProduct, setSelectedProduct] = useState("all");
   const [selectedBranch, setSelectedBranch] = useState("all");
@@ -89,7 +91,7 @@ export const Analytics = () => {
     a.href = url;
     a.download = `daily-analytics-report-${selectedMetric}-${Date.now()}.csv`;
     a.click();
-    toast({ title: "Daily report exported successfully!" });
+    toast({ title: t('analyticsPage.reportExported') });
   };
 
   const getMetricData = () => {
@@ -111,12 +113,12 @@ export const Analytics = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Daily Analytics</h1>
-          <p className="text-gray-400">Today's detailed business analytics and insights</p>
+          <h1 className="text-3xl font-bold text-white mb-2">{t('analyticsPage.title')}</h1>
+          <p className="text-gray-400">{t('analyticsPage.subtitle')}</p>
         </div>
         <Button onClick={exportReport} className="bg-green-600 hover:bg-green-700">
           <Download size={16} className="mr-2" />
-          Export Daily Report
+          {t('analyticsPage.exportReport')}
         </Button>
       </div>
 
@@ -125,18 +127,18 @@ export const Analytics = () => {
         <div className="flex flex-wrap gap-4 items-center">
           <div className="flex items-center space-x-2">
             <Filter size={16} className="text-gray-400" />
-            <span className="text-white font-medium">Daily Filters:</span>
+            <span className="text-white font-medium">{t('analyticsPage.filters')}</span>
           </div>
           
           <Select value={selectedMetric} onValueChange={setSelectedMetric}>
             <SelectTrigger className="w-48 bg-gray-700 border-gray-600">
-              <SelectValue placeholder="Select metric" />
+              <SelectValue placeholder={t('analyticsPage.selectMetric')} />
             </SelectTrigger>
             <SelectContent className="bg-gray-800 border-gray-700">
-              <SelectItem value="sales">Sales Revenue</SelectItem>
-              <SelectItem value="orders">Total Orders</SelectItem>
-              <SelectItem value="deletedOrders">Deleted Orders</SelectItem>
-              <SelectItem value="updatedOrders">Updated Orders</SelectItem>
+              <SelectItem value="sales">{t('analyticsPage.salesRevenue')}</SelectItem>
+              <SelectItem value="orders">{t('analyticsPage.totalOrders')}</SelectItem>
+              <SelectItem value="deletedOrders">{t('analyticsPage.deletedOrders')}</SelectItem>
+              <SelectItem value="updatedOrders">{t('analyticsPage.updatedOrders')}</SelectItem>
             </SelectContent>
           </Select>
 
@@ -156,10 +158,10 @@ export const Analytics = () => {
 
           <Select value={selectedBranch} onValueChange={setSelectedBranch}>
             <SelectTrigger className="w-48 bg-gray-700 border-gray-600">
-              <SelectValue placeholder="Select branch" />
+              <SelectValue placeholder={t('analyticsPage.selectBranch')} />
             </SelectTrigger>
             <SelectContent className="bg-gray-800 border-gray-700">
-              <SelectItem value="all">All Branches</SelectItem>
+              <SelectItem value="all">{t('analyticsPage.allBranches')}</SelectItem>
               {branches.map(branch => (
                 <SelectItem key={branch.id} value={branch.id}>{branch.name}</SelectItem>
               ))}
@@ -173,28 +175,28 @@ export const Analytics = () => {
         <Card className="bg-gray-800 border-gray-700 p-6">
           <div className="text-center">
             <div className="text-3xl font-bold text-green-400 mb-2">$8,210</div>
-            <div className="text-gray-400">Today's Revenue</div>
+            <div className="text-gray-400">{t('analyticsPage.todayRevenue')}</div>
             <div className="text-green-400 text-sm mt-1">+15.2%</div>
           </div>
         </Card>
         <Card className="bg-gray-800 border-gray-700 p-6">
           <div className="text-center">
             <div className="text-3xl font-bold text-blue-400 mb-2">305</div>
-            <div className="text-gray-400">Orders Today</div>
+            <div className="text-gray-400">{t('analyticsPage.ordersToday')}</div>
             <div className="text-blue-400 text-sm mt-1">+12.8%</div>
           </div>
         </Card>
         <Card className="bg-gray-800 border-gray-700 p-6">
           <div className="text-center">
             <div className="text-3xl font-bold text-red-400 mb-2">10</div>
-            <div className="text-gray-400">Deleted Orders</div>
+            <div className="text-gray-400">{t('analyticsPage.deletedToday')}</div>
             <div className="text-red-400 text-sm mt-1">-3.1%</div>
           </div>
         </Card>
         <Card className="bg-gray-800 border-gray-700 p-6">
           <div className="text-center">
             <div className="text-3xl font-bold text-orange-400 mb-2">48</div>
-            <div className="text-gray-400">Updated Orders</div>
+            <div className="text-gray-400">{t('analyticsPage.updatedToday')}</div>
             <div className="text-orange-400 text-sm mt-1">+8.7%</div>
           </div>
         </Card>
@@ -204,7 +206,7 @@ export const Analytics = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="bg-gray-800 border-gray-700 p-6">
           <h3 className="text-lg font-semibold text-white mb-4">
-            Hourly {selectedMetric.charAt(0).toUpperCase() + selectedMetric.slice(1)}
+            {t('analyticsPage.hourlyChart')} {selectedMetric.charAt(0).toUpperCase() + selectedMetric.slice(1)}
           </h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={getMetricData()}>
@@ -217,7 +219,7 @@ export const Analytics = () => {
         </Card>
 
         <Card className="bg-gray-800 border-gray-700 p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Today's {businessTerms.services} Distribution</h3>
+          <h3 className="text-lg font-semibold text-white mb-4">{t('analyticsPage.distribution')} {businessTerms.services} Distribution</h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
@@ -240,7 +242,7 @@ export const Analytics = () => {
 
       {/* Hourly Trend */}
       <Card className="bg-gray-800 border-gray-700 p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Hourly Sales Trend</h3>
+        <h3 className="text-lg font-semibold text-white mb-4">{t('analyticsPage.hourlyTrend')}</h3>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={dailySalesData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#374151" />

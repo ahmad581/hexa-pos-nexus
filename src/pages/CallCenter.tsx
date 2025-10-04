@@ -12,6 +12,7 @@ import { useBranch } from "@/contexts/BranchContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { useCall } from "@/contexts/CallContext";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/contexts/TranslationContext";
 
 interface IncomingCall {
   id: string;
@@ -32,6 +33,7 @@ export const CallCenter = () => {
   const { selectedBusinessType } = useBusinessType();
   const { setActiveCallInfo } = useCall();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCall, setActiveCall] = useState<IncomingCall | null>(null);
   const [branchSelectionDialog, setBranchSelectionDialog] = useState(false);
@@ -107,7 +109,7 @@ export const CallCenter = () => {
     setIncomingCalls(prev => prev.map(call => 
       call.id === callId ? { ...call, status: "On Hold" as const } : call
     ));
-    toast({ title: "Call put on hold" });
+    toast({ title: t('callCenter.callPutOnHold') });
   };
 
   const handleEndCall = (callId: string) => {
@@ -119,7 +121,7 @@ export const CallCenter = () => {
         status: "Completed" as const
       }))
     ]);
-    toast({ title: "Call ended" });
+    toast({ title: t('callCenter.callEnded') });
   };
 
   const handleBranchSelection = () => {
@@ -141,16 +143,16 @@ export const CallCenter = () => {
                       selectedBusinessType?.id === 'hotel' ? '/hotel-services' : '/menu';
     
     navigate(targetPage);
-    toast({ title: `Taking order for ${activeCall.customerName} at ${selectedBranch?.name}` });
+    toast({ title: `${t('callCenter.takingOrder')} ${activeCall.customerName} ${t('callCenter.at')} ${selectedBranch?.name}` });
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">Call Center</h1>
+          <h1 className="text-3xl font-bold text-white">{t('callCenter.pageTitle')}</h1>
           <p className="text-gray-400">
-            Manage incoming calls for {selectedBranch?.name || 'All Locations'} - {selectedBusinessType?.name || 'Business'}
+            {t('callCenter.manageCalls')} {selectedBranch?.name || 'All Locations'} - {selectedBusinessType?.name || 'Business'}
           </p>
         </div>
       </div>
@@ -161,7 +163,7 @@ export const CallCenter = () => {
           <div className="flex items-center justify-between">
             <div>
               <div className="text-2xl font-bold text-green-400">{incomingCalls.filter(c => c.status === 'Active').length}</div>
-              <div className="text-gray-400 text-sm">Active Calls</div>
+              <div className="text-gray-400 text-sm">{t('callCenter.activeCalls')}</div>
             </div>
             <PhoneCall className="text-green-400" size={24} />
           </div>
@@ -170,7 +172,7 @@ export const CallCenter = () => {
           <div className="flex items-center justify-between">
             <div>
               <div className="text-2xl font-bold text-yellow-400">{incomingCalls.filter(c => c.status === 'Ringing').length}</div>
-              <div className="text-gray-400 text-sm">Ringing</div>
+              <div className="text-gray-400 text-sm">{t('callCenter.ringing')}</div>
             </div>
             <PhoneIncoming className="text-yellow-400" size={24} />
           </div>
@@ -179,7 +181,7 @@ export const CallCenter = () => {
           <div className="flex items-center justify-between">
             <div>
               <div className="text-2xl font-bold text-blue-400">{incomingCalls.length + recentCalls.length}</div>
-              <div className="text-gray-400 text-sm">Calls Today</div>
+              <div className="text-gray-400 text-sm">{t('callCenter.callsToday')}</div>
             </div>
             <Phone className="text-blue-400" size={24} />
           </div>
@@ -188,7 +190,7 @@ export const CallCenter = () => {
           <div className="flex items-center justify-between">
             <div>
               <div className="text-2xl font-bold text-purple-400">4:32</div>
-              <div className="text-gray-400 text-sm">Avg Call Time</div>
+              <div className="text-gray-400 text-sm">{t('callCenter.avgCallTime')}</div>
             </div>
             <Clock className="text-purple-400" size={24} />
           </div>
@@ -197,7 +199,7 @@ export const CallCenter = () => {
 
       {/* Incoming Calls */}
       <Card className="bg-gray-800 border-gray-700 p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Incoming Calls</h3>
+        <h3 className="text-lg font-semibold text-white mb-4">{t('callCenter.incomingCalls')}</h3>
         <div className="space-y-4">
           {incomingCalls.map((call) => (
             <div key={call.id} className="bg-gray-700 p-4 rounded-lg border-l-4 border-l-transparent">
@@ -247,7 +249,7 @@ export const CallCenter = () => {
                   disabled={call.status === 'Active'}
                 >
                   <Phone size={14} className="mr-1" />
-                  {call.status === 'Ringing' ? 'Answer' : 'Active'}
+                  {call.status === 'Ringing' ? t('callCenter.answer') : t('callCenter.active')}
                 </Button>
                 <Button 
                   size="sm" 
@@ -257,7 +259,7 @@ export const CallCenter = () => {
                   disabled={call.status === 'On Hold' || call.status === 'Ringing'}
                 >
                   <Pause size={14} className="mr-1" />
-                  Put on Hold
+                  {t('callCenter.putOnHold')}
                 </Button>
                 <Button 
                   size="sm" 
@@ -266,7 +268,7 @@ export const CallCenter = () => {
                   onClick={() => handleEndCall(call.id)}
                 >
                   <PhoneOff size={14} className="mr-1" />
-                  End Call
+                  {t('callCenter.endCall')}
                 </Button>
               </div>
             </div>
@@ -277,9 +279,9 @@ export const CallCenter = () => {
       {/* Recent Calls Table */}
       <Card className="bg-gray-800 border-gray-700 p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-white">Recent Calls</h3>
+          <h3 className="text-lg font-semibold text-white">{t('callCenter.recentCalls')}</h3>
           <Input
-            placeholder="Search calls..."
+            placeholder={t('callCenter.searchCalls')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-64 bg-gray-700 border-gray-600"
@@ -291,11 +293,11 @@ export const CallCenter = () => {
             <thead>
               <tr className="border-b border-gray-700">
                 <th className="text-left py-3 text-gray-400 font-medium">{businessTerms.customer}</th>
-                <th className="text-left py-3 text-gray-400 font-medium">Phone</th>
-                <th className="text-left py-3 text-gray-400 font-medium">Type</th>
-                <th className="text-left py-3 text-gray-400 font-medium">Priority</th>
-                <th className="text-left py-3 text-gray-400 font-medium">Status</th>
-                <th className="text-left py-3 text-gray-400 font-medium">Duration</th>
+                <th className="text-left py-3 text-gray-400 font-medium">{t('callCenter.phone')}</th>
+                <th className="text-left py-3 text-gray-400 font-medium">{t('callCenter.type')}</th>
+                <th className="text-left py-3 text-gray-400 font-medium">{t('callCenter.priority')}</th>
+                <th className="text-left py-3 text-gray-400 font-medium">{t('common.status')}</th>
+                <th className="text-left py-3 text-gray-400 font-medium">{t('callCenter.duration')}</th>
               </tr>
             </thead>
             <tbody>
@@ -330,15 +332,15 @@ export const CallCenter = () => {
       <Dialog open={branchSelectionDialog} onOpenChange={setBranchSelectionDialog}>
         <DialogContent className="bg-gray-800 border-gray-700 text-white">
           <DialogHeader>
-            <DialogTitle>Select Branch for Order - {activeCall?.customerName}</DialogTitle>
+            <DialogTitle>{t('callCenter.selectBranchTitle')} - {activeCall?.customerName}</DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4">
             <div>
-              <label className="text-sm text-gray-300 mb-2 block">Select Branch</label>
+              <label className="text-sm text-gray-300 mb-2 block">{t('callCenter.selectBranch')}</label>
               <Select value={selectedBranchForOrder} onValueChange={setSelectedBranchForOrder}>
                 <SelectTrigger className="bg-gray-700 border-gray-600">
-                  <SelectValue placeholder="Choose a branch" />
+                  <SelectValue placeholder={t('callCenter.chooseBranch')} />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-800 border-gray-700">
                   {branches.filter(b => b.isActive).map(branch => (
@@ -356,14 +358,14 @@ export const CallCenter = () => {
                 disabled={!selectedBranchForOrder}
                 className="flex-1 bg-green-600 hover:bg-green-700"
               >
-                Continue to {selectedBusinessType?.id === 'restaurant' ? 'Menu' : 'Services'}
+                {t('callCenter.continueTo')} {selectedBusinessType?.id === 'restaurant' ? t('nav.menu') : t('callCenter.services')}
               </Button>
               <Button 
                 onClick={() => setBranchSelectionDialog(false)}
                 variant="outline"
                 className="flex-1"
               >
-                Cancel
+                {t('common.cancel')}
               </Button>
             </div>
           </div>

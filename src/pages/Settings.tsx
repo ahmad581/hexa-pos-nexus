@@ -27,11 +27,11 @@ export const Settings = () => {
         <Card className="bg-gray-800 border-gray-700 p-6">
           <div className="flex items-center mb-4">
             <SettingsIcon className="mr-2 text-blue-400" size={20} />
-            <h3 className="text-lg font-semibold text-white">{t('settings.general')}</h3>
+            <h3 className="text-lg font-semibold text-white">{t('settingsCard.general')}</h3>
           </div>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="restaurantName">Restaurant Name</Label>
+              <Label htmlFor="restaurantName">{t('settingsCard.restaurantName')}</Label>
               <Input
                 id="restaurantName"
                 defaultValue="Hexa POS Restaurant"
@@ -39,7 +39,7 @@ export const Settings = () => {
               />
             </div>
             <div>
-              <Label htmlFor="address">Address</Label>
+              <Label htmlFor="address">{t('settingsCard.address')}</Label>
               <Textarea
                 id="address"
                 defaultValue="123 Main Street, City, State 12345"
@@ -47,7 +47,7 @@ export const Settings = () => {
               />
             </div>
             <div>
-              <Label htmlFor="phone">Phone Number</Label>
+              <Label htmlFor="phone">{t('settingsCard.phoneNumber')}</Label>
               <Input
                 id="phone"
                 defaultValue="+1 (555) 123-4567"
@@ -55,7 +55,7 @@ export const Settings = () => {
               />
             </div>
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('settingsCard.email')}</Label>
               <Input
                 id="email"
                 type="email"
@@ -70,11 +70,11 @@ export const Settings = () => {
         <Card className="bg-gray-800 border-gray-700 p-6">
           <div className="flex items-center mb-4">
             <User className="mr-2 text-green-400" size={20} />
-            <h3 className="text-lg font-semibold text-white">User Profile</h3>
+            <h3 className="text-lg font-semibold text-white">{t('settingsCard.userProfile')}</h3>
           </div>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="userName">Full Name</Label>
+              <Label htmlFor="userName">{t('settingsCard.fullName')}</Label>
               <Input
                 id="userName"
                 defaultValue="Admin User"
@@ -82,7 +82,7 @@ export const Settings = () => {
               />
             </div>
             <div>
-              <Label htmlFor="userEmail">Email</Label>
+              <Label htmlFor="userEmail">{t('settingsCard.email')}</Label>
               <Input
                 id="userEmail"
                 type="email"
@@ -91,7 +91,7 @@ export const Settings = () => {
               />
             </div>
             <div>
-              <Label htmlFor="currentPassword">Current Password</Label>
+              <Label htmlFor="currentPassword">{t('settingsCard.currentPassword')}</Label>
               <Input
                 id="currentPassword"
                 type="password"
@@ -99,7 +99,7 @@ export const Settings = () => {
               />
             </div>
             <div>
-              <Label htmlFor="newPassword">New Password</Label>
+              <Label htmlFor="newPassword">{t('settingsCard.newPassword')}</Label>
               <Input
                 id="newPassword"
                 type="password"
@@ -113,34 +113,34 @@ export const Settings = () => {
         <Card className="bg-gray-800 border-gray-700 p-6">
           <div className="flex items-center mb-4">
             <Bell className="mr-2 text-yellow-400" size={20} />
-            <h3 className="text-lg font-semibold text-white">Notifications</h3>
+            <h3 className="text-lg font-semibold text-white">{t('settingsCard.notifications')}</h3>
           </div>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <Label htmlFor="orderAlerts">Order Alerts</Label>
-                <p className="text-sm text-gray-400">Get notified when new orders arrive</p>
+                <Label htmlFor="orderAlerts">{t('settingsCard.orderAlerts')}</Label>
+                <p className="text-sm text-gray-400">{t('settingsCard.orderAlertsDesc')}</p>
               </div>
               <Switch id="orderAlerts" defaultChecked />
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <Label htmlFor="lowStock">Low Stock Alerts</Label>
-                <p className="text-sm text-gray-400">Alert when inventory is running low</p>
+                <Label htmlFor="lowStock">{t('settingsCard.lowStock')}</Label>
+                <p className="text-sm text-gray-400">{t('settingsCard.lowStockDesc')}</p>
               </div>
               <Switch id="lowStock" defaultChecked />
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <Label htmlFor="dailyReports">Daily Reports</Label>
-                <p className="text-sm text-gray-400">Receive daily sales reports via email</p>
+                <Label htmlFor="dailyReports">{t('settingsCard.dailyReports')}</Label>
+                <p className="text-sm text-gray-400">{t('settingsCard.dailyReportsDesc')}</p>
               </div>
               <Switch id="dailyReports" />
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <Label htmlFor="maintenance">Maintenance Reminders</Label>
-                <p className="text-sm text-gray-400">Reminders for system maintenance</p>
+                <Label htmlFor="maintenance">{t('settingsCard.maintenance')}</Label>
+                <p className="text-sm text-gray-400">{t('settingsCard.maintenanceDesc')}</p>
               </div>
               <Switch id="maintenance" defaultChecked />
             </div>
@@ -151,25 +151,25 @@ export const Settings = () => {
         <Card className="bg-gray-800 border-gray-700 p-6">
           <div className="flex items-center mb-4">
             <Shield className="mr-2 text-red-400" size={20} />
-            <h3 className="text-lg font-semibold text-white">Security</h3>
+            <h3 className="text-lg font-semibold text-white">{t('settingsCard.security')}</h3>
           </div>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <Label htmlFor="twoFactor">Two-Factor Authentication</Label>
-                <p className="text-sm text-gray-400">Add an extra layer of security</p>
+                <Label htmlFor="twoFactor">{t('settingsCard.twoFactor')}</Label>
+                <p className="text-sm text-gray-400">{t('settingsCard.twoFactorDesc')}</p>
               </div>
               <Switch id="twoFactor" />
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <Label htmlFor="sessionTimeout">Auto Session Timeout</Label>
-                <p className="text-sm text-gray-400">Automatically log out after inactivity</p>
+                <Label htmlFor="sessionTimeout">{t('settingsCard.sessionTimeout')}</Label>
+                <p className="text-sm text-gray-400">{t('settingsCard.sessionTimeoutDesc')}</p>
               </div>
               <Switch id="sessionTimeout" defaultChecked />
             </div>
             <div>
-              <Label htmlFor="sessionDuration">Session Duration (minutes)</Label>
+              <Label htmlFor="sessionDuration">{t('settingsCard.sessionDuration')}</Label>
               <Input
                 id="sessionDuration"
                 type="number"
@@ -230,12 +230,12 @@ export const Settings = () => {
         <Card className="bg-gray-800 border-gray-700 p-6">
           <div className="flex items-center mb-4">
             <Database className="mr-2 text-purple-400" size={20} />
-            <h3 className="text-lg font-semibold text-white">System Settings</h3>
+            <h3 className="text-lg font-semibold text-white">{t('settingsCard.system')}</h3>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div>
-                <Label htmlFor="currency">Currency</Label>
+                <Label htmlFor="currency">{t('settingsCard.currency')}</Label>
                 <select
                   id="currency"
                   className="w-full p-2 bg-gray-700 border border-gray-600 rounded-md text-white"
@@ -246,7 +246,7 @@ export const Settings = () => {
                 </select>
               </div>
               <div>
-                <Label htmlFor="timezone">Timezone</Label>
+                <Label htmlFor="timezone">{t('settingsCard.timezone')}</Label>
                 <select
                   id="timezone"
                   className="w-full p-2 bg-gray-700 border border-gray-600 rounded-md text-white"
@@ -257,7 +257,7 @@ export const Settings = () => {
                 </select>
               </div>
               <div>
-                <Label htmlFor="taxRate">Default Tax Rate (%)</Label>
+                <Label htmlFor="taxRate">{t('settingsCard.taxRate')}</Label>
                 <Input
                   id="taxRate"
                   type="number"
@@ -270,20 +270,20 @@ export const Settings = () => {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <Label htmlFor="autoBackup">Automatic Backups</Label>
-                  <p className="text-sm text-gray-400">Daily automatic data backups</p>
+                  <Label htmlFor="autoBackup">{t('settingsCard.autoBackup')}</Label>
+                  <p className="text-sm text-gray-400">{t('settingsCard.autoBackupDesc')}</p>
                 </div>
                 <Switch id="autoBackup" defaultChecked />
               </div>
               <div className="flex items-center justify-between">
                 <div>
-                  <Label htmlFor="analyticsTracking">Analytics Tracking</Label>
-                  <p className="text-sm text-gray-400">Track system usage and performance</p>
+                  <Label htmlFor="analyticsTracking">{t('settingsCard.analyticsTracking')}</Label>
+                  <p className="text-sm text-gray-400">{t('settingsCard.analyticsTrackingDesc')}</p>
                 </div>
                 <Switch id="analyticsTracking" defaultChecked />
               </div>
               <div>
-                <Label htmlFor="receiptFooter">Receipt Footer Text</Label>
+                <Label htmlFor="receiptFooter">{t('settingsCard.receiptFooter')}</Label>
                 <Textarea
                   id="receiptFooter"
                   defaultValue="Thank you for dining with us!"
