@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Users } from "lucide-react";
+import { useTranslation } from "@/contexts/TranslationContext";
 
 interface Table {
   id: string;
@@ -29,6 +30,7 @@ const initialTables: Table[] = [
 
 export const Tables = () => {
   const [tables, setTables] = useState<Table[]>(initialTables);
+  const { t } = useTranslation();
 
   const getStatusColor = (status: Table["status"]) => {
     switch (status) {
@@ -39,12 +41,22 @@ export const Tables = () => {
     }
   };
 
+  const getStatusLabel = (status: Table["status"]) => {
+    switch (status) {
+      case "Available": return t('tables.available');
+      case "Occupied": return t('tables.occupied');
+      case "Reserved": return t('tables.reserved');
+      case "Cleaning": return t('tables.cleaning');
+      default: return status;
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">Tables</h1>
-          <p className="text-gray-400">Manage restaurant seating</p>
+          <h1 className="text-3xl font-bold text-white">{t('tables.title')}</h1>
+          <p className="text-gray-400">{t('tablesPage.monitor')}</p>
         </div>
       </div>
 
@@ -52,16 +64,16 @@ export const Tables = () => {
         {tables.map((table) => (
           <Card key={table.id} className="bg-gray-800 border-gray-700 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-white">Table {table.number}</h3>
+              <h3 className="text-xl font-bold text-white">{t('tables.tableNumber')} {table.number}</h3>
               <Badge className={getStatusColor(table.status)}>
-                {table.status}
+                {getStatusLabel(table.status)}
               </Badge>
             </div>
 
             <div className="space-y-3">
               <div className="flex items-center text-gray-300">
                 <Users size={16} className="mr-2" />
-                <span className="text-sm">Seats {table.capacity}</span>
+                <span className="text-sm">{t('tables.seats')} {table.capacity}</span>
               </div>
 
               {table.currentOrder && (
@@ -71,10 +83,10 @@ export const Tables = () => {
                   </div>
                   <div className="flex items-center text-gray-300 mb-2">
                     <Clock size={16} className="mr-2" />
-                    <span className="text-sm">Since {table.currentOrder.orderTime}</span>
+                    <span className="text-sm">{t('tables.since')} {table.currentOrder.orderTime}</span>
                   </div>
                   <div className="text-green-400">
-                    <span className="text-sm">{table.currentOrder.items} items • ${table.currentOrder.total}</span>
+                    <span className="text-sm">{table.currentOrder.items} {t('ordersPage.itemsCount')} • ${table.currentOrder.total}</span>
                   </div>
                 </div>
               )}

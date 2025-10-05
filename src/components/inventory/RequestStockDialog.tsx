@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useBranch } from "@/contexts/BranchContext";
 import { useInventory } from "@/hooks/useInventory";
 import type { InventoryItem, Warehouse } from "@/hooks/useInventory";
+import { useTranslation } from "@/contexts/TranslationContext";
 
 interface RequestStockDialogProps {
   isOpen: boolean;
@@ -29,6 +30,7 @@ export const RequestStockDialog = ({
   const [requestedQuantity, setRequestedQuantity] = useState("");
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
+  const { t } = useTranslation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,7 +74,7 @@ export const RequestStockDialog = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-gray-800 border-gray-700 text-white">
         <DialogHeader>
-          <DialogTitle>Request Stock Transfer</DialogTitle>
+          <DialogTitle>{t('inventory.requestDialog.title')}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -85,22 +87,22 @@ export const RequestStockDialog = ({
               </Badge>
             </div>
             <div className="text-sm text-gray-300 space-y-1">
-              <div>SKU: {item.sku}</div>
-              <div>Requesting Branch: {selectedBranch.name}</div>
-              <div>Current Warehouse Stock: {item.current_stock} units</div>
+              <div>{t('inventory.sku')}: {item.sku}</div>
+              <div>{t('inventory.requestDialog.requestingBranch')}: {selectedBranch.name}</div>
+              <div>{t('inventory.requestDialog.currentWarehouseStock')}: {item.current_stock} {t('inventoryReports.units')}</div>
             </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="warehouse">Select Warehouse</Label>
+              <Label htmlFor="warehouse">{t('inventory.requestDialog.selectWarehouse')}</Label>
               <Select
                 value={selectedWarehouse}
                 onValueChange={setSelectedWarehouse}
                 required
               >
                 <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                  <SelectValue placeholder="Choose warehouse to request from" />
+                  <SelectValue placeholder={t('inventory.requestDialog.chooseWarehouse')} />
                 </SelectTrigger>
                 <SelectContent>
                   {warehouses.map(warehouse => (
@@ -113,7 +115,7 @@ export const RequestStockDialog = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="quantity">Requested Quantity</Label>
+              <Label htmlFor="quantity">{t('inventory.requestDialog.requestedQuantity')}</Label>
               <Input
                 id="quantity"
                 type="number"
@@ -125,18 +127,18 @@ export const RequestStockDialog = ({
                 required
               />
               <div className="text-xs text-gray-400">
-                Maximum available: {item.current_stock} units
+                {t('inventory.requestDialog.maximumAvailable')}: {item.current_stock} {t('inventoryReports.units')}
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="notes">Request Notes (Optional)</Label>
+              <Label htmlFor="notes">{t('inventory.requestDialog.requestNotes')}</Label>
               <Textarea
                 id="notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 className="bg-gray-700 border-gray-600 text-white"
-                placeholder="Add any additional information about this request..."
+                placeholder=""
                 rows={3}
               />
             </div>
@@ -148,14 +150,14 @@ export const RequestStockDialog = ({
                 onClick={onClose}
                 className="border-gray-600 text-white hover:bg-gray-700"
               >
-                Cancel
+                {t('inventory.itemDialog.cancel')}
               </Button>
               <Button
                 type="submit"
                 disabled={loading || !selectedWarehouse || !requestedQuantity}
                 className="bg-blue-600 hover:bg-blue-700"
               >
-                {loading ? "Submitting..." : "Submit Request"}
+                {loading ? t('inventory.requestDialog.submitting') : t('inventory.requestDialog.submit')}
               </Button>
             </div>
           </form>

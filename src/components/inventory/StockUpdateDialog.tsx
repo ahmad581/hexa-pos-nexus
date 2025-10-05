@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import type { InventoryItem } from "@/hooks/useInventory";
+import { useTranslation } from "@/contexts/TranslationContext";
 
 interface StockUpdateDialogProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ export const StockUpdateDialog = ({
   const [quantity, setQuantity] = useState("");
   const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(false);
+  const { t } = useTranslation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,7 +79,7 @@ export const StockUpdateDialog = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-gray-800 border-gray-700 text-white">
         <DialogHeader>
-          <DialogTitle>Update Stock - {item.name}</DialogTitle>
+          <DialogTitle>{t('inventory.stockDialog.title')} - {item.name}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -99,7 +101,7 @@ export const StockUpdateDialog = ({
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="transaction_type">Transaction Type</Label>
+              <Label htmlFor="transaction_type">{t('inventory.stockDialog.transactionType')}</Label>
               <Select
                 value={transactionType}
                 onValueChange={(value: 'Add' | 'Remove' | 'Adjustment') => setTransactionType(value)}
@@ -108,16 +110,16 @@ export const StockUpdateDialog = ({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Add">Add Stock</SelectItem>
-                  <SelectItem value="Remove">Remove Stock</SelectItem>
-                  <SelectItem value="Adjustment">Set Exact Amount</SelectItem>
+                  <SelectItem value="Add">{t('inventory.stockDialog.addStock')}</SelectItem>
+                  <SelectItem value="Remove">{t('inventory.stockDialog.removeStock')}</SelectItem>
+                  <SelectItem value="Adjustment">{t('inventory.stockDialog.setExact')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="quantity">
-                {transactionType === 'Adjustment' ? 'New Stock Level' : 'Quantity'}
+                {transactionType === 'Adjustment' ? t('inventory.stockDialog.newStockLevel') : t('inventory.stockDialog.quantity')}
               </Label>
               <Input
                 id="quantity"
@@ -132,21 +134,21 @@ export const StockUpdateDialog = ({
 
             {quantity && (
               <div className="bg-gray-700 p-3 rounded">
-                <div className="text-sm text-gray-300">
-                  <div>Current Stock: {item.current_stock}</div>
-                  <div className="font-semibold">New Stock: {getNewStock()}</div>
-                </div>
+              <div className="text-sm text-gray-300">
+                <div>{t('inventory.stockDialog.currentStock')}: {item.current_stock}</div>
+                <div className="font-semibold">{t('inventory.stockDialog.newStock')}: {getNewStock()}</div>
+              </div>
               </div>
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="reason">Reason (Optional)</Label>
+              <Label htmlFor="reason">{t('inventory.stockDialog.reason')}</Label>
               <Textarea
                 id="reason"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 className="bg-gray-700 border-gray-600 text-white"
-                placeholder="Enter reason for stock change..."
+                placeholder=""
                 rows={2}
               />
             </div>
@@ -158,14 +160,14 @@ export const StockUpdateDialog = ({
                 onClick={onClose}
                 className="border-gray-600 text-white hover:bg-gray-700"
               >
-                Cancel
+                {t('inventory.itemDialog.cancel')}
               </Button>
               <Button
                 type="submit"
                 disabled={loading || !quantity}
                 className="bg-green-600 hover:bg-green-700"
               >
-                {loading ? "Updating..." : "Update Stock"}
+                {loading ? t('inventory.stockDialog.updating') : t('inventory.stockDialog.update')}
               </Button>
             </div>
           </form>

@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Trash2 } from "lucide-react";
 import type { InventoryItem, Warehouse } from "@/hooks/useInventory";
+import { useTranslation } from "@/contexts/TranslationContext";
 
 interface InventoryItemDialogProps {
   isOpen: boolean;
@@ -40,6 +41,7 @@ export const InventoryItemDialog = ({
     expiry_date: ""
   });
   const [loading, setLoading] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (item) {
@@ -117,7 +119,7 @@ export const InventoryItemDialog = ({
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle>
-              {item ? "Edit Item" : "Add New Item"}
+              {item ? t('inventory.itemDialog.titleEdit') : t('inventory.itemDialog.titleAdd')}
             </DialogTitle>
             {item && onDelete && (
               <AlertDialog>
@@ -127,23 +129,23 @@ export const InventoryItemDialog = ({
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent className="bg-gray-800 border-gray-700 text-white">
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Item</AlertDialogTitle>
-                    <AlertDialogDescription className="text-gray-300">
-                      Are you sure you want to delete "{item.name}"? This action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600">
-                      Cancel
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handleDelete}
-                      className="bg-red-600 hover:bg-red-700"
-                    >
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>{t('inventory.itemDialog.delete')}</AlertDialogTitle>
+                      <AlertDialogDescription className="text-gray-300">
+                        {t('inventory.itemDialog.deleteConfirm')} "{item.name}"? This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600">
+                        {t('inventory.itemDialog.cancel')}
+                      </AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleDelete}
+                        className="bg-red-600 hover:bg-red-700"
+                      >
+                        {t('inventory.itemDialog.delete')}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
             )}
@@ -153,14 +155,14 @@ export const InventoryItemDialog = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="warehouse">Warehouse</Label>
+              <Label htmlFor="warehouse">{t('inventory.itemDialog.warehouse')}</Label>
               <Select
                 value={formData.warehouse_id}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, warehouse_id: value }))}
                 required
               >
                 <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                  <SelectValue placeholder="Select warehouse" />
+                  <SelectValue placeholder={t('inventory.selectWarehouse')} />
                 </SelectTrigger>
                 <SelectContent>
                   {warehouses.map(warehouse => (
@@ -173,7 +175,7 @@ export const InventoryItemDialog = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
+              <Label htmlFor="category">{t('inventory.itemDialog.category')}</Label>
               <Input
                 id="category"
                 value={formData.category}
@@ -186,7 +188,7 @@ export const InventoryItemDialog = ({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Item Name</Label>
+              <Label htmlFor="name">{t('inventory.itemDialog.itemName')}</Label>
               <Input
                 id="name"
                 value={formData.name}
@@ -197,7 +199,7 @@ export const InventoryItemDialog = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="sku">SKU</Label>
+              <Label htmlFor="sku">{t('inventory.itemDialog.sku')}</Label>
               <Input
                 id="sku"
                 value={formData.sku}
@@ -209,7 +211,7 @@ export const InventoryItemDialog = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">{t('inventory.itemDialog.description')}</Label>
             <Textarea
               id="description"
               value={formData.description}
@@ -221,7 +223,7 @@ export const InventoryItemDialog = ({
 
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="current_stock">Current Stock</Label>
+              <Label htmlFor="current_stock">{t('inventory.itemDialog.currentStock')}</Label>
               <Input
                 id="current_stock"
                 type="number"
@@ -234,7 +236,7 @@ export const InventoryItemDialog = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="min_stock">Min Stock</Label>
+              <Label htmlFor="min_stock">{t('inventory.itemDialog.minStock')}</Label>
               <Input
                 id="min_stock"
                 type="number"
@@ -247,7 +249,7 @@ export const InventoryItemDialog = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="max_stock">Max Stock</Label>
+              <Label htmlFor="max_stock">{t('inventory.itemDialog.maxStock')}</Label>
               <Input
                 id="max_stock"
                 type="number"
@@ -262,7 +264,7 @@ export const InventoryItemDialog = ({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="unit_price">Unit Price ($)</Label>
+              <Label htmlFor="unit_price">{t('inventory.itemDialog.unitPrice')}</Label>
               <Input
                 id="unit_price"
                 type="number"
@@ -275,7 +277,7 @@ export const InventoryItemDialog = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="supplier">Supplier</Label>
+              <Label htmlFor="supplier">{t('inventory.itemDialog.supplier')}</Label>
               <Input
                 id="supplier"
                 value={formData.supplier}
@@ -286,14 +288,14 @@ export const InventoryItemDialog = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="expiry_date">Expiry Date (Optional)</Label>
-            <Input
-              id="expiry_date"
-              type="date"
-              value={formData.expiry_date}
-              onChange={(e) => setFormData(prev => ({ ...prev, expiry_date: e.target.value }))}
-              className="bg-gray-700 border-gray-600 text-white"
-            />
+              <Label htmlFor="expiry_date">{t('inventory.itemDialog.expiryDate')}</Label>
+              <Input
+                id="expiry_date"
+                type="date"
+                value={formData.expiry_date}
+                onChange={(e) => setFormData(prev => ({ ...prev, expiry_date: e.target.value }))}
+                className="bg-gray-700 border-gray-600 text-white"
+              />
           </div>
 
           <div className="flex justify-end gap-2 pt-4">
@@ -303,14 +305,14 @@ export const InventoryItemDialog = ({
               onClick={onClose}
               className="border-gray-600 text-white hover:bg-gray-700"
             >
-              Cancel
+              {t('inventory.itemDialog.cancel')}
             </Button>
             <Button
               type="submit"
               disabled={loading}
               className="bg-green-600 hover:bg-green-700"
             >
-              {loading ? "Saving..." : item ? "Update" : "Create"}
+              {loading ? t('inventory.itemDialog.saving') : item ? t('inventory.itemDialog.update') : t('inventory.itemDialog.create')}
             </Button>
           </div>
         </form>

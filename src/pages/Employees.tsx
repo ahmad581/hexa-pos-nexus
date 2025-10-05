@@ -417,7 +417,7 @@ export const Employees = () => {
           ? { ...emp, documents: [...emp.documents, ...newDocuments] }
           : emp
       ));
-      toast({ title: `${newDocuments.length} document(s) uploaded successfully` });
+      toast({ title: `${newDocuments.length} ${t('employees.documentsUploaded')}` });
     }
   };
 
@@ -430,7 +430,7 @@ export const Employees = () => {
           }
         : emp
     ));
-    toast({ title: "Document removed successfully" });
+    toast({ title: t('employees.documentRemoved') });
   };
 
   const openSalaryDialog = (employee: Employee) => {
@@ -483,20 +483,20 @@ export const Employees = () => {
                 <div className="flex items-center gap-4 mb-2">
                   <h3 className="text-xl font-semibold text-white">{employee.name}</h3>
                   <Badge className={employee.status === "Active" ? "bg-green-600" : "bg-red-600"}>
-                    {employee.status}
+                    {employee.status === "Active" ? t('employees.statusActive') : t('employees.statusInactive')}
                   </Badge>
                   <Badge className={employee.isCheckedIn ? "bg-blue-600" : "bg-gray-600"}>
-                    {employee.isCheckedIn ? "Checked In" : "Checked Out"}
+                    {employee.isCheckedIn ? t('employees.checkedIn') : t('employees.checkedOut')}
                   </Badge>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4 text-gray-300 mb-4">
                   <div>
-                    <p><strong>Role:</strong> {employee.role}</p>
-                    <p><strong>Phone:</strong> {employee.phone}</p>
-                    <p><strong>Hire Date:</strong> {employee.hireDate}</p>
+                    <p><strong>{t('employees.role')}:</strong> {employee.role}</p>
+                    <p><strong>{t('employees.phone')}:</strong> {employee.phone}</p>
+                    <p><strong>{t('employees.hireDate')}:</strong> {employee.hireDate}</p>
                     <div className="mt-2">
-                      <p><strong>Documents:</strong></p>
+                      <p><strong>{t('employees.documents')}:</strong></p>
                       <div className="flex flex-wrap gap-2 mt-1">
                         {employee.documents.map((doc, index) => (
                           <div key={index} className="flex items-center gap-1 bg-gray-600 px-2 py-1 rounded text-xs">
@@ -512,7 +512,7 @@ export const Employees = () => {
                         ))}
                         <label className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded text-xs cursor-pointer">
                           <Upload size={12} />
-                          <span>Upload PDF</span>
+                          <span>{t('employees.uploadPdf')}</span>
                           <input
                             type="file"
                             accept=".pdf"
@@ -536,19 +536,19 @@ export const Employees = () => {
                 <div className="bg-gray-700 p-4 rounded-lg mb-4">
                   <div className="grid grid-cols-4 gap-4 text-sm mb-3">
                     <div>
-                      <p className="text-gray-400">Check In Time</p>
-                      <p className="text-white font-semibold">{employee.checkInTime || "Not checked in"}</p>
+                      <p className="text-gray-400">{t('employees.checkInTime')}</p>
+                      <p className="text-white font-semibold">{employee.checkInTime || t('employees.notCheckedIn')}</p>
                     </div>
                     <div>
-                      <p className="text-gray-400">Check Out Time</p>
-                      <p className="text-white font-semibold">{employee.checkOutTime || "Not checked out"}</p>
+                      <p className="text-gray-400">{t('employees.checkOutTime')}</p>
+                      <p className="text-white font-semibold">{employee.checkOutTime || t('employees.notCheckedOut')}</p>
                     </div>
                     <div>
-                      <p className="text-gray-400">Daily Hours</p>
+                      <p className="text-gray-400">{t('employees.dailyHours')}</p>
                       <p className="text-white font-semibold">{employee.dailyHours.toFixed(2)}h</p>
                     </div>
                     <div>
-                      <p className="text-gray-400">Today's Earnings</p>
+                      <p className="text-gray-400">{t('employees.todaysEarnings')}</p>
                       <p className="text-green-400 font-semibold">${employee.todayEarnings.toFixed(2)}</p>
                     </div>
                   </div>
@@ -561,7 +561,7 @@ export const Employees = () => {
                       className="bg-green-600 hover:bg-green-700"
                     >
                       <LogIn size={14} className="mr-1" />
-                      Check In
+                      {t('employeesPage.checkIn')}
                     </Button>
                     <Button 
                       size="sm" 
@@ -570,7 +570,7 @@ export const Employees = () => {
                       className="bg-red-600 hover:bg-red-700"
                     >
                       <LogOut size={14} className="mr-1" />
-                      Check Out
+                      {t('employeesPage.checkOut')}
                     </Button>
                     <Button 
                       size="sm" 
@@ -578,7 +578,7 @@ export const Employees = () => {
                       className={employee.biometricRegistered ? "bg-blue-600 hover:bg-blue-700" : "bg-orange-600 hover:bg-orange-700"}
                     >
                       <Fingerprint size={14} className="mr-1" />
-                      {employee.biometricRegistered ? 'Biometric Auth' : 'Register Biometric'}
+                      {employee.biometricRegistered ? t('employees.biometricAuth') : t('employees.registerBiometric')}
                     </Button>
                     <Button 
                       size="sm" 
@@ -586,7 +586,7 @@ export const Employees = () => {
                       className="bg-purple-600 hover:bg-purple-700"
                     >
                       <QrCode size={14} className="mr-1" />
-                      Show QR
+                      {t('employees.showQR')}
                     </Button>
                   </div>
                 </div>
@@ -602,7 +602,7 @@ export const Employees = () => {
                       className="w-full mb-4 border-gray-600 text-gray-300"
                     >
                       <Calendar size={16} className="mr-2" />
-                      {expandedEmployees.has(employee.id) ? 'Hide' : 'Show'} Monthly Work Days ({employee.workDays.length} days)
+                      {expandedEmployees.has(employee.id) ? t('common.close') : t('common.view')} {t('employeesPage.workingDays')} ({employee.workDays.length} days)
                     </Button>
                   </CollapsibleTrigger>
                   <CollapsibleContent className="mb-4">
@@ -680,7 +680,7 @@ export const Employees = () => {
                   onClick={() => openSalaryDialog(employee)}
                 >
                   <DollarSign size={16} className="mr-1" />
-                  Salary
+                  {t('employees.salary')}
                 </Button>
                 <Button 
                   variant="outline" 
@@ -722,7 +722,7 @@ export const Employees = () => {
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="bg-gray-800 border-gray-700">
           <DialogHeader>
-            <DialogTitle className="text-white">Add New Employee</DialogTitle>
+            <DialogTitle className="text-white">{t('employeesPage.addEmployee')}</DialogTitle>
           </DialogHeader>
           
           <Form {...form}>
@@ -732,7 +732,7 @@ export const Employees = () => {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-300">Name</FormLabel>
+                    <FormLabel className="text-gray-300">{t('employees.name')}</FormLabel>
                     <FormControl>
                       <Input {...field} className="bg-gray-700 border-gray-600 text-white" />
                     </FormControl>
@@ -746,7 +746,7 @@ export const Employees = () => {
                 name="role"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-300">Role</FormLabel>
+                    <FormLabel className="text-gray-300">{t('employees.role')}</FormLabel>
                     <FormControl>
                       <Input {...field} className="bg-gray-700 border-gray-600 text-white" />
                     </FormControl>
@@ -760,7 +760,7 @@ export const Employees = () => {
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-300">Phone</FormLabel>
+                    <FormLabel className="text-gray-300">{t('employees.phone')}</FormLabel>
                     <FormControl>
                       <Input {...field} className="bg-gray-700 border-gray-600 text-white" />
                     </FormControl>
@@ -774,7 +774,7 @@ export const Employees = () => {
                 name="monthlySalary"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-300">Monthly Salary ($)</FormLabel>
+                    <FormLabel className="text-gray-300">{t('employeesPage.monthlySalary')}</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -790,14 +790,14 @@ export const Employees = () => {
               
               <div className="flex gap-2">
                 <Button type="submit" className="bg-green-600 hover:bg-green-700">
-                  Add Employee
+                  {t('employeesPage.addEmployee')}
                 </Button>
                 <Button 
                   type="button" 
                   variant="outline" 
                   onClick={() => setIsAddDialogOpen(false)}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
               </div>
             </form>

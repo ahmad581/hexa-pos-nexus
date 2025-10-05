@@ -188,12 +188,12 @@ export const InventoryReports = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">Inventory Reports</h2>
-          <p className="text-gray-400">Monthly inventory analysis and insights</p>
+          <h2 className="text-2xl font-bold text-white">{t('inventoryReports.title')}</h2>
+          <p className="text-gray-400">{t('inventoryReports.subtitle')}</p>
         </div>
         <Button onClick={exportReport} className="bg-green-600 hover:bg-green-700">
           <Download className="h-4 w-4 mr-2" />
-          Export CSV
+          {t('inventoryReports.exportCsv')}
         </Button>
       </div>
 
@@ -201,10 +201,10 @@ export const InventoryReports = () => {
       <div className="flex gap-4">
         <Select value={selectedWarehouse} onValueChange={setSelectedWarehouse}>
           <SelectTrigger className="w-[200px] bg-gray-800 border-gray-700 text-white">
-            <SelectValue placeholder="Select warehouse" />
+            <SelectValue placeholder={t('inventory.selectWarehouse')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Warehouses</SelectItem>
+            <SelectItem value="all">{t('inventory.allWarehouses')}</SelectItem>
             {warehouses.map(warehouse => (
               <SelectItem key={warehouse.id} value={warehouse.id}>
                 {warehouse.name}
@@ -215,7 +215,7 @@ export const InventoryReports = () => {
 
         <Select value={selectedMonth} onValueChange={setSelectedMonth}>
           <SelectTrigger className="w-[200px] bg-gray-800 border-gray-700 text-white">
-            <SelectValue placeholder="Select month" />
+            <SelectValue placeholder={t('inventoryReports.selectMonth')} />
           </SelectTrigger>
           <SelectContent>
             {Array.from({ length: 12 }, (_, i) => {
@@ -240,7 +240,7 @@ export const InventoryReports = () => {
             <Card className="bg-gray-800 border-gray-700 p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-400">Total Items</p>
+                  <p className="text-sm text-gray-400">{t('inventoryReports.totalItems')}</p>
                   <p className="text-2xl font-bold text-white">{monthlyReport.totalItems}</p>
                 </div>
                 <Package className="h-8 w-8 text-blue-400" />
@@ -250,7 +250,7 @@ export const InventoryReports = () => {
             <Card className="bg-gray-800 border-gray-700 p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-400">Total Value</p>
+                  <p className="text-sm text-gray-400">{t('inventoryReports.totalValue')}</p>
                   <p className="text-2xl font-bold text-white">${monthlyReport.totalValue.toFixed(2)}</p>
                 </div>
                 <DollarSign className="h-8 w-8 text-green-400" />
@@ -260,7 +260,7 @@ export const InventoryReports = () => {
             <Card className="bg-gray-800 border-gray-700 p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-400">Low Stock Alert</p>
+                  <p className="text-sm text-gray-400">{t('inventoryReports.lowStockAlert')}</p>
                   <p className="text-2xl font-bold text-yellow-400">{monthlyReport.lowStockItems}</p>
                 </div>
                 <AlertTriangle className="h-8 w-8 text-yellow-400" />
@@ -270,7 +270,7 @@ export const InventoryReports = () => {
             <Card className="bg-gray-800 border-gray-700 p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-400">Transactions</p>
+                  <p className="text-sm text-gray-400">{t('inventoryReports.transactions')}</p>
                   <p className="text-2xl font-bold text-white">{monthlyReport.transactions}</p>
                 </div>
                 <BarChart3 className="h-8 w-8 text-purple-400" />
@@ -280,7 +280,7 @@ export const InventoryReports = () => {
 
           {/* Transaction Summary */}
           <Card className="bg-gray-800 border-gray-700 p-6">
-            <h3 className="text-lg font-bold text-white mb-4">Transaction Summary</h3>
+            <h3 className="text-lg font-bold text-white mb-4">{t('inventoryReports.transactionSummary')}</h3>
             <div className="space-y-3">
               {transactions.length > 0 ? (
                 transactions.map((transaction) => (
@@ -289,10 +289,10 @@ export const InventoryReports = () => {
                       {getTransactionIcon(transaction.type)}
                       <span className="text-white font-medium">{transaction.type}</span>
                     </div>
-                    <div className="text-right">
-                      <div className="text-white font-bold">{transaction.count} transactions</div>
-                      <div className="text-sm text-gray-400">{transaction.totalQuantity} units</div>
-                    </div>
+                  <div className="text-right">
+                    <div className="text-white font-bold">{transaction.count} {t('inventoryReports.transactions').toLowerCase()}</div>
+                    <div className="text-sm text-gray-400">{transaction.totalQuantity} {t('inventoryReports.units')}</div>
+                  </div>
                   </div>
                 ))
               ) : (
@@ -303,17 +303,17 @@ export const InventoryReports = () => {
 
           {/* Category Breakdown */}
           <Card className="bg-gray-800 border-gray-700 p-6">
-            <h3 className="text-lg font-bold text-white mb-4">Category Breakdown</h3>
+            <h3 className="text-lg font-bold text-white mb-4">{t('inventoryReports.categoryBreakdown')}</h3>
             <div className="space-y-3">
               {getCategoryBreakdown().map((category) => (
                 <div key={category.category} className="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
                   <div>
                     <span className="text-white font-medium">{category.category}</span>
-                    <p className="text-sm text-gray-400">{category.count} items</p>
+                    <p className="text-sm text-gray-400">{category.count} {t('inventoryReports.items')}</p>
                   </div>
                   <div className="text-right">
                     <div className="text-white font-bold">${category.value.toFixed(2)}</div>
-                    <div className="text-sm text-gray-400">{category.stock} units</div>
+                    <div className="text-sm text-gray-400">{category.stock} {t('inventoryReports.units')}</div>
                   </div>
                 </div>
               ))}

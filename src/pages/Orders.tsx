@@ -65,6 +65,25 @@ export const Orders = () => {
     }
   };
 
+  const statusLabel = (status: Order["status"]) => {
+    switch (status) {
+      case "pending": return t('orders.pending');
+      case "preparing": return t('orders.preparing');
+      case "ready": return t('orders.ready');
+      case "served": return t('orders.delivered');
+      default: return status;
+    }
+  };
+
+  const typeLabel = (type: string) => {
+    switch (type) {
+      case "dine-in": return t('orders.dineIn');
+      case "takeout": return t('orders.takeout');
+      case "delivery": return t('orders.delivery');
+      default: return type;
+    }
+  };
+
   const exportOrders = () => {
     const csvContent = [
       [t('ordersPage.orderId'), t('ordersPage.branch'), t('ordersPage.type'), t('ordersPage.customer'), t('ordersPage.items'), t('common.total'), t('common.status'), t('common.date')],
@@ -183,14 +202,14 @@ export const Orders = () => {
                   </td>
                   <td className="py-3">
                     <Badge className="bg-blue-500/20 text-blue-400">
-                      {order.orderType}
+                      {typeLabel(order.orderType)}
                     </Badge>
                   </td>
                   <td className="py-3 text-gray-300">{order.items.length} {t('ordersPage.itemsCount')}</td>
                   <td className="py-3 text-green-400 font-semibold">${order.total.toFixed(2)}</td>
                   <td className="py-3">
                     <Badge className={getStatusColor(order.status)}>
-                      {order.status}
+                      {statusLabel(order.status)}
                     </Badge>
                   </td>
                   <td className="py-3 text-gray-300">{order.timestamp}</td>
@@ -276,9 +295,9 @@ export const Orders = () => {
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-gray-400 mb-1">{t('ordersPage.type')}</h4>
-                  <Badge className="bg-blue-500/20 text-blue-400">
-                    {selectedOrder.orderType}
-                  </Badge>
+                    <Badge className="bg-blue-500/20 text-blue-400">
+                      {typeLabel(selectedOrder.orderType)}
+                    </Badge>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-gray-400 mb-1">{t('ordersPage.customer')}</h4>
@@ -286,9 +305,9 @@ export const Orders = () => {
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-gray-400 mb-1">{t('common.status')}</h4>
-                  <Badge className={getStatusColor(selectedOrder.status)}>
-                    {selectedOrder.status}
-                  </Badge>
+                    <Badge className={getStatusColor(selectedOrder.status)}>
+                      {statusLabel(selectedOrder.status)}
+                    </Badge>
                 </div>
               </div>
 
