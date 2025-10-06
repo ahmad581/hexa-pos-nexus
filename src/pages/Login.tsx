@@ -19,6 +19,7 @@ export const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [masterDialogOpen, setMasterDialogOpen] = useState(false);
   const [masterEmail, setMasterEmail] = useState("");
+  const [masterPassword, setMasterPassword] = useState("");
   const [masterLoading, setMasterLoading] = useState(false);
   const [masterError, setMasterError] = useState("");
   const navigate = useNavigate();
@@ -99,8 +100,8 @@ export const Login = () => {
   };
 
   const handleMasterLogin = async () => {
-    if (!masterEmail) {
-      setMasterError("Please enter your email address");
+    if (!masterEmail || !masterPassword) {
+      setMasterError("Please enter both email and password");
       return;
     }
 
@@ -108,34 +109,38 @@ export const Login = () => {
     setMasterError("");
 
     try {
-      // Check if the email exists in profiles and has SystemMaster role
+      // Authenticate with Supabase
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: masterEmail,
+        password: masterPassword,
+      });
+
+      if (authError) {
+        setMasterError("Invalid email or password");
+        setMasterLoading(false);
+        return;
+      }
+
+      // Verify SystemMaster role
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('email, primary_role')
         .eq('email', masterEmail)
         .maybeSingle();
 
-      if (profileError) {
-        console.error('Profile lookup error:', profileError);
-        setMasterError("Error validating email. Please try again.");
-        setMasterLoading(false);
-        return;
-      }
-
-      if (!profile) {
-        setMasterError("Email not found in the system.");
+      if (profileError || !profile) {
+        await supabase.auth.signOut();
+        setMasterError("Profile not found in the system.");
         setMasterLoading(false);
         return;
       }
 
       if (profile.primary_role !== 'SystemMaster') {
+        await supabase.auth.signOut();
         setMasterError("This email is not authorized for SystemMaster access.");
         setMasterLoading(false);
         return;
       }
-
-      // If validation passes, use demo login for SystemMaster
-      await demoLogin(masterEmail);
       
       toast({
         title: t('auth.login') + " Successful",
@@ -144,6 +149,7 @@ export const Login = () => {
 
       setMasterDialogOpen(false);
       setMasterEmail("");
+      setMasterPassword("");
       setMasterError("");
       navigate("/system-master");
     } catch (error: any) {
@@ -157,6 +163,7 @@ export const Login = () => {
   const handleMasterDialogClose = () => {
     setMasterDialogOpen(false);
     setMasterEmail("");
+    setMasterPassword("");
     setMasterError("");
   };
 
@@ -272,6 +279,19 @@ export const Login = () => {
                       />
                     </div>
                     
+                    <div className="grid gap-2">
+                      <Label htmlFor="master-password">Password</Label>
+                      <Input
+                        id="master-password"
+                        type="password"
+                        placeholder="Enter your password"
+                        value={masterPassword}
+                        onChange={(e) => setMasterPassword(e.target.value)}
+                        className="col-span-3"
+                        disabled={masterLoading}
+                      />
+                    </div>
+                    
                     {masterError && (
                       <Alert variant="destructive">
                         <AlertDescription>{masterError}</AlertDescription>
@@ -289,7 +309,7 @@ export const Login = () => {
                     </Button>
                     <Button 
                       onClick={handleMasterLogin}
-                      disabled={masterLoading || !masterEmail}
+                      disabled={masterLoading || !masterEmail || !masterPassword}
                       className="bg-purple-600 hover:bg-purple-700"
                     >
                       {masterLoading ? (
