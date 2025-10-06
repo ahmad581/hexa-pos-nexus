@@ -208,6 +208,8 @@ const translations: Translations = {
   'orderSummary.customerInfoRequired': { en: 'Customer information required', ar: 'معلومات العميل مطلوبة' },
   'orderSummary.orderSubmitted': { en: 'Order submitted successfully!', ar: 'تم إرسال الطلب بنجاح!' },
   'orderSummary.phoneOrder': { en: 'Phone Order', ar: 'طلب هاتفي' },
+  'orderSummary.notes': { en: 'Order Notes', ar: 'ملاحظات الطلب' },
+  'orderSummary.addNotes': { en: 'Add notes (optional)', ar: 'إضافة ملاحظات (اختياري)' },
   
   // Orders Management
   'ordersPage.title': { en: 'Orders Management', ar: 'إدارة الطلبات' },

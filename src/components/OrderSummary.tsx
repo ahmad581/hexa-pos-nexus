@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Minus, Plus, Trash2, ShoppingCart, User, Phone, MapPin } from "lucide-react";
 import { useOrder } from "@/contexts/OrderContext";
@@ -17,10 +18,12 @@ export const OrderSummary = () => {
     selectedTable, 
     orderType,
     customerInfo,
+    orderNotes,
     removeItemFromOrder, 
     updateItemQuantity, 
     setOrderType,
     setCustomerInfo,
+    setOrderNotes,
     submitOrder, 
     clearCurrentOrder 
   } = useOrder();
@@ -161,6 +164,17 @@ export const OrderSummary = () => {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Order Notes */}
+      <div className="mb-4">
+        <Label className="text-white mb-2 block">{t('orderSummary.notes')}</Label>
+        <Textarea
+          value={orderNotes}
+          onChange={(e) => setOrderNotes(e.target.value)}
+          className="bg-gray-700 border-gray-600 text-white min-h-[80px]"
+          placeholder={t('orderSummary.addNotes')}
+        />
       </div>
 
       <div className="border-t border-gray-600 pt-4">

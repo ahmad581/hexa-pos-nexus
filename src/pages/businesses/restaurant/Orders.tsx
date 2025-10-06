@@ -21,6 +21,7 @@ interface Order {
   type: "Dine-in" | "Takeout" | "Delivery";
   tableNumber?: number;
   address?: string;
+  notes?: string;
   isDeleted?: boolean;
   isUpdated?: boolean;
 }
@@ -84,7 +85,8 @@ export const Orders = () => {
           type: order.orderType === 'dine-in' ? 'Dine-in' as const :
                 order.orderType === 'takeout' ? 'Takeout' as const : 'Delivery' as const,
           tableNumber: order.tableNumber,
-          address: order.customerInfo?.address
+          address: order.customerInfo?.address,
+          notes: order.notes
         }))
     ];
     setOrders(mergedOrders);
@@ -251,6 +253,11 @@ export const Orders = () => {
                       <div className="flex items-center text-sm text-gray-400 mt-1">
                         <MapPin size={12} className="mr-1" />
                         {order.address}
+                      </div>
+                    )}
+                    {order.notes && (
+                      <div className="text-sm text-gray-400 mt-1 italic">
+                        {order.notes}
                       </div>
                     )}
                   </div>

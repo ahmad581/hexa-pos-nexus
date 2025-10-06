@@ -25,6 +25,7 @@ export interface Order {
   total: number;
   status: 'pending' | 'preparing' | 'ready' | 'served';
   timestamp: string;
+  notes?: string;
 }
 
 interface OrderContextType {
@@ -33,12 +34,14 @@ interface OrderContextType {
   selectedTable: number | null;
   orderType: Order['orderType'];
   customerInfo: Order['customerInfo'];
+  orderNotes: string;
   addItemToOrder: (item: Omit<OrderItem, 'id' | 'quantity'>) => void;
   removeItemFromOrder: (itemId: string) => void;
   updateItemQuantity: (itemId: string, quantity: number) => void;
   setSelectedTable: (tableNumber: number | null) => void;
   setOrderType: (type: Order['orderType']) => void;
   setCustomerInfo: (info: Order['customerInfo']) => void;
+  setOrderNotes: (notes: string) => void;
   submitOrder: () => void;
   clearCurrentOrder: () => void;
   updateOrderStatus: (orderId: string, status: Order['status']) => void;
@@ -62,6 +65,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
   const [selectedTable, setSelectedTable] = useState<number | null>(null);
   const [orderType, setOrderType] = useState<Order['orderType']>('dine-in');
   const [customerInfo, setCustomerInfo] = useState<Order['customerInfo']>();
+  const [orderNotes, setOrderNotes] = useState<string>('');
 
   const addItemToOrder = (item: Omit<OrderItem, 'id' | 'quantity'>) => {
     const existingItem = currentOrder.find(orderItem => orderItem.name === item.name);
@@ -110,7 +114,8 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
       items: [...currentOrder],
       total,
       status: 'pending',
-      timestamp: new Date().toLocaleTimeString()
+      timestamp: new Date().toLocaleTimeString(),
+      notes: orderNotes || undefined
     };
 
     setOrders([...orders, newOrder]);
@@ -122,6 +127,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
     setSelectedTable(null);
     setCustomerInfo(undefined);
     setOrderType('dine-in');
+    setOrderNotes('');
   };
 
   const updateOrderStatus = (orderId: string, status: Order['status']) => {
@@ -141,12 +147,14 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
       selectedTable,
       orderType,
       customerInfo,
+      orderNotes,
       addItemToOrder,
       removeItemFromOrder,
       updateItemQuantity,
       setSelectedTable,
       setOrderType,
       setCustomerInfo,
+      setOrderNotes,
       submitOrder,
       clearCurrentOrder,
       updateOrderStatus,
