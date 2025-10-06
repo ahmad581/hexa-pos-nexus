@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useInventory } from "@/hooks/useInventory";
 import { supabase } from "@/integrations/supabase/client";
+import { useTranslation } from "@/contexts/TranslationContext";
 
 interface MonthlyReport {
   month: string;
@@ -32,6 +33,7 @@ interface TransactionSummary {
 }
 
 export const InventoryReports = () => {
+  const { t } = useTranslation();
   const { items, warehouses } = useInventory();
   const [selectedWarehouse, setSelectedWarehouse] = useState("all");
   const [selectedMonth, setSelectedMonth] = useState(() => {
