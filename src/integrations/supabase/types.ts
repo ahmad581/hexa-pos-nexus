@@ -911,7 +911,7 @@ export type Database = {
       }
       profiles: {
         Row: {
-          branch_id: string
+          branch_id: string | null
           created_at: string | null
           email: string
           first_name: string | null
@@ -926,7 +926,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
-          branch_id: string
+          branch_id?: string | null
           created_at?: string | null
           email: string
           first_name?: string | null
@@ -941,7 +941,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
-          branch_id?: string
+          branch_id?: string | null
           created_at?: string | null
           email?: string
           first_name?: string | null
