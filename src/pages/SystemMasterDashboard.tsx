@@ -8,12 +8,21 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Building2, Plus, Settings, Trash2, Users, BarChart3, Crown, Shield, LogOut, Info, ExternalLink } from "lucide-react";
+import { Building2, Plus, Settings, Trash2, Users, BarChart3, Crown, Shield, LogOut, Info, ExternalLink, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { BusinessManagement } from "@/pages/BusinessManagement";
 import { RoleManagement } from "@/components/RoleManagement";
+
+interface AvailableFeature {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  category: string;
+}
 
 interface Client {
   id: string;
@@ -28,17 +37,33 @@ interface Client {
   features: string[];
 }
 
+const businessTypes = [
+  { id: 'restaurant', name: 'Restaurant', icon: '🍽️', category: 'Food & Beverage' },
+  { id: 'hotel', name: 'Hotel', icon: '🏨', category: 'Hospitality' },
+  { id: 'hair-salon', name: 'Hair Salon', icon: '💇', category: 'Beauty & Wellness' },
+  { id: 'medical-clinic', name: 'Medical Clinic', icon: '🏥', category: 'Healthcare' },
+  { id: 'retail-store', name: 'Retail Store', icon: '🛍️', category: 'Retail' },
+  { id: 'pharmacy', name: 'Pharmacy', icon: '💊', category: 'Healthcare' },
+  { id: 'grocery', name: 'Grocery Store', icon: '🛒', category: 'Retail' },
+  { id: 'gym', name: 'Gym & Fitness', icon: '💪', category: 'Health & Fitness' },
+  { id: 'auto-repair', name: 'Auto Repair', icon: '🔧', category: 'Automotive' },
+  { id: 'pet-care', name: 'Pet Care', icon: '🐾', category: 'Pet Services' },
+];
+
 export const SystemMasterDashboard = () => {
   const { userProfile, isAuthenticated, user, userEmail, logout } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
+  const [dialogStep, setDialogStep] = useState(1);
+  const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
   const queryClient = useQueryClient();
   
   const [newClient, setNewClient] = useState({
     name: "",
     email: "",
     business_type: "",
+    password: "",
   });
 
   // Fetch clients (this would be actual client data in a real system)
@@ -88,40 +113,92 @@ export const SystemMasterDashboard = () => {
     enabled: isAuthenticated && (userProfile?.primary_role === 'SystemMaster' || userEmail === 'ahmadalodat530@gmail.com')
   });
 
+  // Fetch available features
+  const { data: availableFeatures } = useQuery({
+    queryKey: ['available-features'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('available_features')
+        .select('*')
+        .order('category', { ascending: true });
+
+      if (error) throw error;
+      return data as AvailableFeature[];
+    },
+    enabled: isAuthenticated
+  });
+
   const createClientMutation = useMutation({
-    mutationFn: async (clientData: typeof newClient) => {
-      // In a real system, this would create the client in the database
-      // For now, we'll just simulate it
-      const newClientData = {
-        id: Date.now().toString(),
-        ...clientData,
+    mutationFn: async () => {
+      if (!newClient.name || !newClient.email || !newClient.business_type || !newClient.password) {
+        throw new Error("All fields are required");
+      }
+
+      const selectedBusinessType = businessTypes.find(bt => bt.id === newClient.business_type);
+      if (!selectedBusinessType) throw new Error("Business type not found");
+
+      // Call edge function to create client with all related data
+      const { data, error } = await supabase.functions.invoke('create-client', {
+        body: {
+          name: newClient.name,
+          email: newClient.email,
+          password: newClient.password,
+          business_type: newClient.business_type,
+          icon: selectedBusinessType.icon,
+          category: selectedBusinessType.category,
+          features: selectedFeatures
+        }
+      });
+
+      if (error) throw error;
+      if (!data.success) throw new Error(data.error || 'Failed to create client');
+
+      return {
+        id: data.user.id,
+        name: newClient.name,
+        email: newClient.email,
+        business_type: newClient.business_type,
         branches_count: 0,
         status: 'active' as const,
         created_at: new Date().toISOString(),
-        owner: 'System Generated',
+        owner: newClient.name,
         subscription: 'Standard',
-        features: ['Dashboard', 'User Management', 'Basic Analytics']
+        features: selectedFeatures.map(fId => {
+          const feature = availableFeatures?.find(f => f.id === fId);
+          return feature?.name || '';
+        }).filter(Boolean)
       };
-      return newClientData;
     },
     onSuccess: () => {
-      toast.success("Client created successfully!");
+      toast.success("Client and business created successfully!");
       queryClient.invalidateQueries({ queryKey: ['system-master-clients'] });
+      queryClient.invalidateQueries({ queryKey: ['custom-businesses'] });
       setIsDialogOpen(false);
-      setNewClient({ name: "", email: "", business_type: "" });
+      setDialogStep(1);
+      setNewClient({ name: "", email: "", business_type: "", password: "" });
+      setSelectedFeatures([]);
     },
-    onError: () => {
-      toast.error("Failed to create client");
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to create client");
+      console.error('Create client error:', error);
     }
   });
 
-  const handleCreateClient = () => {
-    if (!newClient.name || !newClient.email || !newClient.business_type) {
-      toast.error("Please fill all fields");
-      return;
-    }
-    createClientMutation.mutate(newClient);
+  const handleFeatureToggle = (featureId: string) => {
+    setSelectedFeatures(prev => 
+      prev.includes(featureId)
+        ? prev.filter(id => id !== featureId)
+        : [...prev, featureId]
+    );
   };
+
+  const groupedFeatures = availableFeatures?.reduce((acc, feature) => {
+    if (!acc[feature.category]) {
+      acc[feature.category] = [];
+    }
+    acc[feature.category].push(feature);
+    return acc;
+  }, {} as Record<string, AvailableFeature[]>);
 
   const handleManageClient = (client: Client) => {
     // Create a simulated management interface URL
@@ -227,61 +304,151 @@ export const SystemMasterDashboard = () => {
             Logout
           </Button>
           
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog open={isDialogOpen} onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) {
+              setDialogStep(1);
+              setNewClient({ name: "", email: "", business_type: "", password: "" });
+              setSelectedFeatures([]);
+            }
+          }}>
           <DialogTrigger asChild>
             <Button className="gap-2">
               <Plus className="w-4 h-4" />
               Add New Client
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Create New Client</DialogTitle>
+              <DialogTitle>Create New Client & Business</DialogTitle>
               <DialogDescription>
-                Register a new business client to use the BizHub system
+                {dialogStep === 1 ? "Enter client details and select business type" : "Select features for the business"}
               </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="client-name">Business Name</Label>
-                <Input
-                  id="client-name"
-                  placeholder="Enter business name"
-                  value={newClient.name}
-                  onChange={(e) => setNewClient(prev => ({ ...prev, name: e.target.value }))}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="client-email">Email Address</Label>
-                <Input
-                  id="client-email"
-                  type="email"
-                  placeholder="admin@business.com"
-                  value={newClient.email}
-                  onChange={(e) => setNewClient(prev => ({ ...prev, email: e.target.value }))}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="business-type">Business Type</Label>
-                <Select value={newClient.business_type} onValueChange={(value) => setNewClient(prev => ({ ...prev, business_type: value }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select business type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(businessTypeLabels).map(([value, label]) => (
-                      <SelectItem key={value} value={value}>{label}</SelectItem>
+            
+            {dialogStep === 1 && (
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="client-name">Business Name</Label>
+                  <Input
+                    id="client-name"
+                    placeholder="Enter business name"
+                    value={newClient.name}
+                    onChange={(e) => setNewClient(prev => ({ ...prev, name: e.target.value }))}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="client-email">Email Address</Label>
+                  <Input
+                    id="client-email"
+                    type="email"
+                    placeholder="admin@business.com"
+                    value={newClient.email}
+                    onChange={(e) => setNewClient(prev => ({ ...prev, email: e.target.value }))}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="client-password">Password</Label>
+                  <Input
+                    id="client-password"
+                    type="password"
+                    placeholder="Enter password for client"
+                    value={newClient.password}
+                    onChange={(e) => setNewClient(prev => ({ ...prev, password: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-4">
+                  <Label>Business Type</Label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {businessTypes.map((type) => (
+                      <Card 
+                        key={type.id}
+                        className={`cursor-pointer transition-all ${
+                          newClient.business_type === type.id 
+                            ? 'ring-2 ring-primary bg-primary/5' 
+                            : 'hover:bg-muted/50'
+                        }`}
+                        onClick={() => setNewClient(prev => ({ ...prev, business_type: type.id }))}
+                      >
+                        <CardContent className="p-4 text-center">
+                          <div className="text-2xl mb-2">{type.icon}</div>
+                          <div className="font-medium text-sm">{type.name}</div>
+                          <div className="text-xs text-muted-foreground">{type.category}</div>
+                        </CardContent>
+                      </Card>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
+
+            {dialogStep === 2 && (
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Label>Select Features for {newClient.name}</Label>
+                    <Badge variant="secondary">{selectedFeatures.length} selected</Badge>
+                  </div>
+                  
+                  {groupedFeatures && Object.entries(groupedFeatures).map(([category, features]) => (
+                    <Card key={category}>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base">{category}</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        {features.map((feature) => (
+                          <div key={feature.id} className="flex items-start space-x-3">
+                            <Checkbox
+                              id={feature.id}
+                              checked={selectedFeatures.includes(feature.id)}
+                              onCheckedChange={() => handleFeatureToggle(feature.id)}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <Label 
+                                htmlFor={feature.id}
+                                className="text-sm font-medium cursor-pointer flex items-center gap-2"
+                              >
+                                <span>{feature.icon}</span>
+                                {feature.name}
+                              </Label>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {feature.description}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+            
             <DialogFooter>
+              {dialogStep === 2 && (
+                <Button variant="outline" onClick={() => setDialogStep(1)}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back
+                </Button>
+              )}
               <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleCreateClient} disabled={createClientMutation.isPending}>
-                {createClientMutation.isPending ? "Creating..." : "Create Client"}
-              </Button>
+              {dialogStep === 1 ? (
+                <Button 
+                  onClick={() => setDialogStep(2)}
+                  disabled={!newClient.name || !newClient.email || !newClient.password || !newClient.business_type}
+                >
+                  Next: Select Features
+                </Button>
+              ) : (
+                <Button 
+                  onClick={() => createClientMutation.mutate()}
+                  disabled={createClientMutation.isPending}
+                >
+                  {createClientMutation.isPending ? "Creating..." : "Create Client & Business"}
+                </Button>
+              )}
             </DialogFooter>
           </DialogContent>
         </Dialog>
