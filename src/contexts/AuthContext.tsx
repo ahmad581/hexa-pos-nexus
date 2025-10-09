@@ -10,7 +10,7 @@ interface UserProfile {
   email: string;
   first_name: string | null;
   last_name: string | null;
-  branch_id: string;
+  branch_id: string | null;
   primary_role: UserRole | null;
   is_active: boolean;
 }

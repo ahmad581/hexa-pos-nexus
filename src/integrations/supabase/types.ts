@@ -1202,6 +1202,10 @@ export type Database = {
         Args: { break_minutes?: number; check_in: string; check_out: string }
         Returns: number
       }
+      current_user_has_primary_role: {
+        Args: { _role: Database["public"]["Enums"]["app_role"] }
+        Returns: boolean
+      }
       get_user_primary_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
