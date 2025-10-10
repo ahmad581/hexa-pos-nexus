@@ -17,8 +17,10 @@ import {
   Filter 
 } from "lucide-react";
 import { useInventory } from "@/hooks/useInventory";
+import { useTranslation } from "@/contexts/TranslationContext";
 
 export const InventoryRequests = () => {
+  const { t } = useTranslation();
   const { requests, approveRequest, fulfillRequest, loading } = useInventory();
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [approvalQuantity, setApprovalQuantity] = useState("");
@@ -75,15 +77,15 @@ export const InventoryRequests = () => {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64">Loading requests...</div>;
+    return <div className="flex items-center justify-center h-64">{t('common.loading')}</div>;
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">Stock Requests</h2>
-          <p className="text-gray-400">Manage branch-to-warehouse stock requests</p>
+          <h2 className="text-2xl font-bold text-white">{t('inventoryRequests.title')}</h2>
+          <p className="text-gray-400">{t('inventoryRequests.subtitle')}</p>
         </div>
       </div>
 
@@ -92,7 +94,7 @@ export const InventoryRequests = () => {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
-            placeholder="Search requests..."
+            placeholder={t('inventoryRequests.search')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10 bg-gray-800 border-gray-700 text-white"
@@ -100,14 +102,14 @@ export const InventoryRequests = () => {
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[200px] bg-gray-800 border-gray-700 text-white">
-            <SelectValue placeholder="Filter by status" />
+            <SelectValue placeholder={t('inventoryRequests.filterByStatus')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="Pending">Pending</SelectItem>
-            <SelectItem value="Approved">Approved</SelectItem>
-            <SelectItem value="Rejected">Rejected</SelectItem>
-            <SelectItem value="Fulfilled">Fulfilled</SelectItem>
+            <SelectItem value="all">{t('inventoryRequests.allStatuses')}</SelectItem>
+            <SelectItem value="Pending">{t('inventoryRequests.pending')}</SelectItem>
+            <SelectItem value="Approved">{t('inventoryRequests.approved')}</SelectItem>
+            <SelectItem value="Rejected">{t('inventoryRequests.rejected')}</SelectItem>
+            <SelectItem value="Fulfilled">{t('inventoryRequests.fulfilled')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -122,7 +124,7 @@ export const InventoryRequests = () => {
                   {request.inventory_item?.name}
                 </h3>
                 <p className="text-sm text-gray-400">
-                  SKU: {request.inventory_item?.sku}
+                  {t('inventory.sku')}: {request.inventory_item?.sku}
                 </p>
               </div>
               <Badge className={getStatusColor(request.status)}>
@@ -135,26 +137,26 @@ export const InventoryRequests = () => {
 
             <div className="space-y-3 text-sm text-gray-300">
               <div>
-                <span className="font-medium">Branch:</span> {request.branch_id}
+                <span className="font-medium">{t('inventoryRequests.branch')}:</span> {request.branch_id}
               </div>
               <div>
-                <span className="font-medium">Warehouse:</span> {request.warehouse?.name}
+                <span className="font-medium">{t('inventoryRequests.warehouse')}:</span> {request.warehouse?.name}
               </div>
               <div>
-                <span className="font-medium">Requested:</span> {request.requested_quantity} units
+                <span className="font-medium">{t('inventoryRequests.requested')}:</span> {request.requested_quantity} {t('inventoryReports.units')}
               </div>
               {request.approved_quantity && (
                 <div>
-                  <span className="font-medium">Approved:</span> {request.approved_quantity} units
+                  <span className="font-medium">{t('inventoryRequests.approvedQty')}:</span> {request.approved_quantity} {t('inventoryReports.units')}
                 </div>
               )}
               <div>
-                <span className="font-medium">Requested:</span>{' '}
+                <span className="font-medium">{t('inventoryRequests.requestedDate')}:</span>{' '}
                 {new Date(request.requested_at).toLocaleDateString()}
               </div>
               {request.request_notes && (
                 <div>
-                  <span className="font-medium">Notes:</span> {request.request_notes}
+                  <span className="font-medium">{t('inventoryRequests.notes')}:</span> {request.request_notes}
                 </div>
               )}
             </div>
@@ -173,24 +175,24 @@ export const InventoryRequests = () => {
                         }}
                       >
                         <CheckCircle className="h-4 w-4 mr-1" />
-                        Approve
+                        {t('inventoryRequests.approve')}
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="bg-gray-800 border-gray-700 text-white">
                       <DialogHeader>
-                        <DialogTitle>Approve Request</DialogTitle>
+                        <DialogTitle>{t('inventoryRequests.approve')}</DialogTitle>
                       </DialogHeader>
                       <div className="space-y-4">
                         <div>
                           <p className="text-sm text-gray-300 mb-2">
-                            Item: {request.inventory_item?.name}
+                            {t('inventoryRequests.item')}: {request.inventory_item?.name}
                           </p>
                           <p className="text-sm text-gray-300 mb-2">
-                            Requested: {request.requested_quantity} units
+                            {t('inventoryRequests.requested')}: {request.requested_quantity} {t('inventoryReports.units')}
                           </p>
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="approval_quantity">Approved Quantity</Label>
+                          <Label htmlFor="approval_quantity">{t('inventoryRequests.approvedQty')}</Label>
                           <Input
                             id="approval_quantity"
                             type="number"
@@ -203,13 +205,13 @@ export const InventoryRequests = () => {
                         </div>
                         <div className="flex justify-end gap-2">
                           <Button variant="outline" className="border-gray-600 text-white hover:bg-gray-700">
-                            Cancel
+                            {t('inventory.itemDialog.cancel')}
                           </Button>
                           <Button
                             onClick={() => handleApprove(request.id, parseInt(approvalQuantity))}
                             className="bg-green-600 hover:bg-green-700"
                           >
-                            Approve
+                            {t('inventoryRequests.approve')}
                           </Button>
                         </div>
                       </div>
@@ -220,7 +222,7 @@ export const InventoryRequests = () => {
                     variant="destructive"
                   >
                     <XCircle className="h-4 w-4 mr-1" />
-                    Reject
+                    {t('inventoryRequests.reject')}
                   </Button>
                 </>
               )}
@@ -232,7 +234,7 @@ export const InventoryRequests = () => {
                   onClick={() => handleFulfill(request.id)}
                 >
                   <Truck className="h-4 w-4 mr-1" />
-                  Mark Fulfilled
+                  {t('inventoryRequests.fulfilled')}
                 </Button>
               )}
 
@@ -240,55 +242,55 @@ export const InventoryRequests = () => {
                 <DialogTrigger asChild>
                   <Button size="sm" variant="outline" className="border-gray-600 text-white hover:bg-gray-700">
                     <Eye className="h-4 w-4 mr-1" />
-                    View
+                    {t('inventoryRequests.view')}
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="bg-gray-800 border-gray-700 text-white">
                   <DialogHeader>
-                    <DialogTitle>Request Details</DialogTitle>
+                    <DialogTitle>{t('inventoryRequests.details')}</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <span className="font-medium text-gray-400">Item:</span>
+                        <span className="font-medium text-gray-400">{t('inventoryRequests.item')}:</span>
                         <p>{request.inventory_item?.name}</p>
                       </div>
                       <div>
-                        <span className="font-medium text-gray-400">SKU:</span>
+                        <span className="font-medium text-gray-400">{t('inventory.sku')}:</span>
                         <p>{request.inventory_item?.sku}</p>
                       </div>
                       <div>
-                        <span className="font-medium text-gray-400">Branch:</span>
+                        <span className="font-medium text-gray-400">{t('inventoryRequests.branch')}:</span>
                         <p>{request.branch_id}</p>
                       </div>
                       <div>
-                        <span className="font-medium text-gray-400">Warehouse:</span>
+                        <span className="font-medium text-gray-400">{t('inventoryRequests.warehouse')}:</span>
                         <p>{request.warehouse?.name}</p>
                       </div>
                       <div>
-                        <span className="font-medium text-gray-400">Requested Quantity:</span>
-                        <p>{request.requested_quantity} units</p>
+                        <span className="font-medium text-gray-400">{t('inventoryRequests.requestedQuantity')}:</span>
+                        <p>{request.requested_quantity} {t('inventoryReports.units')}</p>
                       </div>
                       {request.approved_quantity && (
                         <div>
-                          <span className="font-medium text-gray-400">Approved Quantity:</span>
-                          <p>{request.approved_quantity} units</p>
+                          <span className="font-medium text-gray-400">{t('inventoryRequests.approvedQty')}:</span>
+                          <p>{request.approved_quantity} {t('inventoryReports.units')}</p>
                         </div>
                       )}
                       <div>
-                        <span className="font-medium text-gray-400">Status:</span>
+                        <span className="font-medium text-gray-400">{t('inventoryRequests.status')}:</span>
                         <Badge className={getStatusColor(request.status)}>
                           {request.status}
                         </Badge>
                       </div>
                       <div>
-                        <span className="font-medium text-gray-400">Requested Date:</span>
+                        <span className="font-medium text-gray-400">{t('inventoryRequests.requestedDate')}:</span>
                         <p>{new Date(request.requested_at).toLocaleDateString()}</p>
                       </div>
                     </div>
                     {request.request_notes && (
                       <div>
-                        <span className="font-medium text-gray-400">Notes:</span>
+                        <span className="font-medium text-gray-400">{t('inventoryRequests.notes')}:</span>
                         <p className="mt-1 text-sm bg-gray-700 p-2 rounded">
                           {request.request_notes}
                         </p>
@@ -304,7 +306,7 @@ export const InventoryRequests = () => {
 
       {filteredRequests.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-gray-400">No requests found matching your filters.</p>
+          <p className="text-gray-400">{t('inventoryRequests.noResults')}</p>
         </div>
       )}
     </div>

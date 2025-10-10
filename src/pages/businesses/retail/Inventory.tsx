@@ -25,9 +25,11 @@ import { InventoryReports } from "@/components/inventory/InventoryReports";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTranslation } from "@/contexts/TranslationContext";
 
 export const Inventory = () => {
   const { userBranchId } = useAuth();
+  const { t } = useTranslation();
   const { items, warehouses, requests, loading, updateStock, addItem, updateItem, deleteItem } = useInventory(userBranchId || undefined);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [isItemDialogOpen, setIsItemDialogOpen] = useState(false);
@@ -88,22 +90,22 @@ export const Inventory = () => {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64">Loading...</div>;
+    return <div className="flex items-center justify-center h-64">{t('common.loading')}</div>;
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">Inventory Management</h1>
-          <p className="text-gray-400">Manage inventory across warehouses and branches</p>
+          <h1 className="text-3xl font-bold text-white">{t('inventory.title')}</h1>
+          <p className="text-gray-400">{t('inventory.subtitle')}</p>
         </div>
         <Button 
           onClick={() => setIsItemDialogOpen(true)}
           className="bg-green-600 hover:bg-green-700"
         >
           <Plus className="h-4 w-4 mr-2" />
-          Add Item
+          {t('inventory.addItem')}
         </Button>
       </div>
 
@@ -111,15 +113,15 @@ export const Inventory = () => {
         <TabsList className="bg-gray-800 border-gray-700">
           <TabsTrigger value="inventory" className="flex items-center gap-2">
             <Package className="h-4 w-4" />
-            Inventory
+            {t('inventory.tabs.inventory')}
           </TabsTrigger>
           <TabsTrigger value="requests" className="flex items-center gap-2">
             <Truck className="h-4 w-4" />
-            Requests
+            {t('inventory.tabs.requests')}
           </TabsTrigger>
           <TabsTrigger value="reports" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
-            Reports
+            {t('inventory.tabs.reports')}
           </TabsTrigger>
         </TabsList>
 
@@ -129,7 +131,7 @@ export const Inventory = () => {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
-                placeholder="Search items..."
+                placeholder={t('inventory.searchItems')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 bg-gray-800 border-gray-700 text-white"
@@ -137,10 +139,10 @@ export const Inventory = () => {
             </div>
             <Select value={selectedWarehouse} onValueChange={setSelectedWarehouse}>
               <SelectTrigger className="w-[200px] bg-gray-800 border-gray-700 text-white">
-                <SelectValue placeholder="Select warehouse" />
+                <SelectValue placeholder={t('inventory.selectWarehouse')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Warehouses</SelectItem>
+                <SelectItem value="all">{t('inventory.allWarehouses')}</SelectItem>
                 {warehouses.map(warehouse => (
                   <SelectItem key={warehouse.id} value={warehouse.id}>
                     {warehouse.name}
@@ -150,10 +152,10 @@ export const Inventory = () => {
             </Select>
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
               <SelectTrigger className="w-[200px] bg-gray-800 border-gray-700 text-white">
-                <SelectValue placeholder="Select category" />
+                <SelectValue placeholder={t('inventory.selectCategory')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value="all">{t('inventory.allCategories')}</SelectItem>
                 {categories.map(category => (
                   <SelectItem key={category} value={category}>
                     {category}
@@ -179,23 +181,23 @@ export const Inventory = () => {
 
                 <div className="space-y-3">
                   <div className="text-gray-300">
-                    <span className="text-sm">SKU: {item.sku}</span>
+                    <span className="text-sm">{t('inventory.sku')}: {item.sku}</span>
                   </div>
                   <div className="text-gray-300">
-                    <span className="text-sm">Category: {item.category}</span>
+                    <span className="text-sm">{t('inventory.category')}: {item.category}</span>
                   </div>
                   <div className="text-gray-300">
-                    <span className="text-sm">Warehouse: {item.warehouse?.name}</span>
+                    <span className="text-sm">{t('inventory.warehouse')}: {item.warehouse?.name}</span>
                   </div>
                   <div className="text-gray-300">
                     <span className="text-2xl font-bold text-white">{item.current_stock}</span>
-                    <span className="text-sm ml-2">units in stock</span>
+                    <span className="text-sm ml-2">{t('inventory.unitsInStock')}</span>
                   </div>
                   <div className="text-gray-400 text-sm">
-                    <div>Min: {item.min_stock} | Max: {item.max_stock}</div>
-                    {item.unit_price && <div>Price: ${item.unit_price}</div>}
+                    <div>{t('inventory.min')}: {item.min_stock} | {t('inventory.max')}: {item.max_stock}</div>
+                    {item.unit_price && <div>{t('inventory.price')}: ${item.unit_price}</div>}
                     {item.last_restocked && (
-                      <div>Last restocked: {new Date(item.last_restocked).toLocaleDateString()}</div>
+                      <div>{t('inventory.lastRestocked')}: {new Date(item.last_restocked).toLocaleDateString()}</div>
                     )}
                   </div>
                 </div>
@@ -207,7 +209,7 @@ export const Inventory = () => {
                     className="flex-1"
                     onClick={() => handleUpdateStock(item)}
                   >
-                    Update Stock
+                    {t('inventory.updateStock')}
                   </Button>
                   <Button 
                     size="sm" 
@@ -224,7 +226,7 @@ export const Inventory = () => {
                   onClick={() => handleRequestStock(item)}
                 >
                   <Truck className="h-4 w-4 mr-2" />
-                  Request from Branch
+                  {t('inventory.requestFromBranch')}
                 </Button>
               </Card>
             ))}

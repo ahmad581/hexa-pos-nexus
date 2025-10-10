@@ -192,6 +192,7 @@ const translations: Translations = {
   'common.quantity': { en: 'Quantity', ar: 'الكمية' },
   'common.price': { en: 'Price', ar: 'السعر' },
   'common.name': { en: 'Name', ar: 'الاسم' },
+  'common.loading': { en: 'Loading...', ar: 'جارٍ التحميل...' },
   
   // Order Summary
   'orderSummary.currentOrder': { en: 'Current Order', ar: 'الطلب الحالي' },
