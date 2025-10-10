@@ -211,12 +211,12 @@ export const RoleManagement = () => {
               </SelectContent>
             </Select>
 
-            <Select value={branchId} onValueChange={setBranchId}>
+            <Select value={branchId || "all"} onValueChange={(value) => setBranchId(value === "all" ? "" : value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Branch (Optional)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Branches</SelectItem>
+                <SelectItem value="all">All Branches</SelectItem>
                 {/* Add branch options here */}
               </SelectContent>
             </Select>
