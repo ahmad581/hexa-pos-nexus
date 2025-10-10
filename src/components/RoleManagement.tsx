@@ -83,14 +83,16 @@ export const RoleManagement = () => {
 
       if (rolesError) throw rolesError;
 
-      const usersWithRoles = profiles?.map(profile => ({
-        id: profile.user_id,
-        email: profile.email,
-        first_name: profile.first_name,
-        last_name: profile.last_name,
-        primary_role: profile.primary_role,
-        roles: userRoles?.filter(role => role.user_id === profile.user_id) || []
-      })) || [];
+      const usersWithRoles = profiles
+        ?.filter(profile => profile.user_id != null)
+        .map(profile => ({
+          id: profile.user_id!,
+          email: profile.email,
+          first_name: profile.first_name,
+          last_name: profile.last_name,
+          primary_role: profile.primary_role,
+          roles: userRoles?.filter(role => role.user_id === profile.user_id) || []
+        })) || [];
 
       setUsers(usersWithRoles);
     } catch (error) {
