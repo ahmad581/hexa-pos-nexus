@@ -1,11 +1,11 @@
-
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState, ReactNode } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface Branch {
-  id: string;
+  id: string; // matches public.branches.id (text)
   name: string;
   address: string;
-  phone: string;
+  phone: string | null;
   isActive: boolean;
 }
 
@@ -13,6 +13,7 @@ interface BranchContextType {
   branches: Branch[];
   selectedBranch: Branch | null;
   setSelectedBranch: (branch: Branch) => void;
+  loading: boolean;
 }
 
 const BranchContext = createContext<BranchContextType | undefined>(undefined);
@@ -25,24 +26,57 @@ export const useBranch = () => {
   return context;
 };
 
-const initialBranches: Branch[] = [
-  { id: '1', name: 'Downtown Branch', address: '123 Main St, Downtown', phone: '+1 (555) 123-4567', isActive: true },
-  { id: '2', name: 'Mall Branch', address: '456 Shopping Center, Mall', phone: '+1 (555) 234-5678', isActive: true },
-  { id: '3', name: 'Airport Branch', address: '789 Terminal Rd, Airport', phone: '+1 (555) 345-6789', isActive: true },
-  { id: '4', name: 'University Branch', address: '321 Campus Ave, University', phone: '+1 (555) 456-7890', isActive: true },
-  { id: '5', name: 'Beachside Branch', address: '654 Ocean Blvd, Beach', phone: '+1 (555) 567-8901', isActive: false }
-];
-
 export const BranchProvider = ({ children }: { children: ReactNode }) => {
-  const [branches] = useState<Branch[]>(initialBranches);
-  const [selectedBranch, setSelectedBranch] = useState<Branch | null>(branches[0]);
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [selectedBranch, setSelectedBranchState] = useState<Branch | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  // Load branches from Supabase
+  useEffect(() => {
+    const fetchBranches = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('branches')
+          .select('*')
+          .order('name', { ascending: true });
+        if (error) throw error;
+
+        const normalized: Branch[] = (data || []).map((b: any) => ({
+          id: b.id,
+          name: b.name,
+          address: b.address,
+          phone: b.phone ?? null,
+          isActive: b.is_active ?? true,
+        }));
+        setBranches(normalized);
+
+        // Initialize selection from localStorage or first active branch
+        const storedId = localStorage.getItem('userBranchId');
+        const initial = normalized.find(b => b.id === storedId) || normalized.find(b => b.isActive) || null;
+        if (initial) setSelectedBranchState(initial);
+      } catch (e) {
+        console.error('Failed to load branches', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBranches();
+  }, []);
+
+  const setSelectedBranch = (branch: Branch) => {
+    setSelectedBranchState(branch);
+    // Persist for other contexts/hooks (e.g., useInventory)
+    localStorage.setItem('userBranchId', branch.id);
+  };
+
+  const value = useMemo(
+    () => ({ branches, selectedBranch, setSelectedBranch, loading }),
+    [branches, selectedBranch, loading]
+  );
 
   return (
-    <BranchContext.Provider value={{
-      branches,
-      selectedBranch,
-      setSelectedBranch
-    }}>
+    <BranchContext.Provider value={value}>
       {children}
     </BranchContext.Provider>
   );

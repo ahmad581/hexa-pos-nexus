@@ -221,15 +221,11 @@ export const useInventory = (branchId?: string) => {
 
   const requestStock = async (request: Omit<InventoryRequest, 'id' | 'requested_at' | 'status'>) => {
     try {
-      const resolvedBranchId = branchId ?? localStorage.getItem('userBranchId');
-      if (!resolvedBranchId) {
-        toast.error('No branch selected. Please select a branch and try again.');
-        throw new Error('Missing branchId');
-      }
+      const resolvedBranchId = branchId ?? localStorage.getItem('userBranchId') ?? undefined;
 
       const requestWithBranch = {
         ...request,
-        requesting_branch_id: resolvedBranchId,
+        ...(resolvedBranchId ? { requesting_branch_id: resolvedBranchId } : {}),
         status: 'Pending'
       };
 

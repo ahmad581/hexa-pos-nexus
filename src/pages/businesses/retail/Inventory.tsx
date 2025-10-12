@@ -26,11 +26,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/contexts/TranslationContext";
-
+import { useBranch } from "@/contexts/BranchContext";
 export const Inventory = () => {
-  const { userBranchId } = useAuth();
+  const { selectedBranch } = useBranch();
   const { t } = useTranslation();
-  const { items, warehouses, requests, loading, updateStock, addItem, updateItem, deleteItem, requestStock, approveRequest, fulfillRequest } = useInventory(userBranchId || undefined);
+  const { items, warehouses, requests, loading, updateStock, addItem, updateItem, deleteItem, requestStock, approveRequest, fulfillRequest } = useInventory(selectedBranch?.id || undefined);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [isItemDialogOpen, setIsItemDialogOpen] = useState(false);
   const [isStockDialogOpen, setIsStockDialogOpen] = useState(false);
