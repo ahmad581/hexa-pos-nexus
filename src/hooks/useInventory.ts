@@ -65,8 +65,9 @@ export const useInventory = (branchId?: string) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setLoading(true);
     fetchData();
-  }, []);
+  }, [branchId]);
 
   const fetchData = async () => {
     try {
@@ -120,9 +121,15 @@ export const useInventory = (branchId?: string) => {
 
   const addItem = async (item: Omit<InventoryItem, 'id' | 'created_at' | 'updated_at' | 'status'>) => {
     try {
+      const resolvedBranchId = branchId ?? localStorage.getItem('userBranchId');
+      if (!resolvedBranchId) {
+        toast.error('No branch selected. Please select a branch and try again.');
+        throw new Error('Missing branchId');
+      }
+
       const itemWithBranch = {
         ...item,
-        branch_id: branchId || '1' // Default to branch 1 if no branchId provided
+        branch_id: resolvedBranchId
       };
 
       const { data, error } = await supabase
@@ -214,9 +221,15 @@ export const useInventory = (branchId?: string) => {
 
   const requestStock = async (request: Omit<InventoryRequest, 'id' | 'requested_at' | 'status'>) => {
     try {
+      const resolvedBranchId = branchId ?? localStorage.getItem('userBranchId');
+      if (!resolvedBranchId) {
+        toast.error('No branch selected. Please select a branch and try again.');
+        throw new Error('Missing branchId');
+      }
+
       const requestWithBranch = {
         ...request,
-        requesting_branch_id: branchId || '1',
+        requesting_branch_id: resolvedBranchId,
         status: 'Pending'
       };
 
