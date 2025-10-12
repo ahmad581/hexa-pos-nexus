@@ -30,7 +30,7 @@ import { useTranslation } from "@/contexts/TranslationContext";
 export const Inventory = () => {
   const { userBranchId } = useAuth();
   const { t } = useTranslation();
-  const { items, warehouses, requests, loading, updateStock, addItem, updateItem, deleteItem } = useInventory(userBranchId || undefined);
+  const { items, warehouses, requests, loading, updateStock, addItem, updateItem, deleteItem, requestStock, approveRequest, fulfillRequest } = useInventory(userBranchId || undefined);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [isItemDialogOpen, setIsItemDialogOpen] = useState(false);
   const [isStockDialogOpen, setIsStockDialogOpen] = useState(false);
@@ -234,7 +234,12 @@ export const Inventory = () => {
         </TabsContent>
 
         <TabsContent value="requests">
-          <InventoryRequests />
+          <InventoryRequests 
+            requests={requests}
+            loading={loading}
+            onApproveRequest={approveRequest}
+            onFulfillRequest={fulfillRequest}
+          />
         </TabsContent>
 
         <TabsContent value="reports">
@@ -279,6 +284,7 @@ export const Inventory = () => {
         }}
         item={selectedItem}
         warehouses={warehouses}
+        onRequestStock={requestStock}
       />
     </div>
   );

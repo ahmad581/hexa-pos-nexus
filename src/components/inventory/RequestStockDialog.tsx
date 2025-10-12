@@ -16,16 +16,17 @@ interface RequestStockDialogProps {
   onClose: () => void;
   item?: InventoryItem | null;
   warehouses: Warehouse[];
+  onRequestStock: (request: any) => Promise<any>;
 }
 
 export const RequestStockDialog = ({
   isOpen,
   onClose,
   item,
-  warehouses
+  warehouses,
+  onRequestStock
 }: RequestStockDialogProps) => {
   const { selectedBranch } = useBranch();
-  const { requestStock } = useInventory();
   const [selectedWarehouse, setSelectedWarehouse] = useState("");
   const [requestedQuantity, setRequestedQuantity] = useState("");
   const [notes, setNotes] = useState("");
@@ -38,7 +39,7 @@ export const RequestStockDialog = ({
 
     setLoading(true);
     try {
-      await requestStock({
+      await onRequestStock({
         branch_id: selectedBranch.id,
         warehouse_id: selectedWarehouse,
         inventory_item_id: item.id,

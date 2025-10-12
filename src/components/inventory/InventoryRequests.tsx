@@ -16,12 +16,18 @@ import {
   Search,
   Filter 
 } from "lucide-react";
-import { useInventory } from "@/hooks/useInventory";
+import type { InventoryRequest } from "@/hooks/useInventory";
 import { useTranslation } from "@/contexts/TranslationContext";
 
-export const InventoryRequests = () => {
+interface InventoryRequestsProps {
+  requests: InventoryRequest[];
+  loading: boolean;
+  onApproveRequest: (id: string, approvedQuantity: number) => Promise<void>;
+  onFulfillRequest: (id: string) => Promise<void>;
+}
+
+export const InventoryRequests = ({ requests, loading, onApproveRequest, onFulfillRequest }: InventoryRequestsProps) => {
   const { t } = useTranslation();
-  const { requests, approveRequest, fulfillRequest, loading } = useInventory();
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [approvalQuantity, setApprovalQuantity] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -60,7 +66,7 @@ export const InventoryRequests = () => {
 
   const handleApprove = async (requestId: string, quantity: number) => {
     try {
-      await approveRequest(requestId, quantity);
+      await onApproveRequest(requestId, quantity);
       setSelectedRequest(null);
       setApprovalQuantity("");
     } catch (error) {
@@ -70,7 +76,7 @@ export const InventoryRequests = () => {
 
   const handleFulfill = async (requestId: string) => {
     try {
-      await fulfillRequest(requestId);
+      await onFulfillRequest(requestId);
     } catch (error) {
       console.error('Error fulfilling request:', error);
     }
