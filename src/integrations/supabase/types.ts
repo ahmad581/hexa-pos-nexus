@@ -431,6 +431,7 @@ export type Database = {
       inventory_items: {
         Row: {
           branch_id: string | null
+          business_id: string | null
           category: string
           created_at: string
           current_stock: number
@@ -450,6 +451,7 @@ export type Database = {
         }
         Insert: {
           branch_id?: string | null
+          business_id?: string | null
           category: string
           created_at?: string
           current_stock?: number
@@ -469,6 +471,7 @@ export type Database = {
         }
         Update: {
           branch_id?: string | null
+          business_id?: string | null
           category?: string
           created_at?: string
           current_stock?: number
@@ -488,6 +491,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "inventory_items_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "custom_businesses"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "inventory_items_warehouse_id_fkey"
             columns: ["warehouse_id"]
             isOneToOne: false
@@ -502,6 +512,7 @@ export type Database = {
           approved_by: string | null
           approved_quantity: number | null
           branch_id: string
+          business_id: string | null
           fulfilled_at: string | null
           id: string
           inventory_item_id: string
@@ -517,6 +528,7 @@ export type Database = {
           approved_by?: string | null
           approved_quantity?: number | null
           branch_id: string
+          business_id?: string | null
           fulfilled_at?: string | null
           id?: string
           inventory_item_id: string
@@ -532,6 +544,7 @@ export type Database = {
           approved_by?: string | null
           approved_quantity?: number | null
           branch_id?: string
+          business_id?: string | null
           fulfilled_at?: string | null
           id?: string
           inventory_item_id?: string
@@ -543,6 +556,13 @@ export type Database = {
           warehouse_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "inventory_requests_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "custom_businesses"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "inventory_requests_inventory_item_id_fkey"
             columns: ["inventory_item_id"]
@@ -561,6 +581,7 @@ export type Database = {
       }
       inventory_transactions: {
         Row: {
+          business_id: string | null
           id: string
           inventory_item_id: string
           performed_by: string | null
@@ -571,6 +592,7 @@ export type Database = {
           transaction_type: string
         }
         Insert: {
+          business_id?: string | null
           id?: string
           inventory_item_id: string
           performed_by?: string | null
@@ -581,6 +603,7 @@ export type Database = {
           transaction_type: string
         }
         Update: {
+          business_id?: string | null
           id?: string
           inventory_item_id?: string
           performed_by?: string | null
@@ -591,6 +614,13 @@ export type Database = {
           transaction_type?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "inventory_transactions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "custom_businesses"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "inventory_transactions_inventory_item_id_fkey"
             columns: ["inventory_item_id"]
@@ -1163,6 +1193,7 @@ export type Database = {
       warehouses: {
         Row: {
           address: string
+          business_id: string | null
           created_at: string
           id: string
           is_active: boolean
@@ -1173,6 +1204,7 @@ export type Database = {
         }
         Insert: {
           address: string
+          business_id?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
@@ -1183,6 +1215,7 @@ export type Database = {
         }
         Update: {
           address?: string
+          business_id?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
@@ -1191,7 +1224,15 @@ export type Database = {
           phone?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "warehouses_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "custom_businesses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
