@@ -1,482 +1,289 @@
 import { useState } from "react";
-import { Plus, Search, Package, AlertTriangle, TrendingUp, TrendingDown } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-
-interface InventoryItem {
-  id: string;
-  name: string;
-  category: string;
-  currentStock: number;
-  minStock: number;
-  maxStock: number;
-  unit: string;
-  unitPrice: number;
-  supplier: string;
-  lastRestocked: string;
-  expiryDate?: string;
-  status: "Normal" | "Low Stock" | "Out of Stock" | "Overstock" | "Expired";
-}
-
-const initialInventory: InventoryItem[] = [
-  {
-    id: "1",
-    name: "Tomatoes",
-    category: "Vegetables",
-    currentStock: 50,
-    minStock: 20,
-    maxStock: 100,
-    unit: "kg",
-    unitPrice: 3.50,
-    supplier: "Fresh Farm Co",
-    lastRestocked: "2024-01-15",
-    expiryDate: "2024-01-20",
-    status: "Normal",
-  },
-  {
-    id: "2",
-    name: "Chicken Breast",
-    category: "Meat",
-    currentStock: 15,
-    minStock: 20,
-    maxStock: 80,
-    unit: "kg",
-    unitPrice: 12.99,
-    supplier: "Quality Meats Ltd",
-    lastRestocked: "2024-01-14",
-    expiryDate: "2024-01-18",
-    status: "Low Stock",
-  },
-  {
-    id: "3",
-    name: "Olive Oil",
-    category: "Condiments",
-    currentStock: 25,
-    minStock: 10,
-    maxStock: 50,
-    unit: "bottles",
-    unitPrice: 8.99,
-    supplier: "Mediterranean Imports",
-    lastRestocked: "2024-01-10",
-    status: "Normal",
-  },
-  {
-    id: "4",
-    name: "Bread Flour",
-    category: "Baking",
-    currentStock: 0,
-    minStock: 15,
-    maxStock: 60,
-    unit: "kg",
-    unitPrice: 2.99,
-    supplier: "Baker's Supply",
-    lastRestocked: "2024-01-05",
-    status: "Out of Stock",
-  },
-];
+  AlertTriangle,
+  TrendingUp,
+  TrendingDown,
+  Plus,
+  Search,
+  Package,
+  Truck,
+  FileText,
+  Edit
+} from "lucide-react";
+import { useInventory } from "@/hooks/useInventory";
+import { InventoryItemDialog } from "@/components/inventory/InventoryItemDialog";
+import { StockUpdateDialog } from "@/components/inventory/StockUpdateDialog";
+import { RequestStockDialog } from "@/components/inventory/RequestStockDialog";
+import { InventoryRequests } from "@/components/inventory/InventoryRequests";
+import { InventoryReports } from "@/components/inventory/InventoryReports";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useBranch } from "@/contexts/BranchContext";
 
 export default function RestaurantInventory() {
-  const [inventory, setInventory] = useState<InventoryItem[]>(initialInventory);
+  const { selectedBranch } = useBranch();
+  const {
+    items,
+    warehouses,
+    requests,
+    loading,
+    updateStock,
+    addItem,
+    updateItem,
+    deleteItem,
+    requestStock,
+    approveRequest,
+    fulfillRequest
+  } = useInventory(selectedBranch?.id || undefined);
+
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [isItemDialogOpen, setIsItemDialogOpen] = useState(false);
+  const [isStockDialogOpen, setIsStockDialogOpen] = useState(false);
+  const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [newItem, setNewItem] = useState<Partial<InventoryItem>>({
-    category: "Vegetables",
-    unit: "kg",
-    status: "Normal",
-  });
-  const { toast } = useToast();
+  const [selectedWarehouse, setSelectedWarehouse] = useState<string>("all");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
-  const categories = ["All", "Vegetables", "Meat", "Condiments", "Baking", "Dairy", "Beverages"];
-
-  const getStatusColor = (status: InventoryItem["status"]) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case "Normal":
-        return "bg-green-100 text-green-800";
+        return "bg-green-500/20 text-green-400";
       case "Low Stock":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-yellow-500/20 text-yellow-400";
       case "Out of Stock":
-        return "bg-red-100 text-red-800";
+        return "bg-red-500/20 text-red-400";
       case "Overstock":
-        return "bg-blue-100 text-blue-800";
+        return "bg-blue-500/20 text-blue-400";
       case "Expired":
-        return "bg-gray-100 text-gray-800";
+        return "bg-red-500/20 text-red-400";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-500/20 text-gray-400";
     }
   };
 
-  const filteredInventory = inventory.filter((item) => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.supplier.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === "All" || item.category === selectedCategory;
-    return matchesSearch && matchesCategory;
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "Low Stock":
+      case "Out of Stock":
+      case "Expired":
+        return <AlertTriangle size={16} />;
+      case "Overstock":
+        return <TrendingUp size={16} />;
+      default:
+        return <TrendingDown size={16} />;
+    }
+  };
+
+  const filteredItems = items.filter((item) => {
+    const matchesSearch =
+      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.sku || "").toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesWarehouse = selectedWarehouse === "all" || item.warehouse_id === selectedWarehouse;
+    const matchesCategory = selectedCategory === "all" || item.category === selectedCategory;
+    return matchesSearch && matchesWarehouse && matchesCategory;
   });
 
-  const handleAddItem = () => {
-    if (!newItem.name || !newItem.currentStock || !newItem.unitPrice) {
-      toast({
-        title: "Error",
-        description: "Please fill in all required fields.",
-        variant: "destructive",
-      });
-      return;
-    }
+  const categories = [...new Set(items.map((i) => i.category))];
 
-    const item: InventoryItem = {
-      id: Date.now().toString(),
-      name: newItem.name!,
-      category: newItem.category!,
-      currentStock: newItem.currentStock!,
-      minStock: newItem.minStock || 10,
-      maxStock: newItem.maxStock || 100,
-      unit: newItem.unit!,
-      unitPrice: newItem.unitPrice!,
-      supplier: newItem.supplier || "Unknown",
-      lastRestocked: new Date().toISOString().split('T')[0],
-      expiryDate: newItem.expiryDate,
-      status: newItem.status as InventoryItem["status"],
-    };
-
-    setInventory([...inventory, item]);
-    setNewItem({
-      category: "Vegetables",
-      unit: "kg",
-      status: "Normal",
-    });
-    setIsAddDialogOpen(false);
-    
-    toast({
-      title: "Success",
-      description: "Inventory item added successfully.",
-    });
+  const handleEditItem = (item: any) => {
+    setSelectedItem(item);
+    setIsItemDialogOpen(true);
   };
 
-  const handleStockUpdate = (id: string, change: number) => {
-    setInventory(prev => prev.map(item => {
-      if (item.id === id) {
-        const newStock = Math.max(0, item.currentStock + change);
-        let newStatus: InventoryItem["status"] = "Normal";
-        
-        if (newStock === 0) {
-          newStatus = "Out of Stock";
-        } else if (newStock <= item.minStock) {
-          newStatus = "Low Stock";
-        } else if (newStock >= item.maxStock) {
-          newStatus = "Overstock";
-        }
-        
-        return { ...item, currentStock: newStock, status: newStatus };
-      }
-      return item;
-    }));
-
-    toast({
-      title: "Stock Updated",
-      description: "Inventory quantity has been updated.",
-    });
+  const handleUpdateStock = (item: any) => {
+    setSelectedItem(item);
+    setIsStockDialogOpen(true);
   };
 
-  const lowStockCount = inventory.filter(item => item.status === "Low Stock" || item.status === "Out of Stock").length;
-  const totalValue = inventory.reduce((sum, item) => sum + (item.currentStock * item.unitPrice), 0);
+  const handleRequestStock = (item: any) => {
+    setSelectedItem(item);
+    setIsRequestDialogOpen(true);
+  };
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-64">Loading...</div>;
+  }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Restaurant Inventory</h1>
-          <p className="text-muted-foreground">Manage your restaurant's ingredient inventory</p>
+          <h1 className="text-3xl font-bold text-white">Restaurant Inventory</h1>
+          <p className="text-gray-400">Manage your restaurant's ingredient stock levels</p>
         </div>
-        
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Item
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Add New Inventory Item</DialogTitle>
-              <DialogDescription>
-                Add a new ingredient or supply to your inventory.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="name">Item Name *</Label>
-                <Input
-                  id="name"
-                  value={newItem.name || ""}
-                  onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
-                  placeholder="e.g., Fresh Basil"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="category">Category</Label>
-                <Select value={newItem.category} onValueChange={(value) => setNewItem({ ...newItem, category: value })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.slice(1).map(category => (
-                      <SelectItem key={category} value={category}>{category}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="grid gap-2">
-                  <Label htmlFor="currentStock">Current Stock *</Label>
-                  <Input
-                    id="currentStock"
-                    type="number"
-                    value={newItem.currentStock || ""}
-                    onChange={(e) => setNewItem({ ...newItem, currentStock: Number(e.target.value) })}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="unit">Unit</Label>
-                  <Select value={newItem.unit} onValueChange={(value) => setNewItem({ ...newItem, unit: value })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="kg">kg</SelectItem>
-                      <SelectItem value="g">g</SelectItem>
-                      <SelectItem value="pieces">pieces</SelectItem>
-                      <SelectItem value="bottles">bottles</SelectItem>
-                      <SelectItem value="cans">cans</SelectItem>
-                      <SelectItem value="liters">liters</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="grid gap-2">
-                  <Label htmlFor="minStock">Min Stock</Label>
-                  <Input
-                    id="minStock"
-                    type="number"
-                    value={newItem.minStock || ""}
-                    onChange={(e) => setNewItem({ ...newItem, minStock: Number(e.target.value) })}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="maxStock">Max Stock</Label>
-                  <Input
-                    id="maxStock"
-                    type="number"
-                    value={newItem.maxStock || ""}
-                    onChange={(e) => setNewItem({ ...newItem, maxStock: Number(e.target.value) })}
-                  />
-                </div>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="unitPrice">Unit Price ($) *</Label>
-                <Input
-                  id="unitPrice"
-                  type="number"
-                  step="0.01"
-                  value={newItem.unitPrice || ""}
-                  onChange={(e) => setNewItem({ ...newItem, unitPrice: Number(e.target.value) })}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="supplier">Supplier</Label>
-                <Input
-                  id="supplier"
-                  value={newItem.supplier || ""}
-                  onChange={(e) => setNewItem({ ...newItem, supplier: e.target.value })}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="expiryDate">Expiry Date</Label>
-                <Input
-                  id="expiryDate"
-                  type="date"
-                  value={newItem.expiryDate || ""}
-                  onChange={(e) => setNewItem({ ...newItem, expiryDate: e.target.value })}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleAddItem}>Add Item</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <Button onClick={() => setIsItemDialogOpen(true)} className="bg-green-600 hover:bg-green-700">
+          <Plus className="h-4 w-4 mr-2" /> Add Item
+        </Button>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Items</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{inventory.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Low Stock Alerts</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{lowStockCount}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Value</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${totalValue.toFixed(2)}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Categories</CardTitle>
-            <TrendingDown className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{categories.length - 1}</div>
-          </CardContent>
-        </Card>
-      </div>
+      <Tabs defaultValue="inventory" className="space-y-6">
+        <TabsList className="bg-gray-800 border-gray-700">
+          <TabsTrigger value="inventory" className="flex items-center gap-2">
+            <Package className="h-4 w-4" /> Inventory
+          </TabsTrigger>
+          <TabsTrigger value="requests" className="flex items-center gap-2">
+            <Truck className="h-4 w-4" /> Requests
+          </TabsTrigger>
+          <TabsTrigger value="reports" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" /> Reports
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Inventory Items</CardTitle>
-          <CardDescription>Manage your restaurant's ingredient stock levels</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-4 mb-6">
+        <TabsContent value="inventory" className="space-y-6">
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
-                placeholder="Search items or suppliers..."
+                placeholder="Search items..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8"
+                className="pl-10 bg-gray-800 border-gray-700 text-white"
               />
             </div>
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="w-48">
-                <SelectValue />
+            <Select value={selectedWarehouse} onValueChange={setSelectedWarehouse}>
+              <SelectTrigger className="w-[200px] bg-gray-800 border-gray-700 text-white">
+                <SelectValue placeholder="Select warehouse" />
               </SelectTrigger>
               <SelectContent>
-                {categories.map(category => (
-                  <SelectItem key={category} value={category}>{category}</SelectItem>
+                <SelectItem value="all">All Warehouses</SelectItem>
+                {warehouses.map((w) => (
+                  <SelectItem key={w.id} value={w.id}>
+                    {w.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="w-[200px] bg-gray-800 border-gray-700 text-white">
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {categories.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
-          {/* Inventory Table */}
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Item</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Stock</TableHead>
-                <TableHead>Unit Price</TableHead>
-                <TableHead>Supplier</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredInventory.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{item.name}</div>
-                      {item.expiryDate && (
-                        <div className="text-sm text-muted-foreground">
-                          Expires: {new Date(item.expiryDate).toLocaleDateString()}
-                        </div>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>{item.category}</TableCell>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">
-                        {item.currentStock} {item.unit}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        Min: {item.minStock} | Max: {item.maxStock}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>${item.unitPrice.toFixed(2)}</TableCell>
-                  <TableCell>{item.supplier}</TableCell>
-                  <TableCell>
-                    <Badge className={getStatusColor(item.status)}>
+          {/* Inventory Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredItems.map((item) => (
+              <Card key={item.id} className="bg-gray-800 border-gray-700 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-white">{item.name}</h3>
+                  <Badge className={getStatusColor(item.status)}>
+                    <span className="flex items-center gap-1">
+                      {getStatusIcon(item.status)}
                       {item.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleStockUpdate(item.id, -1)}
-                        disabled={item.currentStock === 0}
-                      >
-                        -
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleStockUpdate(item.id, 1)}
-                      >
-                        +
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                    </span>
+                  </Badge>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="text-gray-300">
+                    <span className="text-sm">SKU: {item.sku}</span>
+                  </div>
+                  <div className="text-gray-300">
+                    <span className="text-sm">Category: {item.category}</span>
+                  </div>
+                  <div className="text-gray-300">
+                    <span className="text-sm">Warehouse: {item.warehouse?.name}</span>
+                  </div>
+                  <div className="text-gray-300">
+                    <span className="text-2xl font-bold text-white">{item.current_stock}</span>
+                    <span className="text-sm ml-2">units in stock</span>
+                  </div>
+                  <div className="text-gray-400 text-sm">
+                    <div>Min: {item.min_stock} | Max: {item.max_stock}</div>
+                    {item.unit_price && <div>Price: ${item.unit_price}</div>}
+                    {item.last_restocked && (
+                      <div>Last Restocked: {new Date(item.last_restocked).toLocaleDateString()}</div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-4 flex gap-2">
+                  <Button size="sm" variant="outline" className="flex-1" onClick={() => handleUpdateStock(item)}>
+                    Update Stock
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => handleEditItem(item)}>
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </div>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="w-full mt-2"
+                  onClick={() => handleRequestStock(item)}
+                >
+                  <Truck className="h-4 w-4 mr-2" /> Request from Branch
+                </Button>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="requests">
+          <InventoryRequests
+            requests={requests}
+            loading={loading}
+            onApproveRequest={approveRequest}
+            onFulfillRequest={fulfillRequest}
+          />
+        </TabsContent>
+
+        <TabsContent value="reports">
+          <InventoryReports />
+        </TabsContent>
+      </Tabs>
+
+      {/* Dialogs */}
+      <InventoryItemDialog
+        isOpen={isItemDialogOpen}
+        onClose={() => {
+          setIsItemDialogOpen(false);
+          setSelectedItem(null);
+        }}
+        item={selectedItem}
+        warehouses={warehouses}
+        onSave={async (data: any) => {
+          if (selectedItem) {
+            await updateItem(selectedItem.id, data);
+          } else {
+            await addItem(data);
+          }
+        }}
+        onDelete={selectedItem ? deleteItem : undefined}
+      />
+
+      <StockUpdateDialog
+        isOpen={isStockDialogOpen}
+        onClose={() => {
+          setIsStockDialogOpen(false);
+          setSelectedItem(null);
+        }}
+        item={selectedItem}
+        onUpdate={updateStock}
+      />
+
+      <RequestStockDialog
+        isOpen={isRequestDialogOpen}
+        onClose={() => {
+          setIsRequestDialogOpen(false);
+          setSelectedItem(null);
+        }}
+        item={selectedItem}
+        warehouses={warehouses}
+        onRequestStock={requestStock}
+      />
     </div>
   );
 }
