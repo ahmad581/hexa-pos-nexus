@@ -6,12 +6,12 @@
   },
   "files": [
     "dist/**/*",
-    "electron/main.js",
+    "electron/main.cjs",
     "electron/preload.js",
     "package.json"
   ],
   "extraMetadata": {
-    "main": "electron/main.js"
+    "main": "electron/main.cjs"
   },
   "mac": {
     "category": "public.app-category.business",
@@ -42,5 +42,6 @@
     "oneClick": false,
     "allowElevation": true,
     "allowToChangeInstallationDirectory": true
-  }
+  },
+  "forceCodeSigning": false
 }
