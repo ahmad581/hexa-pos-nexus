@@ -11,7 +11,7 @@ function createWindow() {
     minHeight: 600,
     webPreferences: {
       nodeIntegration: false,
-      contextIsolation: true,
+      contextIsolation: false,
       enableRemoteModule: false,
       webSecurity: true,
       preload: path.join(__dirname, 'preload.js')
@@ -27,7 +27,8 @@ function createWindow() {
     // Open DevTools in development
     mainWindow.webContents.openDevTools();
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+    const indexPath = path.join(__dirname, '..', 'dist', 'index.html');
+    mainWindow.loadFile(indexPath);
   }
 
   // Show window when ready

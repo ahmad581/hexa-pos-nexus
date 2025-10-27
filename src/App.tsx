@@ -82,7 +82,6 @@ const App = () => (
               <TranslationProvider>
                 <OrderProvider>
                   <CallProvider>
-                  <BrowserRouter>
                     <Routes>
                       <Route path="/login" element={<Login />} />
                       <Route path="/system-master" element={
@@ -194,7 +193,6 @@ const App = () => (
                       </Route>
                       <Route path="*" element={<NotFound />} />
                     </Routes>
-                  </BrowserRouter>
                   </CallProvider>
                 </OrderProvider>
               </TranslationProvider>

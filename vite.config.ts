@@ -21,11 +21,9 @@ export default defineConfig(({ mode }) => ({
     },
   },
    build: {
+    sourcemap: true, // enable source maps for readable stacks
     rollupOptions: {
       external: [
-        "@supabase/supabase-js",
-        "@capacitor-community/barcode-scanner",
-        "qrcode",
         "electron",
       ]
     },
