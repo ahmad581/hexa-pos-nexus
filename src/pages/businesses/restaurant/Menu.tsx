@@ -8,9 +8,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useTranslation } from "@/contexts/TranslationContext";
 import { useRole } from "@/hooks/useRole";
+import { useBranch } from "@/contexts/BranchContext";
+import { supabase } from "@/integrations/supabase/client";
 import { OrderSummary } from "@/components/OrderSummary";
 import { MenuModern } from "./MenuModern";
 import { MenuSimple } from "./MenuSimple";
+import { CreateCategoryDialog } from "@/components/menu/CreateCategoryDialog";
+import { CreateMenuItemDialog } from "@/components/menu/CreateMenuItemDialog";
 
 interface MenuItem {
   id: string;
@@ -43,57 +47,126 @@ export const Menu = () => {
   const { menuDesign } = useSettings();
   const { t } = useTranslation();
   const { isManager, isSuperManager, isSystemMaster } = useRole();
+  const { selectedBranch } = useBranch();
   
   const canManageMenu = isManager() || isSuperManager() || isSystemMaster();
   
   const [isEditingOrder, setIsEditingOrder] = useState(false);
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([
-    {
-      id: "1",
-      name: "Classic Burger",
-      description: "Juicy beef patty with lettuce, tomato, and special sauce",
-      price: 12.99,
-      category: "burgers",
-      available: true,
-      soldOut: false
-    },
-    {
-      id: "2",
-      name: "Margherita Pizza",
-      description: "Fresh mozzarella, tomatoes, and basil on thin crust",
-      price: 16.99,
-      category: "pizza",
-      available: true,
-      soldOut: false
-    },
-    {
-      id: "3",
-      name: "Caesar Salad",
-      description: "Crisp romaine lettuce with parmesan and croutons",
-      price: 9.99,
-      category: "salads",
-      available: true,
-      soldOut: true
-    },
-    {
-      id: "4",
-      name: "Grilled Chicken",
-      description: "Tender chicken breast with herbs and spices",
-      price: 18.99,
-      category: "mains",
-      available: true,
-      soldOut: false
-    }
-  ]);
-
-  const categories = [
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [categories, setCategories] = useState([
     { value: "all", label: t('menu.allItems') },
     { value: "burgers", label: t('category.burgers') },
     { value: "pizza", label: t('category.pizza') },
     { value: "salads", label: t('category.salads') },
     { value: "mains", label: t('category.mains') }
-  ];
+  ]);
+
+  // Fetch menu items from Supabase
+  useEffect(() => {
+    if (selectedBranch?.id) {
+      fetchMenuItems();
+      fetchCategories();
+    }
+  }, [selectedBranch?.id]);
+
+  const fetchMenuItems = async () => {
+    if (!selectedBranch?.id) return;
+
+    const { data, error } = await supabase
+      .from('menu_items')
+      .select('*')
+      .eq('branch_id', selectedBranch.id);
+
+    if (error) {
+      toast({ title: "Error fetching menu items", variant: "destructive" });
+      return;
+    }
+
+    if (data) {
+      setMenuItems(data.map(item => ({
+        id: item.id,
+        name: item.name,
+        description: item.description || '',
+        price: typeof item.price === 'string' ? parseFloat(item.price) : Number(item.price),
+        category: item.category,
+        available: item.is_available,
+        soldOut: !item.is_available
+      })));
+    }
+  };
+
+  const fetchCategories = async () => {
+    if (!selectedBranch?.id) return;
+
+    const { data, error } = await supabase
+      .from('menu_items')
+      .select('category')
+      .eq('branch_id', selectedBranch.id);
+
+    if (error) return;
+
+    if (data) {
+      const uniqueCategories = Array.from(new Set(data.map(item => item.category)));
+      const categoryList = [
+        { value: "all", label: t('menu.allItems') },
+        ...uniqueCategories.map(cat => ({
+          value: cat,
+          label: cat.charAt(0).toUpperCase() + cat.slice(1)
+        }))
+      ];
+      setCategories(categoryList);
+    }
+  };
+
+  const handleCreateCategory = (categoryValue: string, categoryLabel: string) => {
+    setCategories(prev => [...prev, { value: categoryValue, label: categoryLabel }]);
+    toast({ title: `Category "${categoryLabel}" created` });
+  };
+
+  const handleCreateItem = async (item: {
+    name: string;
+    description: string;
+    price: number;
+    category: string;
+  }) => {
+    if (!selectedBranch?.id) {
+      toast({ title: "No branch selected", variant: "destructive" });
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('menu_items')
+      .insert({
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        category: item.category,
+        branch_id: selectedBranch.id,
+        is_available: true
+      })
+      .select()
+      .single();
+
+    if (error) {
+      toast({ title: "Error creating menu item", variant: "destructive" });
+      return;
+    }
+
+    if (data) {
+      const newItem: MenuItem = {
+        id: data.id,
+        name: data.name,
+        description: data.description || '',
+        price: typeof data.price === 'string' ? parseFloat(data.price) : Number(data.price),
+        category: data.category,
+        available: data.is_available,
+        soldOut: !data.is_available
+      };
+      setMenuItems(prev => [...prev, newItem]);
+      toast({ title: `"${item.name}" added to menu` });
+    }
+  };
 
   // Load order for editing if passed from Orders page
   useEffect(() => {
@@ -167,14 +240,28 @@ export const Menu = () => {
     navigate("/orders");
   };
 
-  const toggleSoldOut = (itemId: string) => {
-    setMenuItems(prev => prev.map(item => 
-      item.id === itemId ? { ...item, soldOut: !item.soldOut } : item
+  const toggleSoldOut = async (itemId: string) => {
+    const item = menuItems.find(item => item.id === itemId);
+    if (!item) return;
+
+    const newAvailability = !item.available;
+
+    const { error } = await supabase
+      .from('menu_items')
+      .update({ is_available: newAvailability })
+      .eq('id', itemId);
+
+    if (error) {
+      toast({ title: "Error updating item", variant: "destructive" });
+      return;
+    }
+
+    setMenuItems(prev => prev.map(i => 
+      i.id === itemId ? { ...i, available: newAvailability, soldOut: !newAvailability } : i
     ));
     
-    const item = menuItems.find(item => item.id === itemId);
     toast({ 
-      title: `${item?.name} marked as ${item?.soldOut ? 'available' : 'sold out'}` 
+      title: `${item.name} marked as ${newAvailability ? 'available' : 'sold out'}` 
     });
   };
 
@@ -182,7 +269,7 @@ export const Menu = () => {
     <div className="space-y-6">
       {/* Header */}
         <div className="flex justify-between items-center">
-          <div>
+          <div className="flex-1">
             <h1 className="text-3xl font-bold text-white">
               {isEditingOrder ? `${t('order.editOrder')} #${editingOrderId}` : t('menu.title')}
             </h1>
@@ -197,7 +284,13 @@ export const Menu = () => {
               </p>
             )}
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
+            {canManageMenu && !isEditingOrder && (
+              <>
+                <CreateCategoryDialog onCategoryCreate={handleCreateCategory} />
+                <CreateMenuItemDialog categories={categories} onItemCreate={handleCreateItem} />
+              </>
+            )}
             {isEditingOrder && (
               <>
                 <Button
