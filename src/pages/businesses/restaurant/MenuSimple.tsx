@@ -30,9 +30,10 @@ interface MenuSimpleProps {
   categories: Category[];
   toggleSoldOut: (itemId: string) => void;
   isEditingOrder: boolean;
+  canManageMenu: boolean;
 }
 
-export const MenuSimple = ({ menuItems, categories, toggleSoldOut, isEditingOrder }: MenuSimpleProps) => {
+export const MenuSimple = ({ menuItems, categories, toggleSoldOut, isEditingOrder, canManageMenu }: MenuSimpleProps) => {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const { addItemToOrder } = useOrder();
@@ -85,7 +86,7 @@ export const MenuSimple = ({ menuItems, categories, toggleSoldOut, isEditingOrde
                         {t('common.add')}
                       </Button>
                       
-                      {!isEditingOrder && (
+                      {!isEditingOrder && canManageMenu && (
                         <Button
                           onClick={() => toggleSoldOut(item.id)}
                           variant="outline"

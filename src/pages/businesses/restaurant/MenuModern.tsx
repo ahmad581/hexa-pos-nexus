@@ -30,9 +30,10 @@ interface MenuModernProps {
   categories: Category[];
   toggleSoldOut: (itemId: string) => void;
   isEditingOrder: boolean;
+  canManageMenu: boolean;
 }
 
-export const MenuModern = ({ menuItems, categories, toggleSoldOut, isEditingOrder }: MenuModernProps) => {
+export const MenuModern = ({ menuItems, categories, toggleSoldOut, isEditingOrder, canManageMenu }: MenuModernProps) => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const { addItemToOrder } = useOrder();
@@ -170,7 +171,7 @@ export const MenuModern = ({ menuItems, categories, toggleSoldOut, isEditingOrde
                   {t('menu.addToOrder')}
                 </Button>
                 
-                {!isEditingOrder && (
+                {!isEditingOrder && canManageMenu && (
                   <Button
                     onClick={() => toggleSoldOut(item.id)}
                     variant="outline"

@@ -7,6 +7,7 @@ import { useCall } from "@/contexts/CallContext";
 import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useTranslation } from "@/contexts/TranslationContext";
+import { useRole } from "@/hooks/useRole";
 import { OrderSummary } from "@/components/OrderSummary";
 import { MenuModern } from "./MenuModern";
 import { MenuSimple } from "./MenuSimple";
@@ -41,6 +42,9 @@ export const Menu = () => {
   const { toast } = useToast();
   const { menuDesign } = useSettings();
   const { t } = useTranslation();
+  const { isManager, isSuperManager, isSystemMaster } = useRole();
+  
+  const canManageMenu = isManager() || isSuperManager() || isSystemMaster();
   
   const [isEditingOrder, setIsEditingOrder] = useState(false);
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
@@ -233,6 +237,7 @@ export const Menu = () => {
               categories={categories}
               toggleSoldOut={toggleSoldOut}
               isEditingOrder={isEditingOrder}
+              canManageMenu={canManageMenu}
             />
           </div>
           {currentOrder.length > 0 && (
@@ -249,6 +254,7 @@ export const Menu = () => {
               categories={categories}
               toggleSoldOut={toggleSoldOut}
               isEditingOrder={isEditingOrder}
+              canManageMenu={canManageMenu}
             />
           </div>
           {currentOrder.length > 0 && (
