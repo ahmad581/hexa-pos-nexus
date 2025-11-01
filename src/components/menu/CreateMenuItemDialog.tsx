@@ -59,16 +59,16 @@ export const CreateMenuItemDialog = ({ categories, onItemCreate }: CreateMenuIte
       <DialogTrigger asChild>
         <Button variant="default" size="sm">
           <Plus size={16} className="mr-2" />
-          {t('menu.createItem') || 'Create Item'}
+          Add Menu Item
         </Button>
       </DialogTrigger>
       <DialogContent className="bg-gray-800 border-gray-700 text-white">
         <DialogHeader>
-          <DialogTitle>{t('menu.createNewItem') || 'Create New Menu Item'}</DialogTitle>
+          <DialogTitle>Add Menu Item</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="name">{t('menu.itemName') || 'Item Name'}</Label>
+            <Label htmlFor="name">Item Name</Label>
             <Input
               id="name"
               value={name}
@@ -79,7 +79,7 @@ export const CreateMenuItemDialog = ({ categories, onItemCreate }: CreateMenuIte
             />
           </div>
           <div>
-            <Label htmlFor="description">{t('menu.description') || 'Description'}</Label>
+            <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
               value={description}
@@ -90,7 +90,7 @@ export const CreateMenuItemDialog = ({ categories, onItemCreate }: CreateMenuIte
             />
           </div>
           <div>
-            <Label htmlFor="price">{t('menu.price') || 'Price'}</Label>
+            <Label htmlFor="price">Price ($)</Label>
             <Input
               id="price"
               type="number"
@@ -104,10 +104,10 @@ export const CreateMenuItemDialog = ({ categories, onItemCreate }: CreateMenuIte
             />
           </div>
           <div>
-            <Label htmlFor="category">{t('menu.category') || 'Category'}</Label>
+            <Label htmlFor="category">Category</Label>
             <Select value={category} onValueChange={setCategory} required>
               <SelectTrigger className="bg-gray-700 border-gray-600">
-                <SelectValue placeholder={t('menu.selectCategory') || 'Select a category'} />
+                <SelectValue placeholder="Select a category" />
               </SelectTrigger>
               <SelectContent className="bg-gray-800 border-gray-700">
                 {categories.filter(cat => cat.value !== 'all').map((cat) => (
@@ -119,7 +119,7 @@ export const CreateMenuItemDialog = ({ categories, onItemCreate }: CreateMenuIte
             </Select>
           </div>
           <Button type="submit" className="w-full">
-            {t('common.create') || 'Create'}
+            Add Item
           </Button>
         </form>
       </DialogContent>

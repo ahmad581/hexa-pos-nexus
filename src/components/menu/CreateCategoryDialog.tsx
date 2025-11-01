@@ -37,16 +37,16 @@ export const CreateCategoryDialog = ({ onCategoryCreate }: CreateCategoryDialogP
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <Plus size={16} className="mr-2" />
-          {t('menu.createCategory') || 'Create Category'}
+          Add Category
         </Button>
       </DialogTrigger>
       <DialogContent className="bg-gray-800 border-gray-700 text-white">
         <DialogHeader>
-          <DialogTitle>{t('menu.createNewCategory') || 'Create New Category'}</DialogTitle>
+          <DialogTitle>Add New Category</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="categoryValue">{t('menu.categoryId') || 'Category ID'}</Label>
+            <Label htmlFor="categoryValue">Category Key</Label>
             <Input
               id="categoryValue"
               value={categoryValue}
@@ -55,9 +55,10 @@ export const CreateCategoryDialog = ({ onCategoryCreate }: CreateCategoryDialogP
               className="bg-gray-700 border-gray-600"
               required
             />
+            <p className="text-xs text-gray-400 mt-1">Used internally (lowercase, no spaces)</p>
           </div>
           <div>
-            <Label htmlFor="categoryLabel">{t('menu.categoryName') || 'Category Name'}</Label>
+            <Label htmlFor="categoryLabel">Display Name</Label>
             <Input
               id="categoryLabel"
               value={categoryLabel}
@@ -66,9 +67,10 @@ export const CreateCategoryDialog = ({ onCategoryCreate }: CreateCategoryDialogP
               className="bg-gray-700 border-gray-600"
               required
             />
+            <p className="text-xs text-gray-400 mt-1">Shown to customers</p>
           </div>
           <Button type="submit" className="w-full">
-            {t('common.create') || 'Create'}
+            Add Category
           </Button>
         </form>
       </DialogContent>
