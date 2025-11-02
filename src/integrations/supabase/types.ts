@@ -95,6 +95,7 @@ export type Database = {
       branches: {
         Row: {
           address: string
+          business_id: string | null
           business_type: string
           created_at: string | null
           id: string
@@ -106,6 +107,7 @@ export type Database = {
         }
         Insert: {
           address: string
+          business_id?: string | null
           business_type: string
           created_at?: string | null
           id: string
@@ -117,6 +119,7 @@ export type Database = {
         }
         Update: {
           address?: string
+          business_id?: string | null
           business_type?: string
           created_at?: string | null
           id?: string
@@ -126,7 +129,15 @@ export type Database = {
           phone?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "branches_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "custom_businesses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       business_features: {
         Row: {
@@ -381,6 +392,7 @@ export type Database = {
           id: string
           is_active: boolean
           last_name: string
+          password: string | null
           phone: string | null
           position: string
           salary: number | null
@@ -401,6 +413,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           last_name: string
+          password?: string | null
           phone?: string | null
           position: string
           salary?: number | null
@@ -421,6 +434,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           last_name?: string
+          password?: string | null
           phone?: string | null
           position?: string
           salary?: number | null
@@ -942,6 +956,7 @@ export type Database = {
       profiles: {
         Row: {
           branch_id: string | null
+          business_id: string | null
           created_at: string | null
           email: string
           first_name: string | null
@@ -957,6 +972,7 @@ export type Database = {
         }
         Insert: {
           branch_id?: string | null
+          business_id?: string | null
           created_at?: string | null
           email: string
           first_name?: string | null
@@ -972,6 +988,7 @@ export type Database = {
         }
         Update: {
           branch_id?: string | null
+          business_id?: string | null
           created_at?: string | null
           email?: string
           first_name?: string | null
@@ -985,7 +1002,15 @@ export type Database = {
           updated_at?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "custom_businesses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rooms: {
         Row: {
@@ -1266,10 +1291,7 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_super_admin: {
-        Args: { user_id: string }
-        Returns: boolean
-      }
+      is_super_admin: { Args: { user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role:
