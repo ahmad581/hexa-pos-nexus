@@ -11,6 +11,7 @@ interface UserProfile {
   first_name: string | null;
   last_name: string | null;
   branch_id: string | null;
+  business_id: string | null;
   primary_role: UserRole | null;
   is_active: boolean;
 }
@@ -242,6 +243,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           first_name: 'Demo',
           last_name: 'User',
           branch_id: defaultBranchId,
+          business_id: null,
           primary_role: 'Manager',
           is_active: true
         };

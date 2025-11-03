@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface InventoryItem {
   id: string;
@@ -63,6 +64,7 @@ export const useInventory = (branchId?: string) => {
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [requests, setRequests] = useState<InventoryRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const { userProfile } = useAuth();
 
   useEffect(() => {
     setLoading(true);
@@ -71,22 +73,8 @@ export const useInventory = (branchId?: string) => {
 
   const fetchData = async () => {
     try {
-      // Get current user's business_id
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error('User not authenticated');
-        setLoading(false);
-        return;
-      }
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('business_id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!profile?.business_id) {
-        toast.error('No business associated with user');
+      if (!userProfile?.business_id) {
+        console.log('No business_id found in user profile');
         setLoading(false);
         return;
       }
@@ -97,7 +85,7 @@ export const useInventory = (branchId?: string) => {
           *,
           warehouse:warehouses(id, name)
         `)
-        .eq('business_id', profile.business_id)
+        .eq('business_id', userProfile.business_id)
         .order('name');
 
       let requestsQuery = supabase
@@ -107,13 +95,13 @@ export const useInventory = (branchId?: string) => {
           inventory_item:inventory_items(id, name, sku),
           warehouse:warehouses(id, name)
         `)
-        .eq('business_id', profile.business_id)
+        .eq('business_id', userProfile.business_id)
         .order('requested_at', { ascending: false });
 
       let warehousesQuery = supabase
         .from('warehouses')
         .select('*')
-        .eq('business_id', profile.business_id)
+        .eq('business_id', userProfile.business_id)
         .eq('is_active', true)
         .order('name');
 
@@ -152,22 +140,15 @@ export const useInventory = (branchId?: string) => {
         throw new Error('Missing branchId');
       }
 
-      // Get current user's business_id
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('business_id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!profile?.business_id) throw new Error('No business associated with user');
+      if (!userProfile?.business_id) {
+        toast.error('No business associated with user');
+        throw new Error('No business_id');
+      }
 
       const itemWithBranch = {
         ...item,
         branch_id: resolvedBranchId,
-        business_id: profile.business_id
+        business_id: userProfile.business_id
       };
 
       const { data, error } = await supabase
@@ -261,22 +242,15 @@ export const useInventory = (branchId?: string) => {
     try {
       const resolvedBranchId = branchId ?? localStorage.getItem('userBranchId') ?? undefined;
 
-      // Get current user's business_id
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('business_id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!profile?.business_id) throw new Error('No business associated with user');
+      if (!userProfile?.business_id) {
+        toast.error('No business associated with user');
+        throw new Error('No business_id');
+      }
 
       const requestWithBranch = {
         ...request,
         ...(resolvedBranchId ? { requesting_branch_id: resolvedBranchId } : {}),
-        business_id: profile.business_id,
+        business_id: userProfile.business_id,
         status: 'Pending'
       };
 
