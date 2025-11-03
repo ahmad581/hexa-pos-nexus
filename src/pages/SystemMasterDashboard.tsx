@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Building2, Plus, Settings, Trash2, Users, BarChart3, Crown, Shield, LogOut, Info, ExternalLink, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import { BusinessManagement } from "@/pages/BusinessManagement";
+import { ClientManagement } from "@/components/ClientManagement";
 import { RoleManagement } from "@/components/RoleManagement";
 
 interface AvailableFeature {
@@ -541,15 +541,11 @@ export const SystemMasterDashboard = () => {
         <TabsList>
           <TabsTrigger value="clients" className="gap-2">
             <Building2 className="w-4 h-4" />
-            Clients
+            Client Management
           </TabsTrigger>
           <TabsTrigger value="analytics" className="gap-2">
             <BarChart3 className="w-4 h-4" />
             System Analytics
-          </TabsTrigger>
-          <TabsTrigger value="business-management" className="gap-2">
-            <Building2 className="w-4 h-4" />
-            Business Management
           </TabsTrigger>
           <TabsTrigger value="role-management" className="gap-2">
             <Shield className="w-4 h-4" />
@@ -558,79 +554,7 @@ export const SystemMasterDashboard = () => {
         </TabsList>
 
         <TabsContent value="clients" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {isLoading ? (
-              <div className="col-span-full text-center py-8">
-                <p className="text-muted-foreground">Loading clients...</p>
-              </div>
-            ) : clients.length === 0 ? (
-              <div className="col-span-full text-center py-8">
-                <Building2 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">No clients registered yet</p>
-                <p className="text-sm text-muted-foreground">Create your first client to get started</p>
-              </div>
-            ) : (
-              clients.map((client) => (
-                <Card key={client.id}>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-lg">{client.name}</CardTitle>
-                        <CardDescription className="mt-1">
-                          {client.email}
-                        </CardDescription>
-                      </div>
-                      <Badge variant={client.status === 'active' ? 'default' : 'secondary'}>
-                        {client.status}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Business Type</span>
-                        <span className="font-medium">
-                          {businessTypeLabels[client.business_type as keyof typeof businessTypeLabels]}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Branches</span>
-                        <span className="font-medium">{client.branches_count || 0}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Since</span>
-                        <span className="font-medium">
-                          {new Date(client.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <div className="flex gap-2 pt-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => handleClientInfo(client)}
-                        >
-                          <Info className="w-3 h-3 mr-1" />
-                          Info
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="flex-1"
-                          onClick={() => handleManageClient(client)}
-                        >
-                          <Settings className="w-3 h-3 mr-1" />
-                          Manage
-                        </Button>
-                        <Button variant="outline" size="sm" className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground">
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </div>
+          <ClientManagement clients={clients} isLoading={isLoading} />
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4">
@@ -688,10 +612,6 @@ export const SystemMasterDashboard = () => {
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
-
-        <TabsContent value="business-management" className="space-y-4">
-          <BusinessManagement />
         </TabsContent>
 
         <TabsContent value="role-management" className="space-y-4">
