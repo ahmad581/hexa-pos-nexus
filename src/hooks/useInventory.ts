@@ -71,12 +71,33 @@ export const useInventory = (branchId?: string) => {
 
   const fetchData = async () => {
     try {
+      // Get current user's business_id
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('User not authenticated');
+        setLoading(false);
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('business_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile?.business_id) {
+        toast.error('No business associated with user');
+        setLoading(false);
+        return;
+      }
+
       let itemsQuery = supabase
         .from('inventory_items')
         .select(`
           *,
           warehouse:warehouses(id, name)
         `)
+        .eq('business_id', profile.business_id)
         .order('name');
 
       let requestsQuery = supabase
@@ -86,7 +107,15 @@ export const useInventory = (branchId?: string) => {
           inventory_item:inventory_items(id, name, sku),
           warehouse:warehouses(id, name)
         `)
+        .eq('business_id', profile.business_id)
         .order('requested_at', { ascending: false });
+
+      let warehousesQuery = supabase
+        .from('warehouses')
+        .select('*')
+        .eq('business_id', profile.business_id)
+        .eq('is_active', true)
+        .order('name');
 
       // Filter by branch if branchId is provided
       if (branchId) {
@@ -96,11 +125,7 @@ export const useInventory = (branchId?: string) => {
 
       const [itemsResponse, warehousesResponse, requestsResponse] = await Promise.all([
         itemsQuery,
-        supabase
-          .from('warehouses')
-          .select('*')
-          .eq('is_active', true)
-          .order('name'),
+        warehousesQuery,
         requestsQuery
       ]);
 
@@ -127,9 +152,22 @@ export const useInventory = (branchId?: string) => {
         throw new Error('Missing branchId');
       }
 
+      // Get current user's business_id
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('business_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile?.business_id) throw new Error('No business associated with user');
+
       const itemWithBranch = {
         ...item,
-        branch_id: resolvedBranchId
+        branch_id: resolvedBranchId,
+        business_id: profile.business_id
       };
 
       const { data, error } = await supabase
@@ -223,9 +261,22 @@ export const useInventory = (branchId?: string) => {
     try {
       const resolvedBranchId = branchId ?? localStorage.getItem('userBranchId') ?? undefined;
 
+      // Get current user's business_id
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('business_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile?.business_id) throw new Error('No business associated with user');
+
       const requestWithBranch = {
         ...request,
         ...(resolvedBranchId ? { requesting_branch_id: resolvedBranchId } : {}),
+        business_id: profile.business_id,
         status: 'Pending'
       };
 
