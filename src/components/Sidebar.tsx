@@ -5,6 +5,7 @@ import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRole } from "@/hooks/useRole";
 import { useTranslation } from "@/contexts/TranslationContext";
+import { useBusinessFeatures } from "@/hooks/useBusinessFeatures";
 import {
   Sheet,
   SheetContent,
@@ -38,6 +39,7 @@ export const Sidebar = () => {
     canOnlyCheckInOut,
     isSystemMaster
   } = useRole();
+  const { hasRouteAccess } = useBusinessFeatures();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
@@ -163,56 +165,56 @@ export const Sidebar = () => {
   ];
 
   const filteredRestaurantItems = [
-    ...(canAccessMenu() ? [{ to: "/menu", icon: FileText, label: t('nav.menu') }] : []),
-    ...(canAccessTables() ? [{ to: "/tables", icon: Users, label: t('nav.tables') }] : []),
-    ...(canHandleOrders() ? [{ to: "/orders", icon: ShoppingBag, label: t('nav.orders') }] : []),
-    ...(canManageInventory() ? [{ to: "/inventory", icon: Package, label: t('nav.inventory') }] : [])
+    ...(canAccessMenu() && hasRouteAccess('/menu') ? [{ to: "/menu", icon: FileText, label: t('nav.menu') }] : []),
+    ...(canAccessTables() && hasRouteAccess('/tables') ? [{ to: "/tables", icon: Users, label: t('nav.tables') }] : []),
+    ...(canHandleOrders() && hasRouteAccess('/orders') ? [{ to: "/orders", icon: ShoppingBag, label: t('nav.orders') }] : []),
+    ...(canManageInventory() && hasRouteAccess('/inventory') ? [{ to: "/inventory", icon: Package, label: t('nav.inventory') }] : [])
   ];
 
   const hotelItems = [
     { to: "/rooms", icon: Home, label: t('nav.rooms') },
     { to: "/hotel-services", icon: ListChecks, label: t('nav.services') }
-  ];
+  ].filter(item => hasRouteAccess(item.to));
 
   const salonItems = [
     { to: "/appointments", icon: ClipboardList, label: t('nav.appointments') },
     { to: "/stylists", icon: Users, label: t('nav.stylists') }
-  ];
+  ].filter(item => hasRouteAccess(item.to));
 
   const retailItems = [
     { to: "/products", icon: ShoppingBag, label: t('nav.products') },
     { to: "/retail-inventory", icon: Package, label: t('nav.inventory') }
-  ];
+  ].filter(item => hasRouteAccess(item.to));
 
   const clinicItems = [
     { to: "/patients", icon: Users, label: "Patients" },
     { to: "/appointments", icon: ClipboardList, label: t('nav.appointments') }
-  ];
+  ].filter(item => hasRouteAccess(item.to));
 
   const pharmacyItems = [
     { to: "/prescriptions", icon: Pill, label: t('nav.prescriptions') }
-  ];
+  ].filter(item => hasRouteAccess(item.to));
 
   const groceryItems = [
     { to: "/grocery-inventory", icon: Package, label: t('nav.inventory') },
     { to: "/suppliers", icon: Users, label: "Suppliers" }
-  ];
+  ].filter(item => hasRouteAccess(item.to));
 
   const gymItems = [
     { to: "/members", icon: Users, label: t('nav.members') },
     { to: "/classes", icon: Calendar, label: "Classes" },
     { to: "/equipment", icon: Dumbbell, label: "Equipment" }
-  ];
+  ].filter(item => hasRouteAccess(item.to));
 
   const autoRepairItems = [
     { to: "/auto-services", icon: Car, label: t('nav.services') },
     { to: "/vehicles", icon: Car, label: "Vehicles" }
-  ];
+  ].filter(item => hasRouteAccess(item.to));
 
   const petCareItems = [
     { to: "/pet-appointments", icon: Calendar, label: t('nav.appointments') },
     { to: "/pets", icon: Heart, label: "Pets" }
-  ];
+  ].filter(item => hasRouteAccess(item.to));
 
   const getBusinessSpecificItems = () => {
     switch (selectedBusinessType?.id) {

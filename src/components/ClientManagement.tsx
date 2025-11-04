@@ -72,53 +72,83 @@ export const ClientManagement = ({ clients, isLoading }: { clients: Client[], is
   });
   const queryClient = useQueryClient();
 
-  // Fetch employees for selected client
-  const { data: clientEmployees = [] } = useQuery({
-    queryKey: ['client-employees', selectedClient?.id],
+  // Fetch business ID for selected client
+  const { data: clientBusiness } = useQuery({
+    queryKey: ['client-business', selectedClient?.id],
     queryFn: async () => {
-      if (!selectedClient) return [];
+      if (!selectedClient) return null;
       
-      // Get business associated with client
-      const { data: businesses } = await supabase
+      const { data } = await supabase
         .from('custom_businesses')
         .select('id')
         .eq('user_id', selectedClient.id)
-        .limit(1);
+        .limit(1)
+        .single();
 
-      if (!businesses || businesses.length === 0) return [];
-
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('business_id', businesses[0].id);
-
-      return profiles as ClientEmployee[];
+      return data;
     },
     enabled: !!selectedClient
   });
 
+  // Fetch employees for selected client
+  const { data: clientEmployees = [] } = useQuery({
+    queryKey: ['client-employees', clientBusiness?.id],
+    queryFn: async () => {
+      if (!clientBusiness) return [];
+
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('business_id', clientBusiness.id);
+
+      return profiles as ClientEmployee[];
+    },
+    enabled: !!clientBusiness
+  });
+
+  // Fetch enabled features for selected client
+  const { data: clientFeatures = [] } = useQuery({
+    queryKey: ['client-features', clientBusiness?.id],
+    queryFn: async () => {
+      if (!clientBusiness) return [];
+
+      const { data } = await supabase
+        .from('business_features')
+        .select(`
+          feature_id,
+          is_enabled,
+          available_features (
+            id,
+            name,
+            description,
+            icon,
+            category
+          )
+        `)
+        .eq('business_id', clientBusiness.id);
+
+      return data?.map(bf => ({
+        ...bf.available_features,
+        is_enabled: bf.is_enabled
+      })) || [];
+    },
+    enabled: !!clientBusiness
+  });
+
   // Fetch branches for selected client
   const { data: clientBranches = [] } = useQuery({
-    queryKey: ['client-branches', selectedClient?.id],
+    queryKey: ['client-branches', clientBusiness?.id],
     queryFn: async () => {
-      if (!selectedClient) return [];
-      
-      const { data: businesses } = await supabase
-        .from('custom_businesses')
-        .select('id')
-        .eq('user_id', selectedClient.id)
-        .limit(1);
-
-      if (!businesses || businesses.length === 0) return [];
+      if (!clientBusiness) return [];
 
       const { data: branches } = await supabase
         .from('branches')
         .select('*')
-        .eq('business_id', businesses[0].id);
+        .eq('business_id', clientBusiness.id);
 
       return branches || [];
     },
-    enabled: !!selectedClient
+    enabled: !!clientBusiness
   });
 
   const handleViewClient = (client: Client) => {
@@ -246,10 +276,14 @@ export const ClientManagement = ({ clients, isLoading }: { clients: Client[], is
           </DialogHeader>
 
           <Tabs defaultValue="employees" className="mt-4">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="employees" className="gap-2">
                 <Users className="w-4 h-4" />
                 Employees
+              </TabsTrigger>
+              <TabsTrigger value="features" className="gap-2">
+                <Settings className="w-4 h-4" />
+                Features
               </TabsTrigger>
               <TabsTrigger value="roles" className="gap-2">
                 <Shield className="w-4 h-4" />
@@ -291,6 +325,32 @@ export const ClientManagement = ({ clients, isLoading }: { clients: Client[], is
                             {employee.is_active ? "Active" : "Inactive"}
                           </Badge>
                         </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="features" className="space-y-4 max-h-[50vh] overflow-y-auto">
+              <p className="text-sm text-muted-foreground">
+                {clientFeatures.length} feature(s) enabled for this client
+              </p>
+              <div className="grid gap-3">
+                {clientFeatures.map((feature: any) => (
+                  <Card key={feature.id}>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl">{feature.icon}</span>
+                          <div>
+                            <p className="font-medium">{feature.name}</p>
+                            <p className="text-sm text-muted-foreground">{feature.description}</p>
+                          </div>
+                        </div>
+                        <Badge variant={feature.is_enabled ? "default" : "secondary"}>
+                          {feature.is_enabled ? "Enabled" : "Disabled"}
+                        </Badge>
                       </div>
                     </CardContent>
                   </Card>
