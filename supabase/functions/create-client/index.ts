@@ -31,6 +31,9 @@ serve(async (req) => {
       throw new Error('Missing required fields')
     }
 
+    // Normalize email for consistent comparisons
+    const normalizedEmail = (email || '').toLowerCase().trim()
+
     // 1. Create auth user
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,

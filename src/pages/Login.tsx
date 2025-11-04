@@ -31,67 +31,96 @@ export const Login = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate authentication
-    setTimeout(async () => {
-      const validCredentials = [
-        // Manager accounts
-        { email: "restaurant@bizhub.com", password: "demo123" },
-        { email: "hotel@bizhub.com", password: "demo123" },
-        { email: "salon@bizhub.com", password: "demo123" },
-        { email: "clinic@bizhub.com", password: "demo123" },
-        { email: "retail@bizhub.com", password: "demo123" },
-        { email: "pharmacy@bizhub.com", password: "demo123" },
-        { email: "grocery@bizhub.com", password: "demo123" },
-        { email: "gym@bizhub.com", password: "demo123" },
-        { email: "autorepair@bizhub.com", password: "demo123" },
-        { email: "petcare@bizhub.com", password: "demo123" },
-        // Employee accounts
-        { email: "restaurant.server@bizhub.com", password: "demo123" },
-        { email: "restaurant.chef@bizhub.com", password: "demo123" },
-        { email: "hotel.front@bizhub.com", password: "demo123" },
-        { email: "hotel.beach@bizhub.com", password: "demo123" },
-        { email: "salon.stylist@bizhub.com", password: "demo123" },
-        { email: "salon.mall@bizhub.com", password: "demo123" },
-        { email: "clinic.nurse@bizhub.com", password: "demo123" },
-        { email: "clinic.north@bizhub.com", password: "demo123" },
-        { email: "retail.sales@bizhub.com", password: "demo123" },
-        { email: "retail.outlet@bizhub.com", password: "demo123" },
-        { email: "pharmacy.tech@bizhub.com", password: "demo123" },
-        { email: "pharmacy.west@bizhub.com", password: "demo123" },
-        { email: "grocery.cashier@bizhub.com", password: "demo123" },
-        { email: "gym.trainer@bizhub.com", password: "demo123" },
-        { email: "autorepair.tech@bizhub.com", password: "demo123" },
-        { email: "petcare.vet@bizhub.com", password: "demo123" }
-      ];
+    try {
+      // 1) Try real Supabase email/password login first
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-      const isValid = validCredentials.some(cred => 
-        cred.email === email && cred.password === password
-      );
+      if (!authError && authData?.session) {
+        toast({
+          title: t('auth.login') + " Successful",
+          description: "Welcome to BizHub POS!",
+        });
+        navigate("/");
+        return;
+      }
 
-      if (isValid) {
-        try {
-          await demoLogin(email);
-          toast({
-            title: t('auth.login') + " Successful",
-            description: "Welcome to BizHub POS!",
-          });
-          navigate("/");
-        } catch (error) {
+      // 2) Fallback to demo accounts if Supabase auth fails
+      //    (keeps the existing demo flow intact)
+      const runDemoFallback = async () => {
+        const validCredentials = [
+          // Manager accounts
+          { email: "restaurant@bizhub.com", password: "demo123" },
+          { email: "hotel@bizhub.com", password: "demo123" },
+          { email: "salon@bizhub.com", password: "demo123" },
+          { email: "clinic@bizhub.com", password: "demo123" },
+          { email: "retail@bizhub.com", password: "demo123" },
+          { email: "pharmacy@bizhub.com", password: "demo123" },
+          { email: "grocery@bizhub.com", password: "demo123" },
+          { email: "gym@bizhub.com", password: "demo123" },
+          { email: "autorepair@bizhub.com", password: "demo123" },
+          { email: "petcare@bizhub.com", password: "demo123" },
+          // Employee accounts
+          { email: "restaurant.server@bizhub.com", password: "demo123" },
+          { email: "restaurant.chef@bizhub.com", password: "demo123" },
+          { email: "hotel.front@bizhub.com", password: "demo123" },
+          { email: "hotel.beach@bizhub.com", password: "demo123" },
+          { email: "salon.stylist@bizhub.com", password: "demo123" },
+          { email: "salon.mall@bizhub.com", password: "demo123" },
+          { email: "clinic.nurse@bizhub.com", password: "demo123" },
+          { email: "clinic.north@bizhub.com", password: "demo123" },
+          { email: "retail.sales@bizhub.com", password: "demo123" },
+          { email: "retail.outlet@bizhub.com", password: "demo123" },
+          { email: "pharmacy.tech@bizhub.com", password: "demo123" },
+          { email: "pharmacy.west@bizhub.com", password: "demo123" },
+          { email: "grocery.cashier@bizhub.com", password: "demo123" },
+          { email: "gym.trainer@bizhub.com", password: "demo123" },
+          { email: "autorepair.tech@bizhub.com", password: "demo123" },
+          { email: "petcare.vet@bizhub.com", password: "demo123" }
+        ];
+
+        const isValid = validCredentials.some(cred => 
+          cred.email === email && cred.password === password
+        );
+
+        if (isValid) {
+          try {
+            await demoLogin(email);
+            toast({
+              title: t('auth.login') + " Successful",
+              description: "Welcome to BizHub POS!",
+            });
+            navigate("/");
+          } catch (error) {
+            toast({
+              title: t('auth.login') + " Failed",
+              description: "Demo login failed",
+              variant: "destructive",
+            });
+          }
+        } else {
           toast({
             title: t('auth.login') + " Failed",
-            description: "Demo login failed",
+            description: authError?.message || "Invalid email or password",
             variant: "destructive",
           });
         }
-      } else {
-        toast({
-          title: t('auth.login') + " Failed",
-          description: "Invalid email or password",
-          variant: "destructive",
-        });
-      }
-      setIsLoading(false);
-    }, 1000);
+      };
+
+      // preserve the previous loading feel
+      setTimeout(runDemoFallback, 600);
+    } catch (err: any) {
+      toast({
+        title: t('auth.login') + " Failed",
+        description: err?.message || "Something went wrong",
+        variant: "destructive",
+      });
+    } finally {
+      // ensure loading state is cleared even if fallback runs
+      setTimeout(() => setIsLoading(false), 650);
+    }
   };
 
   const fillCredentials = (businessEmail: string) => {
