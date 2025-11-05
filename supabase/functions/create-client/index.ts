@@ -44,32 +44,7 @@ serve(async (req) => {
     if (authError) throw authError
     if (!authData.user) throw new Error('Failed to create user')
 
-    // 2. Create profile with SystemMaster role
-    const { error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .insert({
-        user_id: authData.user.id,
-        email,
-        first_name: name.split(' ')[0] || name,
-        last_name: name.split(' ').slice(1).join(' ') || '',
-        primary_role: 'SystemMaster',
-        is_active: true,
-      })
-
-    if (profileError) throw profileError
-
-    // 3. Create user_roles entry
-    const { error: roleError } = await supabaseAdmin
-      .from('user_roles')
-      .insert({
-        user_id: authData.user.id,
-        role: 'SystemMaster',
-        is_active: true,
-      })
-
-    if (roleError) throw roleError
-
-    // 4. Create custom business
+    // 2. Create custom business first
     const { data: business, error: businessError } = await supabaseAdmin
       .from('custom_businesses')
       .insert({
@@ -93,6 +68,32 @@ serve(async (req) => {
       .single()
 
     if (businessError) throw businessError
+
+    // 3. Create profile with SystemMaster role and business_id
+    const { error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .insert({
+        user_id: authData.user.id,
+        email,
+        first_name: name.split(' ')[0] || name,
+        last_name: name.split(' ').slice(1).join(' ') || '',
+        primary_role: 'SystemMaster',
+        business_id: business.id,
+        is_active: true,
+      })
+
+    if (profileError) throw profileError
+
+    // 4. Create user_roles entry
+    const { error: roleError } = await supabaseAdmin
+      .from('user_roles')
+      .insert({
+        user_id: authData.user.id,
+        role: 'SystemMaster',
+        is_active: true,
+      })
+
+    if (roleError) throw roleError
 
     // 5. Add selected features to business
     if (features && features.length > 0) {
