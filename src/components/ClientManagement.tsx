@@ -113,34 +113,88 @@ export const ClientManagement = ({ clients, isLoading }: { clients: Client[], is
     enabled: !!clientBusiness
   });
 
+  // Fetch all available features
+  const { data: allAvailableFeatures = [] } = useQuery({
+    queryKey: ['available-features'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('available_features')
+        .select('*')
+        .order('category', { ascending: true });
+
+      if (error) throw error;
+      return data;
+    }
+  });
+
   // Fetch enabled features for selected client
-  const { data: clientFeatures = [] } = useQuery({
+  const { data: clientEnabledFeatures = [] } = useQuery({
     queryKey: ['client-features', clientBusiness?.id],
     queryFn: async () => {
       if (!clientBusiness) return [];
 
       const { data } = await supabase
         .from('business_features')
-        .select(`
-          feature_id,
-          is_enabled,
-          available_features (
-            id,
-            name,
-            description,
-            icon,
-            category
-          )
-        `)
+        .select('feature_id, is_enabled')
         .eq('business_id', clientBusiness.id);
 
-      return data?.map(bf => ({
-        ...bf.available_features,
-        is_enabled: bf.is_enabled
-      })) || [];
+      return data || [];
     },
     enabled: !!clientBusiness
   });
+
+  // Filter and merge features based on business type
+  const clientFeatures = allAvailableFeatures
+    .filter(feature => {
+      if (!selectedClient) return false;
+
+      const categoryLower = feature.category.toLowerCase();
+      const nameLower = feature.name.toLowerCase();
+      
+      // Always show core business features
+      if (categoryLower.includes('core')) return true;
+      
+      // Universal features available for all business types
+      const universalKeywords = [
+        'employee', 'hr', 'staff', 'call center', 'inventory', 
+        'analytics', 'reporting', 'branch', 'financial', 'user management'
+      ];
+      
+      if (universalKeywords.some(keyword => 
+        categoryLower.includes(keyword) || nameLower.includes(keyword)
+      )) {
+        return true;
+      }
+      
+      // Business-specific features
+      const businessTypeToKeywords: Record<string, string[]> = {
+        'restaurant': ['restaurant', 'menu', 'food', 'dining', 'kitchen', 'table', 'order'],
+        'hotel': ['hotel', 'room', 'guest', 'reservation', 'hospitality', 'accommodation'],
+        'hair-salon': ['salon', 'beauty', 'stylist', 'appointment', 'hair'],
+        'medical-clinic': ['medical', 'clinic', 'healthcare', 'patient', 'appointment'],
+        'retail-store': ['retail', 'product', 'store', 'sales'],
+        'pharmacy': ['pharmacy', 'prescription', 'medication', 'drug'],
+        'grocery': ['grocery', 'produce', 'fresh'],
+        'gym': ['gym', 'fitness', 'membership', 'class', 'equipment', 'trainer'],
+        'auto-repair': ['auto', 'vehicle', 'repair', 'service', 'parts'],
+        'pet-care': ['pet', 'veterinary', 'animal', 'grooming']
+      };
+
+      const keywords = businessTypeToKeywords[selectedClient.business_type] || [];
+      return keywords.some(keyword => 
+        categoryLower.includes(keyword) || 
+        nameLower.includes(keyword) ||
+        feature.description.toLowerCase().includes(keyword)
+      );
+    })
+    .map(feature => {
+      const enabledFeature = clientEnabledFeatures.find(ef => ef.feature_id === feature.id);
+      return {
+        ...feature,
+        is_enabled: enabledFeature?.is_enabled ?? false,
+        exists_in_db: !!enabledFeature
+      };
+    });
 
   // Fetch branches for selected client
   const { data: clientBranches = [] } = useQuery({
@@ -282,16 +336,30 @@ export const ClientManagement = ({ clients, isLoading }: { clients: Client[], is
   });
 
   const toggleFeatureMutation = useMutation({
-    mutationFn: async ({ featureId, isEnabled }: { featureId: string; isEnabled: boolean }) => {
+    mutationFn: async ({ featureId, isEnabled, existsInDb }: { featureId: string; isEnabled: boolean; existsInDb: boolean }) => {
       if (!clientBusiness) throw new Error("No business selected");
 
-      const { error } = await supabase
-        .from('business_features')
-        .update({ is_enabled: !isEnabled })
-        .eq('business_id', clientBusiness.id)
-        .eq('feature_id', featureId);
+      if (existsInDb) {
+        // Update existing feature
+        const { error } = await supabase
+          .from('business_features')
+          .update({ is_enabled: !isEnabled })
+          .eq('business_id', clientBusiness.id)
+          .eq('feature_id', featureId);
 
-      if (error) throw error;
+        if (error) throw error;
+      } else {
+        // Create new feature entry
+        const { error } = await supabase
+          .from('business_features')
+          .insert({
+            business_id: clientBusiness.id,
+            feature_id: featureId,
+            is_enabled: true
+          });
+
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       toast.success("Feature updated successfully!");
@@ -511,34 +579,48 @@ export const ClientManagement = ({ clients, isLoading }: { clients: Client[], is
               <p className="text-sm text-muted-foreground">
                 {clientFeatures.filter((f: any) => f.is_enabled).length} of {clientFeatures.length} feature(s) enabled
               </p>
-              <div className="grid gap-3">
-                {clientFeatures.map((feature: any) => (
-                  <Card key={feature.id}>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xl">{feature.icon}</span>
-                          <div>
-                            <p className="font-medium">{feature.name}</p>
-                            <p className="text-sm text-muted-foreground">{feature.description}</p>
+              <div className="space-y-4">
+                {Object.entries(
+                  clientFeatures.reduce((acc: any, feature: any) => {
+                    const category = feature.category;
+                    if (!acc[category]) acc[category] = [];
+                    acc[category].push(feature);
+                    return acc;
+                  }, {})
+                ).map(([category, features]: [string, any]) => (
+                  <Card key={category}>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base">{category}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {features.map((feature: any) => (
+                        <div key={feature.id} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div className="flex items-center gap-3 flex-1">
+                            <span className="text-xl">{feature.icon}</span>
+                            <div>
+                              <p className="font-medium">{feature.name}</p>
+                              <p className="text-sm text-muted-foreground">{feature.description}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={feature.is_enabled ? "default" : "secondary"}>
+                              {feature.is_enabled ? "Enabled" : "Disabled"}
+                            </Badge>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => toggleFeatureMutation.mutate({ 
+                                featureId: feature.id, 
+                                isEnabled: feature.is_enabled,
+                                existsInDb: feature.exists_in_db
+                              })}
+                              disabled={toggleFeatureMutation.isPending}
+                            >
+                              {feature.is_enabled ? "Disable" : "Enable"}
+                            </Button>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant={feature.is_enabled ? "default" : "secondary"}>
-                            {feature.is_enabled ? "Enabled" : "Disabled"}
-                          </Badge>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => toggleFeatureMutation.mutate({ 
-                              featureId: feature.id, 
-                              isEnabled: feature.is_enabled 
-                            })}
-                          >
-                            {feature.is_enabled ? "Disable" : "Enable"}
-                          </Button>
-                        </div>
-                      </div>
+                      ))}
                     </CardContent>
                   </Card>
                 ))}
