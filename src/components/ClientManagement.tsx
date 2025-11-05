@@ -634,7 +634,13 @@ export const ClientManagement = ({ clients, isLoading }: { clients: Client[], is
                             {clientEmployees.filter(e => e.primary_role === role.value).length} employee(s)
                           </p>
                         </div>
-                        <Button variant="outline" size="sm">Configure</Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => toast.info(`Role configuration for ${role.label} coming soon`)}
+                        >
+                          Configure
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
