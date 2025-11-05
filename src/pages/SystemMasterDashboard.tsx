@@ -195,26 +195,39 @@ export const SystemMasterDashboard = () => {
   // Filter features based on selected business type (only when on step 2)
   const filteredFeatures = dialogStep === 2 && newClient.business_type && availableFeatures
     ? availableFeatures.filter(feature => {
-        // Core features are available for all business types
-        if (feature.category.toLowerCase().includes('core')) return true;
+        const categoryLower = feature.category.toLowerCase();
+        const nameLower = feature.name.toLowerCase();
         
-        // Map business types to their relevant feature keywords
+        // Always show core business features
+        if (categoryLower.includes('core')) return true;
+        
+        // Universal features available for all business types
+        const universalKeywords = [
+          'employee', 'hr', 'staff', 'call center', 'inventory', 
+          'analytics', 'reporting', 'branch', 'financial', 'user management'
+        ];
+        
+        if (universalKeywords.some(keyword => 
+          categoryLower.includes(keyword) || nameLower.includes(keyword)
+        )) {
+          return true;
+        }
+        
+        // Business-specific features
         const businessTypeToKeywords: Record<string, string[]> = {
           'restaurant': ['restaurant', 'menu', 'food', 'dining', 'kitchen', 'table', 'order'],
           'hotel': ['hotel', 'room', 'guest', 'reservation', 'hospitality', 'accommodation'],
           'hair-salon': ['salon', 'beauty', 'stylist', 'appointment', 'hair'],
           'medical-clinic': ['medical', 'clinic', 'healthcare', 'patient', 'appointment'],
-          'retail-store': ['retail', 'product', 'inventory', 'store', 'sales'],
-          'pharmacy': ['pharmacy', 'prescription', 'medication', 'healthcare', 'drug'],
-          'grocery': ['grocery', 'product', 'inventory', 'store', 'retail'],
+          'retail-store': ['retail', 'product', 'store', 'sales'],
+          'pharmacy': ['pharmacy', 'prescription', 'medication', 'drug'],
+          'grocery': ['grocery', 'product', 'store'],
           'gym': ['gym', 'fitness', 'member', 'workout', 'exercise'],
           'auto-repair': ['auto', 'automotive', 'repair', 'service', 'vehicle'],
-          'pet-care': ['pet', 'animal', 'veterinary', 'appointment', 'care'],
+          'pet-care': ['pet', 'animal', 'veterinary', 'care'],
         };
         
         const keywords = businessTypeToKeywords[newClient.business_type] || [];
-        const categoryLower = feature.category.toLowerCase();
-        const nameLower = feature.name.toLowerCase();
         
         return keywords.some(keyword => 
           categoryLower.includes(keyword) || nameLower.includes(keyword)
