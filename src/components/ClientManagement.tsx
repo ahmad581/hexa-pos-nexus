@@ -63,12 +63,19 @@ export const ClientManagement = ({ clients, isLoading }: { clients: Client[], is
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [showEmployeeDialog, setShowEmployeeDialog] = useState(false);
+  const [showBranchDialog, setShowBranchDialog] = useState(false);
   const [newEmployee, setNewEmployee] = useState({
     email: "",
     first_name: "",
     last_name: "",
     role: "Employee",
     password: ""
+  });
+  const [newBranch, setNewBranch] = useState({
+    name: "",
+    address: "",
+    phone: "",
+    manager_name: ""
   });
   const queryClient = useQueryClient();
 
@@ -151,6 +158,91 @@ export const ClientManagement = ({ clients, isLoading }: { clients: Client[], is
     enabled: !!clientBusiness
   });
 
+  // Fetch financial data for selected client
+  const { data: financialData } = useQuery({
+    queryKey: ['client-financial', clientBusiness?.id],
+    queryFn: async () => {
+      if (!clientBusiness) return null;
+
+      // Get current month date range
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const endOfMonth = new Date();
+      endOfMonth.setMonth(endOfMonth.getMonth() + 1);
+      endOfMonth.setDate(0);
+      endOfMonth.setHours(23, 59, 59, 999);
+
+      // Get last month date range
+      const startOfLastMonth = new Date();
+      startOfLastMonth.setMonth(startOfLastMonth.getMonth() - 1);
+      startOfLastMonth.setDate(1);
+      startOfLastMonth.setHours(0, 0, 0, 0);
+
+      const endOfLastMonth = new Date();
+      endOfLastMonth.setDate(0);
+      endOfLastMonth.setHours(23, 59, 59, 999);
+
+      // Fetch branches for this business
+      const { data: branches } = await supabase
+        .from('branches')
+        .select('id')
+        .eq('business_id', clientBusiness.id);
+
+      const branchIds = branches?.map(b => b.id) || [];
+
+      if (branchIds.length === 0) {
+        return {
+          currentMonthRevenue: 0,
+          lastMonthRevenue: 0,
+          currentMonthOrders: 0,
+          percentageChange: 0
+        };
+      }
+
+      // Get current month orders
+      const { data: currentMonthOrders } = await supabase
+        .from('orders')
+        .select('total_amount')
+        .in('branch_id', branchIds)
+        .gte('created_at', startOfMonth.toISOString())
+        .lte('created_at', endOfMonth.toISOString())
+        .eq('payment_status', 'paid');
+
+      // Get last month orders
+      const { data: lastMonthOrders } = await supabase
+        .from('orders')
+        .select('total_amount')
+        .in('branch_id', branchIds)
+        .gte('created_at', startOfLastMonth.toISOString())
+        .lte('created_at', endOfLastMonth.toISOString())
+        .eq('payment_status', 'paid');
+
+      const currentRevenue = currentMonthOrders?.reduce(
+        (sum, order) => sum + (Number(order.total_amount) || 0),
+        0
+      ) || 0;
+
+      const lastRevenue = lastMonthOrders?.reduce(
+        (sum, order) => sum + (Number(order.total_amount) || 0),
+        0
+      ) || 0;
+
+      const percentageChange = lastRevenue > 0
+        ? ((currentRevenue - lastRevenue) / lastRevenue) * 100
+        : 0;
+
+      return {
+        currentMonthRevenue: currentRevenue,
+        lastMonthRevenue: lastRevenue,
+        currentMonthOrders: currentMonthOrders?.length || 0,
+        percentageChange
+      };
+    },
+    enabled: !!clientBusiness
+  });
+
   const handleViewClient = (client: Client) => {
     setSelectedClient(client);
     setShowDetailsDialog(true);
@@ -186,6 +278,79 @@ export const ClientManagement = ({ clients, isLoading }: { clients: Client[], is
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to add employee");
+    }
+  });
+
+  const toggleFeatureMutation = useMutation({
+    mutationFn: async ({ featureId, isEnabled }: { featureId: string; isEnabled: boolean }) => {
+      if (!clientBusiness) throw new Error("No business selected");
+
+      const { error } = await supabase
+        .from('business_features')
+        .update({ is_enabled: !isEnabled })
+        .eq('business_id', clientBusiness.id)
+        .eq('feature_id', featureId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Feature updated successfully!");
+      queryClient.invalidateQueries({ queryKey: ['client-features'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to update feature");
+    }
+  });
+
+  const toggleEmployeeStatusMutation = useMutation({
+    mutationFn: async ({ employeeId, currentStatus }: { employeeId: string; currentStatus: boolean }) => {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_active: !currentStatus })
+        .eq('id', employeeId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Employee status updated!");
+      queryClient.invalidateQueries({ queryKey: ['client-employees'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to update employee status");
+    }
+  });
+
+  const addBranchMutation = useMutation({
+    mutationFn: async () => {
+      if (!clientBusiness || !selectedClient) throw new Error("No business selected");
+
+      // Generate a branch ID
+      const branchId = `${selectedClient.business_type.substring(0, 4)}-${newBranch.name.toLowerCase().replace(/\s+/g, '-').substring(0, 10)}-${Date.now().toString().slice(-6)}`;
+
+      const { error } = await supabase
+        .from('branches')
+        .insert({
+          id: branchId,
+          name: newBranch.name,
+          address: newBranch.address,
+          phone: newBranch.phone,
+          manager_name: newBranch.manager_name,
+          business_id: clientBusiness.id,
+          business_type: selectedClient.business_type,
+          is_active: true
+        });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Branch added successfully!");
+      queryClient.invalidateQueries({ queryKey: ['client-branches'] });
+      queryClient.invalidateQueries({ queryKey: ['system-master-clients'] });
+      setShowBranchDialog(false);
+      setNewBranch({ name: "", address: "", phone: "", manager_name: "" });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to add branch");
     }
   });
 
@@ -324,6 +489,16 @@ export const ClientManagement = ({ clients, isLoading }: { clients: Client[], is
                           <Badge variant={employee.is_active ? "default" : "secondary"}>
                             {employee.is_active ? "Active" : "Inactive"}
                           </Badge>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => toggleEmployeeStatusMutation.mutate({ 
+                              employeeId: employee.id, 
+                              currentStatus: employee.is_active 
+                            })}
+                          >
+                            {employee.is_active ? "Deactivate" : "Activate"}
+                          </Button>
                         </div>
                       </div>
                     </CardContent>
@@ -334,7 +509,7 @@ export const ClientManagement = ({ clients, isLoading }: { clients: Client[], is
 
             <TabsContent value="features" className="space-y-4 max-h-[50vh] overflow-y-auto">
               <p className="text-sm text-muted-foreground">
-                {clientFeatures.length} feature(s) enabled for this client
+                {clientFeatures.filter((f: any) => f.is_enabled).length} of {clientFeatures.length} feature(s) enabled
               </p>
               <div className="grid gap-3">
                 {clientFeatures.map((feature: any) => (
@@ -348,9 +523,21 @@ export const ClientManagement = ({ clients, isLoading }: { clients: Client[], is
                             <p className="text-sm text-muted-foreground">{feature.description}</p>
                           </div>
                         </div>
-                        <Badge variant={feature.is_enabled ? "default" : "secondary"}>
-                          {feature.is_enabled ? "Enabled" : "Disabled"}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={feature.is_enabled ? "default" : "secondary"}>
+                            {feature.is_enabled ? "Enabled" : "Disabled"}
+                          </Badge>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => toggleFeatureMutation.mutate({ 
+                              featureId: feature.id, 
+                              isEnabled: feature.is_enabled 
+                            })}
+                          >
+                            {feature.is_enabled ? "Disable" : "Enable"}
+                          </Button>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -392,26 +579,62 @@ export const ClientManagement = ({ clients, isLoading }: { clients: Client[], is
                 </Card>
                 <Card>
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-sm">Monthly Revenue</CardTitle>
+                    <CardTitle className="text-sm">Current Month Revenue</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-2xl font-bold">$2,450</p>
-                    <p className="text-sm text-green-600 mt-1">+12% from last month</p>
+                    <p className="text-2xl font-bold">
+                      ${financialData?.currentMonthRevenue?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
+                    </p>
+                    <p className={`text-sm mt-1 ${financialData && financialData.percentageChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {financialData?.percentageChange ? `${financialData.percentageChange > 0 ? '+' : ''}${financialData.percentageChange.toFixed(1)}% from last month` : 'No previous data'}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm">Orders This Month</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-2xl font-bold">{financialData?.currentMonthOrders || 0}</p>
+                    <p className="text-sm text-muted-foreground mt-1">Total paid orders</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm">Last Month Revenue</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-2xl font-bold">
+                      ${financialData?.lastMonthRevenue?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-1">Previous period</p>
                   </CardContent>
                 </Card>
               </div>
             </TabsContent>
 
             <TabsContent value="branches" className="space-y-4 max-h-[50vh] overflow-y-auto">
-              <p className="text-sm text-muted-foreground">{clientBranches.length} branch(es)</p>
+              <div className="flex justify-between items-center">
+                <p className="text-sm text-muted-foreground">{clientBranches.length} branch(es)</p>
+                <Button size="sm" onClick={() => setShowBranchDialog(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Branch
+                </Button>
+              </div>
               <div className="grid gap-3">
                 {clientBranches.map((branch: any) => (
                   <Card key={branch.id}>
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
-                        <div>
+                        <div className="flex-1">
                           <p className="font-medium">{branch.name}</p>
                           <p className="text-sm text-muted-foreground">{branch.address}</p>
+                          {branch.phone && (
+                            <p className="text-sm text-muted-foreground">📞 {branch.phone}</p>
+                          )}
+                          {branch.manager_name && (
+                            <p className="text-sm text-muted-foreground">Manager: {branch.manager_name}</p>
+                          )}
                         </div>
                         <Badge variant={branch.is_active ? "default" : "secondary"}>
                           {branch.is_active ? "Active" : "Inactive"}
@@ -554,6 +777,67 @@ export const ClientManagement = ({ clients, isLoading }: { clients: Client[], is
               disabled={addEmployeeMutation.isPending || !newEmployee.email || !newEmployee.first_name || !newEmployee.last_name || !newEmployee.password}
             >
               {addEmployeeMutation.isPending ? "Adding..." : "Add Employee"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Branch Dialog */}
+      <Dialog open={showBranchDialog} onOpenChange={setShowBranchDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add New Branch</DialogTitle>
+            <DialogDescription>
+              Create a new branch for {selectedClient?.name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="branch-name">Branch Name</Label>
+              <Input
+                id="branch-name"
+                placeholder="e.g., Downtown Branch"
+                value={newBranch.name}
+                onChange={(e) => setNewBranch(prev => ({ ...prev, name: e.target.value }))}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="branch-address">Address</Label>
+              <Input
+                id="branch-address"
+                placeholder="123 Main St, City, State"
+                value={newBranch.address}
+                onChange={(e) => setNewBranch(prev => ({ ...prev, address: e.target.value }))}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="branch-phone">Phone</Label>
+              <Input
+                id="branch-phone"
+                placeholder="+1 (555) 123-4567"
+                value={newBranch.phone}
+                onChange={(e) => setNewBranch(prev => ({ ...prev, phone: e.target.value }))}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="branch-manager">Manager Name</Label>
+              <Input
+                id="branch-manager"
+                placeholder="John Doe"
+                value={newBranch.manager_name}
+                onChange={(e) => setNewBranch(prev => ({ ...prev, manager_name: e.target.value }))}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowBranchDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={() => addBranchMutation.mutate()}
+              disabled={addBranchMutation.isPending || !newBranch.name || !newBranch.address}
+            >
+              {addBranchMutation.isPending ? "Adding..." : "Add Branch"}
             </Button>
           </DialogFooter>
         </DialogContent>
