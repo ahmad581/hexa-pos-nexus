@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Building2, Plus, Settings, Trash2, Users, BarChart3, Crown, Shield, LogOut, Info, ExternalLink, ArrowLeft } from "lucide-react";
+import { Building2, Plus, Settings, Trash2, Users, BarChart3, Crown, Shield, LogOut, Info, ExternalLink, ArrowLeft, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 import { ClientManagement } from "@/components/ClientManagement";
 import { RoleManagement } from "@/components/RoleManagement";
@@ -154,6 +154,69 @@ export const SystemMasterDashboard = () => {
       return data as AvailableFeature[];
     },
     enabled: isAuthenticated
+  });
+
+  // Fetch analytics data
+  const { data: analyticsData } = useQuery({
+    queryKey: ['system-analytics'],
+    queryFn: async () => {
+      // Get total businesses count
+      const { count: totalBusinesses } = await supabase
+        .from('custom_businesses')
+        .select('*', { count: 'exact', head: true });
+
+      // Get active businesses (based on profile is_active)
+      const { data: businessesWithProfiles } = await supabase
+        .from('custom_businesses')
+        .select('user_id, profiles!inner(is_active)');
+      
+      const activeCount = businessesWithProfiles?.filter(
+        (b: any) => b.profiles?.is_active === true
+      ).length || 0;
+
+      // Get total branches count
+      const { count: totalBranches } = await supabase
+        .from('branches')
+        .select('*', { count: 'exact', head: true });
+
+      // Get employees count
+      const { count: totalEmployees } = await supabase
+        .from('employees')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_active', true);
+
+      // Get orders count for this month
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const { count: ordersThisMonth } = await supabase
+        .from('orders')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', startOfMonth.toISOString());
+
+      // Get total revenue this month
+      const { data: ordersData } = await supabase
+        .from('orders')
+        .select('total_amount')
+        .gte('created_at', startOfMonth.toISOString())
+        .eq('payment_status', 'paid');
+
+      const revenueThisMonth = ordersData?.reduce(
+        (sum, order) => sum + (Number(order.total_amount) || 0), 
+        0
+      ) || 0;
+
+      return {
+        totalBusinesses: totalBusinesses || 0,
+        activeBusinesses: activeCount,
+        totalBranches: totalBranches || 0,
+        totalEmployees: totalEmployees || 0,
+        ordersThisMonth: ordersThisMonth || 0,
+        revenueThisMonth
+      };
+    },
+    enabled: isAuthenticated && (userProfile?.primary_role === 'SystemMaster' || userEmail === 'ahmadalodat530@gmail.com')
   });
 
   const createClientMutation = useMutation({
@@ -636,9 +699,9 @@ export const SystemMasterDashboard = () => {
                 <Building2 className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{clients.length}</div>
+                <div className="text-2xl font-bold">{analyticsData?.totalBusinesses || 0}</div>
                 <p className="text-xs text-muted-foreground">
-                  +2 from last month
+                  Registered businesses
                 </p>
               </CardContent>
             </Card>
@@ -649,10 +712,12 @@ export const SystemMasterDashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {clients.filter(c => c.status === 'active').length}
+                  {analyticsData?.activeBusinesses || 0}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {Math.round((clients.filter(c => c.status === 'active').length / Math.max(clients.length, 1)) * 100)}% active rate
+                  {analyticsData?.totalBusinesses 
+                    ? Math.round((analyticsData.activeBusinesses / analyticsData.totalBusinesses) * 100)
+                    : 0}% active rate
                 </p>
               </CardContent>
             </Card>
@@ -663,7 +728,7 @@ export const SystemMasterDashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {clients.reduce((sum, client) => sum + (client.branches_count || 0), 0)}
+                  {analyticsData?.totalBranches || 0}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Across all clients
@@ -672,13 +737,42 @@ export const SystemMasterDashboard = () => {
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">System Health</CardTitle>
-                <Shield className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">Total Employees</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">99.9%</div>
+                <div className="text-2xl font-bold">{analyticsData?.totalEmployees || 0}</div>
                 <p className="text-xs text-muted-foreground">
-                  Uptime this month
+                  Active staff members
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+          
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Orders This Month</CardTitle>
+                <BarChart3 className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{analyticsData?.ordersThisMonth || 0}</div>
+                <p className="text-xs text-muted-foreground">
+                  Total orders placed
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Revenue This Month</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  ${analyticsData?.revenueThisMonth?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  From paid orders
                 </p>
               </CardContent>
             </Card>
