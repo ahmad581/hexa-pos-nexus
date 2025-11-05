@@ -85,14 +85,8 @@ export const ClientManagement = ({ clients, isLoading }: { clients: Client[], is
     queryFn: async () => {
       if (!selectedClient) return null;
       
-      const { data } = await supabase
-        .from('custom_businesses')
-        .select('id')
-        .eq('user_id', selectedClient.id)
-        .limit(1)
-        .single();
-
-      return data;
+      // selectedClient.id is already the business ID from custom_businesses
+      return { id: selectedClient.id };
     },
     enabled: !!selectedClient
   });
