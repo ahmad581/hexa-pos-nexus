@@ -69,7 +69,7 @@ serve(async (req) => {
 
     if (businessError) throw businessError
 
-    // 3. Create profile with SystemMaster role and business_id
+    // 3. Create profile with SuperManager role and business_id
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
       .insert({
@@ -77,7 +77,7 @@ serve(async (req) => {
         email,
         first_name: name.split(' ')[0] || name,
         last_name: name.split(' ').slice(1).join(' ') || '',
-        primary_role: 'SystemMaster',
+        primary_role: 'SuperManager',
         business_id: business.id,
         is_active: true,
       })
@@ -89,7 +89,7 @@ serve(async (req) => {
       .from('user_roles')
       .insert({
         user_id: authData.user.id,
-        role: 'SystemMaster',
+        role: 'SuperManager',
         is_active: true,
       })
 
