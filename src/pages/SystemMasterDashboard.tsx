@@ -70,24 +70,10 @@ export const SystemMasterDashboard = () => {
   const { data: clients = [], isLoading } = useQuery({
     queryKey: ['system-master-clients'],
     queryFn: async () => {
-      // Fetch all businesses with their profiles and features
+      // Fetch all businesses
       const { data: businesses, error } = await supabase
         .from('custom_businesses')
-        .select(`
-          id,
-          name,
-          business_type,
-          category,
-          icon,
-          created_at,
-          user_id,
-          profiles!custom_businesses_user_id_fkey (
-            email,
-            first_name,
-            last_name,
-            is_active
-          )
-        `)
+        .select('id, name, business_type, category, icon, created_at, user_id')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -96,6 +82,16 @@ export const SystemMasterDashboard = () => {
       }
 
       if (!businesses) return [];
+
+      // Fetch profiles for all user_ids
+      const userIds = businesses.map(b => b.user_id).filter(Boolean);
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, email, first_name, last_name, is_active')
+        .in('user_id', userIds);
+
+      // Create a map for quick profile lookup
+      const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
 
       // Fetch branches count and features for each business
       const clientsWithDetails = await Promise.all(
@@ -118,12 +114,12 @@ export const SystemMasterDashboard = () => {
             .eq('business_id', business.id)
             .eq('is_enabled', true);
 
-          const profile = business.profiles as any;
+          const profile = profileMap.get(business.user_id);
           const ownerName = profile 
             ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.email
             : 'Unknown';
 
-          const features = businessFeatures?.map(bf => bf.available_features?.name).filter(Boolean) || [];
+          const features = businessFeatures?.map(bf => (bf.available_features as any)?.name).filter(Boolean) || [];
 
           return {
             id: business.id,
@@ -134,7 +130,7 @@ export const SystemMasterDashboard = () => {
             status: (profile?.is_active ? 'active' : 'inactive') as 'active' | 'inactive',
             created_at: business.created_at,
             owner: ownerName,
-            subscription: 'Standard', // You can add subscription logic later
+            subscription: 'Standard',
             features: features as string[]
           };
         })
