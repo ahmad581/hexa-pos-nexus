@@ -192,7 +192,32 @@ export const SystemMasterDashboard = () => {
     );
   };
 
-  const groupedFeatures = availableFeatures?.reduce((acc, feature) => {
+  // Filter features based on selected business type
+  const filteredFeatures = availableFeatures?.filter(feature => {
+    if (!newClient.business_type) return false;
+    
+    // Core features are available for all business types
+    if (feature.category === 'Core Features') return true;
+    
+    // Map business types to their relevant feature categories
+    const businessTypeToCategories: Record<string, string[]> = {
+      'restaurant': ['Core Features', 'Restaurant'],
+      'hotel': ['Core Features', 'Hotel'],
+      'hair-salon': ['Core Features', 'Salon'],
+      'medical-clinic': ['Core Features', 'Healthcare'],
+      'retail-store': ['Core Features', 'Retail'],
+      'pharmacy': ['Core Features', 'Healthcare', 'Pharmacy'],
+      'grocery': ['Core Features', 'Retail', 'Grocery'],
+      'gym': ['Core Features', 'Fitness'],
+      'auto-repair': ['Core Features', 'Automotive'],
+      'pet-care': ['Core Features', 'Pet Care'],
+    };
+    
+    const allowedCategories = businessTypeToCategories[newClient.business_type] || ['Core Features'];
+    return allowedCategories.includes(feature.category);
+  });
+
+  const groupedFeatures = filteredFeatures?.reduce((acc, feature) => {
     if (!acc[feature.category]) {
       acc[feature.category] = [];
     }
