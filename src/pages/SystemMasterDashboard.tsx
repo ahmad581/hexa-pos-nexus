@@ -66,49 +66,81 @@ export const SystemMasterDashboard = () => {
     password: "",
   });
 
-  // Fetch clients (this would be actual client data in a real system)
+  // Fetch clients from database
   const { data: clients = [], isLoading } = useQuery({
     queryKey: ['system-master-clients'],
     queryFn: async () => {
-      // For now, return mock data. In a real system, this would fetch actual client data
-      return [
-        {
-          id: '1',
-          name: 'Downtown Restaurant Group',
-          email: 'admin@downtownrestaurants.com',
-          business_type: 'restaurant',
-          branches_count: 5,
-          status: 'active' as const,
-          created_at: '2024-01-15T00:00:00Z',
-          owner: 'John Smith',
-          subscription: 'Premium',
-          features: ['Order Management', 'Inventory Tracking', 'Staff Management', 'Analytics Dashboard', 'Multi-branch Support']
-        },
-        {
-          id: '2', 
-          name: 'City Hotel Chain',
-          email: 'management@cityhotels.com',
-          business_type: 'hotel',
-          branches_count: 3,
-          status: 'active' as const,
-          created_at: '2024-02-10T00:00:00Z',
-          owner: 'Sarah Johnson',
-          subscription: 'Enterprise',
-          features: ['Room Management', 'Booking System', 'Guest Services', 'Housekeeping Management', 'Revenue Analytics']
-        },
-        {
-          id: '3',
-          name: 'Beauty Salon Network',
-          email: 'info@beautysalons.com', 
-          business_type: 'hair-salon',
-          branches_count: 8,
-          status: 'inactive' as const,
-          created_at: '2024-03-05T00:00:00Z',
-          owner: 'Maria Rodriguez',
-          subscription: 'Standard',
-          features: ['Appointment Scheduling', 'Staff Management', 'Customer Database', 'Service Management']
-        }
-      ] as Client[];
+      // Fetch all businesses with their profiles and features
+      const { data: businesses, error } = await supabase
+        .from('custom_businesses')
+        .select(`
+          id,
+          name,
+          business_type,
+          category,
+          icon,
+          created_at,
+          user_id,
+          profiles!custom_businesses_user_id_fkey (
+            email,
+            first_name,
+            last_name,
+            is_active
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching businesses:', error);
+        throw error;
+      }
+
+      if (!businesses) return [];
+
+      // Fetch branches count and features for each business
+      const clientsWithDetails = await Promise.all(
+        businesses.map(async (business) => {
+          // Get branches count
+          const { count: branchesCount } = await supabase
+            .from('branches')
+            .select('*', { count: 'exact', head: true })
+            .eq('business_id', business.id);
+
+          // Get enabled features
+          const { data: businessFeatures } = await supabase
+            .from('business_features')
+            .select(`
+              feature_id,
+              available_features (
+                name
+              )
+            `)
+            .eq('business_id', business.id)
+            .eq('is_enabled', true);
+
+          const profile = business.profiles as any;
+          const ownerName = profile 
+            ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.email
+            : 'Unknown';
+
+          const features = businessFeatures?.map(bf => bf.available_features?.name).filter(Boolean) || [];
+
+          return {
+            id: business.id,
+            name: business.name,
+            email: profile?.email || '',
+            business_type: business.business_type,
+            branches_count: branchesCount || 0,
+            status: (profile?.is_active ? 'active' : 'inactive') as 'active' | 'inactive',
+            created_at: business.created_at,
+            owner: ownerName,
+            subscription: 'Standard', // You can add subscription logic later
+            features: features as string[]
+          };
+        })
+      );
+
+      return clientsWithDetails as Client[];
     },
     enabled: isAuthenticated && (userProfile?.primary_role === 'SystemMaster' || userEmail === 'ahmadalodat530@gmail.com')
   });
