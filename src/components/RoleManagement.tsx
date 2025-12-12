@@ -46,11 +46,19 @@ const ROLE_COLORS: Record<UserRole, string> = {
   'Employee': 'bg-gray-100 text-gray-800 border-gray-200',
 };
 
+interface Business {
+  id: string;
+  name: string;
+}
+
 export const RoleManagement = () => {
   const [users, setUsers] = useState<UserWithRoles[]>([]);
+  const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [branches, setBranches] = useState<Array<{ id: string; name: string; business_id: string | null }>>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [selectedRole, setSelectedRole] = useState<UserRole>("Employee");
+  const [selectedBusinessId, setSelectedBusinessId] = useState<string>("");
   const [branchId, setBranchId] = useState<string>("");
   const { userProfile, hasRole, user } = useAuth();
 
@@ -60,8 +68,37 @@ export const RoleManagement = () => {
   useEffect(() => {
     if (canManageRoles) {
       fetchUsers();
+      fetchBusinesses();
     }
   }, [canManageRoles]);
+
+  const fetchBusinesses = async () => {
+    try {
+      const { data: businessData, error: businessError } = await supabase
+        .from('custom_businesses')
+        .select('id, name')
+        .order('name');
+
+      if (businessError) throw businessError;
+      setBusinesses(businessData || []);
+
+      const { data: branchData, error: branchError } = await supabase
+        .from('branches')
+        .select('id, name, business_id')
+        .eq('is_active', true)
+        .order('name');
+
+      if (branchError) throw branchError;
+      setBranches(branchData || []);
+    } catch (error) {
+      console.error('Error fetching businesses:', error);
+    }
+  };
+
+  // Filter branches based on selected business
+  const filteredBranches = selectedBusinessId 
+    ? branches.filter(b => b.business_id === selectedBusinessId)
+    : branches;
 
   const fetchUsers = async () => {
     try {
@@ -126,6 +163,7 @@ export const RoleManagement = () => {
       fetchUsers();
       setSelectedUserId("");
       setSelectedRole("Employee");
+      setSelectedBusinessId("");
       setBranchId("");
     } catch (error: any) {
       console.error('Error assigning role:', error);
@@ -211,17 +249,40 @@ export const RoleManagement = () => {
               </SelectContent>
             </Select>
 
+            <Select value={selectedBusinessId || "none"} onValueChange={(value) => {
+              setSelectedBusinessId(value === "none" ? "" : value);
+              setBranchId(""); // Reset branch when business changes
+            }}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select Business (Client)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No Business</SelectItem>
+                {businesses.map(business => (
+                  <SelectItem key={business.id} value={business.id}>
+                    {business.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
             <Select value={branchId || "all"} onValueChange={(value) => setBranchId(value === "all" ? "" : value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Branch (Optional)" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Branches</SelectItem>
-                {/* Add branch options here */}
+                {filteredBranches.map(branch => (
+                  <SelectItem key={branch.id} value={branch.id}>
+                    {branch.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
+          </div>
 
-            <Button onClick={assignRole} className="w-full">
+          <div className="flex justify-end">
+            <Button onClick={assignRole}>
               <Plus className="h-4 w-4 mr-2" />
               Assign Role
             </Button>
