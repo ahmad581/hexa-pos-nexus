@@ -11,12 +11,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { useBusinessTypes, useBusinessTypeFeatures } from "@/hooks/useBusinessTypes";
 
 interface AvailableFeature {
   id: string;
@@ -31,19 +31,6 @@ interface CreateBusinessDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const businessTypes = [
-  { id: 'restaurant', name: 'Restaurant', icon: '🍽️', category: 'Food & Beverage' },
-  { id: 'hotel', name: 'Hotel', icon: '🏨', category: 'Hospitality' },
-  { id: 'hair-salon', name: 'Hair Salon', icon: '💇', category: 'Beauty & Wellness' },
-  { id: 'medical-clinic', name: 'Medical Clinic', icon: '🏥', category: 'Healthcare' },
-  { id: 'retail-store', name: 'Retail Store', icon: '🛍️', category: 'Retail' },
-  { id: 'pharmacy', name: 'Pharmacy', icon: '💊', category: 'Healthcare' },
-  { id: 'grocery', name: 'Grocery Store', icon: '🛒', category: 'Retail' },
-  { id: 'gym', name: 'Gym & Fitness', icon: '💪', category: 'Health & Fitness' },
-  { id: 'auto-repair', name: 'Auto Repair', icon: '🔧', category: 'Automotive' },
-  { id: 'pet-care', name: 'Pet Care', icon: '🐾', category: 'Pet Services' },
-];
-
 export const CreateBusinessDialog = ({ open, onOpenChange }: CreateBusinessDialogProps) => {
   const [step, setStep] = useState(1);
   const [businessName, setBusinessName] = useState("");
@@ -52,9 +39,25 @@ export const CreateBusinessDialog = ({ open, onOpenChange }: CreateBusinessDialo
   const { user, userProfile, isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
 
+  // Fetch business types from database
+  const { businessTypes, isLoading: isLoadingTypes } = useBusinessTypes();
+  
+  // Fetch features for selected business type
+  const { features: businessTypeFeatures } = useBusinessTypeFeatures(selectedType);
+
   // Check both authentication and SystemMaster role or specific email
   const isSystemMaster = userProfile?.primary_role === 'SystemMaster' || user?.email === 'ahmadalodat530@gmail.com';
   const canCreateBusiness = isAuthenticated && user?.id && isSystemMaster;
+
+  // Auto-select default features when business type changes
+  useEffect(() => {
+    if (businessTypeFeatures && businessTypeFeatures.length > 0) {
+      const defaultFeatureIds = businessTypeFeatures
+        .filter(bf => bf.is_default)
+        .map(bf => bf.feature_id);
+      setSelectedFeatures(defaultFeatureIds);
+    }
+  }, [businessTypeFeatures]);
 
   useEffect(() => {
     if (open) {
@@ -66,19 +69,8 @@ export const CreateBusinessDialog = ({ open, onOpenChange }: CreateBusinessDialo
     }
   }, [open, isAuthenticated, user?.id, isSystemMaster]);
 
-  const { data: availableFeatures } = useQuery({
-    queryKey: ['available-features'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('available_features')
-        .select('*')
-        .order('category', { ascending: true });
-
-      if (error) throw error;
-      return data as AvailableFeature[];
-    },
-    enabled: isAuthenticated && !!user?.id // Only fetch when authenticated
-  });
+  // Get available features from business type features
+  const availableFeatures = businessTypeFeatures?.map(bf => bf.available_features as unknown as AvailableFeature).filter(Boolean) || [];
 
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -92,27 +84,18 @@ export const CreateBusinessDialog = ({ open, onOpenChange }: CreateBusinessDialo
       const selectedBusinessType = businessTypes.find(bt => bt.id === selectedType);
       if (!selectedBusinessType) throw new Error("Business type not found");
 
-      console.log('Creating business with user_id:', user.id); // Debug log
+      console.log('Creating business with user_id:', user.id);
 
-      // Create the business
+      // Create the business with terminology from the database
       const { data: business, error: businessError } = await supabase
         .from('custom_businesses')
         .insert({
-          user_id: user.id, // Ensure this is not null
+          user_id: user.id,
           name: businessName,
           business_type: selectedType,
           icon: selectedBusinessType.icon,
           category: selectedBusinessType.category,
-          terminology: {
-            branch: "Branch",
-            branches: "Branches",
-            unit: "Unit",
-            units: "Units",
-            customer: "Customer",
-            customers: "Customers",
-            service: "Service",
-            services: "Services"
-          }
+          terminology: selectedBusinessType.terminology
         })
         .select()
         .single();

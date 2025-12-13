@@ -178,6 +178,78 @@ export type Database = {
           },
         ]
       }
+      business_type_features: {
+        Row: {
+          business_type_id: string
+          created_at: string
+          feature_id: string
+          id: string
+          is_default: boolean
+        }
+        Insert: {
+          business_type_id: string
+          created_at?: string
+          feature_id: string
+          id?: string
+          is_default?: boolean
+        }
+        Update: {
+          business_type_id?: string
+          created_at?: string
+          feature_id?: string
+          id?: string
+          is_default?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_type_features_business_type_id_fkey"
+            columns: ["business_type_id"]
+            isOneToOne: false
+            referencedRelation: "business_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_type_features_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "available_features"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_types: {
+        Row: {
+          category: string
+          created_at: string
+          icon: string
+          id: string
+          is_active: boolean
+          name: string
+          terminology: Json
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          icon: string
+          id: string
+          is_active?: boolean
+          name: string
+          terminology?: Json
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          icon?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          terminology?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       custom_businesses: {
         Row: {
           business_type: string
