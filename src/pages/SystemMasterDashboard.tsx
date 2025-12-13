@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +15,7 @@ import { Building2, Plus, Settings, Trash2, Users, BarChart3, Crown, Shield, Log
 import { toast } from "sonner";
 import { ClientManagement } from "@/components/ClientManagement";
 import { RoleManagement } from "@/components/RoleManagement";
+import { useBusinessTypes, useBusinessTypeFeatures } from "@/hooks/useBusinessTypes";
 
 interface AvailableFeature {
   id: string;
@@ -37,19 +38,6 @@ interface Client {
   features: string[];
 }
 
-const businessTypes = [
-  { id: 'restaurant', name: 'Restaurant', icon: '🍽️', category: 'Food & Beverage' },
-  { id: 'hotel', name: 'Hotel', icon: '🏨', category: 'Hospitality' },
-  { id: 'hair-salon', name: 'Hair Salon', icon: '💇', category: 'Beauty & Wellness' },
-  { id: 'medical-clinic', name: 'Medical Clinic', icon: '🏥', category: 'Healthcare' },
-  { id: 'retail-store', name: 'Retail Store', icon: '🛍️', category: 'Retail' },
-  { id: 'pharmacy', name: 'Pharmacy', icon: '💊', category: 'Healthcare' },
-  { id: 'grocery', name: 'Grocery Store', icon: '🛒', category: 'Retail' },
-  { id: 'gym', name: 'Gym & Fitness', icon: '💪', category: 'Health & Fitness' },
-  { id: 'auto-repair', name: 'Auto Repair', icon: '🔧', category: 'Automotive' },
-  { id: 'pet-care', name: 'Pet Care', icon: '🐾', category: 'Pet Services' },
-];
-
 export const SystemMasterDashboard = () => {
   const { userProfile, isAuthenticated, user, userEmail, logout } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -65,6 +53,24 @@ export const SystemMasterDashboard = () => {
     business_type: "",
     password: "",
   });
+
+  // Fetch business types from database
+  const { businessTypes, isLoading: isLoadingTypes } = useBusinessTypes();
+  
+  // Fetch features for selected business type
+  const { features: businessTypeFeatures } = useBusinessTypeFeatures(newClient.business_type);
+
+  // Auto-select default features when business type changes
+  useEffect(() => {
+    if (businessTypeFeatures && businessTypeFeatures.length > 0) {
+      const defaultFeatureIds = businessTypeFeatures
+        .filter(bf => bf.is_default)
+        .map(bf => bf.feature_id);
+      setSelectedFeatures(defaultFeatureIds);
+    } else {
+      setSelectedFeatures([]);
+    }
+  }, [businessTypeFeatures]);
 
   // Fetch clients from database
   const { data: clients = [], isLoading } = useQuery({
@@ -141,20 +147,8 @@ export const SystemMasterDashboard = () => {
     enabled: isAuthenticated && (userProfile?.primary_role === 'SystemMaster' || userEmail === 'ahmadalodat530@gmail.com')
   });
 
-  // Fetch available features
-  const { data: availableFeatures } = useQuery({
-    queryKey: ['available-features'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('available_features')
-        .select('*')
-        .order('category', { ascending: true });
-
-      if (error) throw error;
-      return data as AvailableFeature[];
-    },
-    enabled: isAuthenticated
-  });
+  // Available features are now derived from business type features
+  const availableFeatures = businessTypeFeatures?.map(bf => bf.available_features as unknown as AvailableFeature).filter(Boolean) || [];
 
   // Fetch analytics data
   const { data: analyticsData } = useQuery({
@@ -237,6 +231,7 @@ export const SystemMasterDashboard = () => {
           business_type: newClient.business_type,
           icon: selectedBusinessType.icon,
           category: selectedBusinessType.category,
+          terminology: selectedBusinessType.terminology,
           features: selectedFeatures
         }
       });
@@ -283,50 +278,8 @@ export const SystemMasterDashboard = () => {
     );
   };
 
-  // Filter features based on selected business type (only when on step 2)
-  const filteredFeatures = dialogStep === 2 && newClient.business_type && availableFeatures
-    ? availableFeatures.filter(feature => {
-        const categoryLower = feature.category.toLowerCase();
-        const nameLower = feature.name.toLowerCase();
-        
-        // Always show core business features
-        if (categoryLower.includes('core')) return true;
-        
-        // Universal features available for all business types
-        const universalKeywords = [
-          'employee', 'hr', 'staff', 'call center', 'inventory', 
-          'analytics', 'reporting', 'branch', 'financial', 'user management'
-        ];
-        
-        if (universalKeywords.some(keyword => 
-          categoryLower.includes(keyword) || nameLower.includes(keyword)
-        )) {
-          return true;
-        }
-        
-        // Business-specific features
-        const businessTypeToKeywords: Record<string, string[]> = {
-          'restaurant': ['restaurant', 'menu', 'food', 'dining', 'kitchen', 'table', 'order'],
-          'hotel': ['hotel', 'room', 'guest', 'reservation', 'hospitality', 'accommodation'],
-          'hair-salon': ['salon', 'beauty', 'stylist', 'appointment', 'hair'],
-          'medical-clinic': ['medical', 'clinic', 'healthcare', 'patient', 'appointment'],
-          'retail-store': ['retail', 'product', 'store', 'sales'],
-          'pharmacy': ['pharmacy', 'prescription', 'medication', 'drug'],
-          'grocery': ['grocery', 'product', 'store'],
-          'gym': ['gym', 'fitness', 'member', 'workout', 'exercise'],
-          'auto-repair': ['auto', 'automotive', 'repair', 'service', 'vehicle'],
-          'pet-care': ['pet', 'animal', 'veterinary', 'care'],
-        };
-        
-        const keywords = businessTypeToKeywords[newClient.business_type] || [];
-        
-        return keywords.some(keyword => 
-          categoryLower.includes(keyword) || nameLower.includes(keyword)
-        );
-      })
-    : availableFeatures;
-
-  const groupedFeatures = filteredFeatures?.reduce((acc, feature) => {
+  // Features are now directly from the business type - no filtering needed
+  const groupedFeatures = availableFeatures?.reduce((acc, feature) => {
     if (!acc[feature.category]) {
       acc[feature.category] = [];
     }
@@ -357,17 +310,10 @@ export const SystemMasterDashboard = () => {
     setIsInfoDialogOpen(true);
   };
 
-  const businessTypeLabels = {
-    restaurant: "Restaurant",
-    hotel: "Hotel", 
-    'hair-salon': "Hair Salon",
-    'medical-clinic': "Medical Clinic",
-    'retail-store': "Retail Store",
-    pharmacy: "Pharmacy",
-    grocery: "Grocery Store",
-    gym: "Gym",
-    'auto-repair': "Auto Repair",
-    'pet-care': "Pet Care"
+  // Create dynamic business type labels from database
+  const getBusinessTypeLabel = (typeId: string) => {
+    const bt = businessTypes.find(t => t.id === typeId);
+    return bt?.name || typeId;
   };
 
   // Debug logging
@@ -618,7 +564,7 @@ export const SystemMasterDashboard = () => {
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Business Type</Label>
-                  <p className="text-base">{businessTypeLabels[selectedClient.business_type as keyof typeof businessTypeLabels]}</p>
+                  <p className="text-base">{getBusinessTypeLabel(selectedClient.business_type)}</p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Owner</Label>
