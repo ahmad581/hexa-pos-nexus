@@ -14,7 +14,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Building2, Plus, Settings, Trash2, Users, BarChart3, Crown, Shield, LogOut, Info, ExternalLink, ArrowLeft, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 import { ClientManagement } from "@/components/ClientManagement";
-import { RoleManagement } from "@/components/RoleManagement";
+import { SystemMasterRoleManagement } from "@/components/SystemMasterRoleManagement";
 import { useBusinessTypes, useBusinessTypeFeatures } from "@/hooks/useBusinessTypes";
 
 interface AvailableFeature {
@@ -726,7 +726,7 @@ export const SystemMasterDashboard = () => {
         </TabsContent>
 
         <TabsContent value="role-management" className="space-y-4">
-          <RoleManagement />
+          <SystemMasterRoleManagement />
         </TabsContent>
       </Tabs>
     </div>

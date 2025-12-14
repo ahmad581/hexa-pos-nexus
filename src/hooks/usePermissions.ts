@@ -11,7 +11,7 @@ export interface RolePermission {
 
 export const useRolePermissions = (roleId?: string) => {
   return useQuery({
-    queryKey: ['role-permissions', roleId],
+    queryKey: ['role-permissions', roleId || 'all'],
     queryFn: async () => {
       let query = supabase
         .from('role_permissions')
@@ -26,7 +26,6 @@ export const useRolePermissions = (roleId?: string) => {
       if (error) throw error;
       return data as RolePermission[];
     },
-    enabled: !!roleId || roleId === undefined,
   });
 };
 
