@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Edit, Trash2, Search, DollarSign, Clock, QrCode, Fingerprint, LogIn, LogOut, Calendar, Upload, FileText, Scan, X } from "lucide-react";
+import { Plus, Edit, Trash2, Search, DollarSign, Clock, QrCode, Fingerprint, LogIn, LogOut, Calendar, Upload, FileText, Scan, X, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -14,6 +14,8 @@ import { QRCodeGenerator } from "@/components/QRCodeGenerator";
 import { QRScanner } from "@/components/QRScanner";
 import { BiometricAuth } from "@/components/BiometricAuth";
 import { useTranslation } from "@/contexts/TranslationContext";
+import { EmployeeDocumentsManager } from "@/components/EmployeeDocumentsManager";
+import { useBranch } from "@/contexts/BranchContext";
 
 interface WorkSession {
   checkInTime: string;
@@ -32,6 +34,7 @@ interface WorkDay {
 interface Employee {
   id: number;
   name: string;
+  email: string;
   documents: string[]; // Array of PDF file URLs
   role: string;
   status: "Active" | "Inactive";
@@ -55,6 +58,7 @@ interface Employee {
 
 interface EmployeeFormData {
   name: string;
+  email: string;
   role: string;
   phone: string;
   monthlySalary: number;
@@ -73,6 +77,7 @@ export const Employees = () => {
     {
       id: 1,
       name: "John Doe",
+      email: "john.doe@example.com",
       documents: ["contract.pdf", "id_copy.pdf"],
       role: "Manager",
       status: "Active",
@@ -127,6 +132,7 @@ export const Employees = () => {
     {
       id: 2,
       name: "Jane Smith",
+      email: "jane.smith@example.com",
       documents: ["contract.pdf"],
       role: "Cashier",
       status: "Active",
@@ -171,8 +177,10 @@ export const Employees = () => {
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [showBiometric, setShowBiometric] = useState<{show: boolean, employeeId: number, mode: 'register' | 'authenticate'}>({show: false, employeeId: 0, mode: 'register'});
   const [showQRGenerator, setShowQRGenerator] = useState<{show: boolean, employee: Employee | null}>({show: false, employee: null});
+  const [showDocuments, setShowDocuments] = useState<{show: boolean, employee: Employee | null}>({show: false, employee: null});
   const { toast } = useToast();
   const { t } = useTranslation();
+  const { selectedBranch } = useBranch();
 
   const form = useForm<EmployeeFormData>();
   const salaryForm = useForm<SalaryFormData>();
@@ -351,6 +359,7 @@ export const Employees = () => {
   const openEditDialog = (employee: Employee) => {
     setSelectedEmployee(employee);
     form.setValue("name", employee.name);
+    form.setValue("email", employee.email);
     form.setValue("role", employee.role);
     form.setValue("phone", employee.phone);
     form.setValue("monthlySalary", employee.monthlySalary);
@@ -494,34 +503,21 @@ export const Employees = () => {
                   <div>
                     <p><strong>{t('employees.role')}:</strong> {employee.role}</p>
                     <p><strong>{t('employees.phone')}:</strong> {employee.phone}</p>
+                    <p className="flex items-center gap-1">
+                      <Mail size={14} />
+                      <strong>Email:</strong> {employee.email || 'Not set'}
+                    </p>
                     <p><strong>{t('employees.hireDate')}:</strong> {employee.hireDate}</p>
                     <div className="mt-2">
-                      <p><strong>{t('employees.documents')}:</strong></p>
-                      <div className="flex flex-wrap gap-2 mt-1">
-                        {employee.documents.map((doc, index) => (
-                          <div key={index} className="flex items-center gap-1 bg-gray-600 px-2 py-1 rounded text-xs">
-                            <FileText size={12} />
-                            <span>{doc}</span>
-                            <button
-                              onClick={() => removeDocument(employee.id, index)}
-                              className="ml-1 text-red-400 hover:text-red-300"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ))}
-                        <label className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded text-xs cursor-pointer">
-                          <Upload size={12} />
-                          <span>{t('employees.uploadPdf')}</span>
-                          <input
-                            type="file"
-                            accept=".pdf"
-                            multiple
-                            className="hidden"
-                            onChange={(e) => handleFileUpload(employee.id, e.target.files)}
-                          />
-                        </label>
-                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setShowDocuments({ show: true, employee })}
+                        className="border-blue-600 text-blue-400 hover:bg-blue-600/20"
+                      >
+                        <FileText size={14} className="mr-1" />
+                        Manage Documents ({employee.documents.length})
+                      </Button>
                     </div>
                   </div>
                   <div>
@@ -743,6 +739,20 @@ export const Employees = () => {
               
               <FormField
                 control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-300">Email</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="email" placeholder="employee@example.com" className="bg-gray-700 border-gray-600 text-white" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="role"
                 render={({ field }) => (
                   <FormItem>
@@ -830,6 +840,20 @@ export const Employees = () => {
                 )}
               />
               
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-300">Email</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="email" placeholder="employee@example.com" className="bg-gray-700 border-gray-600 text-white" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <FormField
                 control={form.control}
                 name="role"
@@ -1069,6 +1093,17 @@ export const Employees = () => {
             />
           </div>
         </div>
+      )}
+
+      {/* Documents Manager Modal */}
+      {showDocuments.show && showDocuments.employee && (
+        <EmployeeDocumentsManager
+          employeeId={String(showDocuments.employee.id)}
+          branchId={selectedBranch?.id || 'default'}
+          isOpen={showDocuments.show}
+          onClose={() => setShowDocuments({ show: false, employee: null })}
+          employeeName={showDocuments.employee.name}
+        />
       )}
     </div>
   );
