@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Edit, Trash2, Search, DollarSign, Clock, QrCode, Fingerprint, LogIn, LogOut, Calendar, Upload, FileText, Scan, X, Mail } from "lucide-react";
+import { Plus, Edit, Trash2, Search, DollarSign, Clock, QrCode, Fingerprint, LogIn, LogOut, Calendar, Upload, FileText, Scan, X, Mail, Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -15,6 +15,7 @@ import { QRScanner } from "@/components/QRScanner";
 import { BiometricAuth } from "@/components/BiometricAuth";
 import { useTranslation } from "@/contexts/TranslationContext";
 import { EmployeeDocumentsManager } from "@/components/EmployeeDocumentsManager";
+import { SalaryCalculator } from "@/components/SalaryCalculator";
 import { useBranch } from "@/contexts/BranchContext";
 
 interface WorkSession {
@@ -178,6 +179,7 @@ export const Employees = () => {
   const [showBiometric, setShowBiometric] = useState<{show: boolean, employeeId: number, mode: 'register' | 'authenticate'}>({show: false, employeeId: 0, mode: 'register'});
   const [showQRGenerator, setShowQRGenerator] = useState<{show: boolean, employee: Employee | null}>({show: false, employee: null});
   const [showDocuments, setShowDocuments] = useState<{show: boolean, employee: Employee | null}>({show: false, employee: null});
+  const [showSalaryCalculator, setShowSalaryCalculator] = useState(false);
   const { toast } = useToast();
   const { t } = useTranslation();
   const { selectedBranch } = useBranch();
@@ -456,6 +458,14 @@ export const Employees = () => {
         <h1 className="text-3xl font-bold">{t('employeesPage.title')}</h1>
         <div className="flex gap-3">
           <Button 
+            variant={showSalaryCalculator ? "default" : "outline"}
+            onClick={() => setShowSalaryCalculator(!showSalaryCalculator)}
+            className={showSalaryCalculator ? "bg-primary" : "border-primary text-primary hover:bg-primary/10"}
+          >
+            <Calculator size={20} className="mr-2" />
+            Salary Calculator
+          </Button>
+          <Button 
             className="bg-purple-600 hover:bg-purple-700"
             onClick={() => setShowQRScanner(true)}
           >
@@ -483,6 +493,11 @@ export const Employees = () => {
           />
         </div>
       </div>
+
+      {/* Salary Calculator */}
+      {showSalaryCalculator && (
+        <SalaryCalculator employees={employees} />
+      )}
 
       <div className="grid gap-4">
         {filteredEmployees.map((employee) => (
