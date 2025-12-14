@@ -7,48 +7,27 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Users, Shield, Plus } from "lucide-react";
 import { toast } from "sonner";
-
-type UserRole = 'SystemMaster' | 'SuperManager' | 'Manager' | 'Cashier' | 'HallManager' | 'HrManager' | 'CallCenterEmp' | 'Employee';
+import { useRoles, useBusinessTypeRoles, getRoleColor, getRoleDisplayName, getRoleHierarchy, Role } from "@/hooks/useRoles";
+import { useHasPermission } from "@/hooks/usePermissions";
 
 interface UserWithRoles {
   id: string;
   email: string;
   first_name: string | null;
   last_name: string | null;
-  primary_role: UserRole | null;
+  primary_role: string | null;
   roles: Array<{
     id: string;
-    role: UserRole;
+    role: string;
     branch_id: string | null;
     is_active: boolean;
   }>;
 }
 
-const ROLE_HIERARCHY: Record<UserRole, number> = {
-  'SystemMaster': 0,
-  'SuperManager': 1,
-  'Manager': 2,
-  'HrManager': 3,
-  'HallManager': 4,
-  'CallCenterEmp': 5,
-  'Cashier': 6,
-  'Employee': 7,
-};
-
-const ROLE_COLORS: Record<UserRole, string> = {
-  'SystemMaster': 'bg-purple-100 text-purple-800 border-purple-200',
-  'SuperManager': 'bg-red-100 text-red-800 border-red-200',
-  'Manager': 'bg-blue-100 text-blue-800 border-blue-200',
-  'HrManager': 'bg-indigo-100 text-indigo-800 border-indigo-200',
-  'HallManager': 'bg-green-100 text-green-800 border-green-200',
-  'CallCenterEmp': 'bg-orange-100 text-orange-800 border-orange-200',
-  'Cashier': 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  'Employee': 'bg-gray-100 text-gray-800 border-gray-200',
-};
-
 interface Business {
   id: string;
   name: string;
+  business_type: string;
 }
 
 export const RoleManagement = () => {
@@ -57,13 +36,27 @@ export const RoleManagement = () => {
   const [branches, setBranches] = useState<Array<{ id: string; name: string; business_id: string | null }>>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
-  const [selectedRole, setSelectedRole] = useState<UserRole>("Employee");
+  const [selectedRole, setSelectedRole] = useState<string>("Employee");
   const [selectedBusinessId, setSelectedBusinessId] = useState<string>("");
   const [branchId, setBranchId] = useState<string>("");
   const { userProfile, hasRole, user } = useAuth();
+  const { hasPermission } = useHasPermission();
+  
+  // Fetch dynamic roles from database
+  const { data: allRoles = [] } = useRoles();
+  
+  // Get the selected business type for role filtering
+  const selectedBusiness = businesses.find(b => b.id === selectedBusinessId);
+  const { data: businessTypeRoles = [] } = useBusinessTypeRoles(selectedBusiness?.business_type);
 
-  // Check permissions - SystemMaster should have access
-  const canManageRoles = userProfile?.primary_role === 'SystemMaster' || hasRole('SystemMaster') || hasRole('SuperManager') || hasRole('Manager') || hasRole('HrManager');
+  // Check permissions - using both legacy role checks and new permission system
+  const canManageRoles = userProfile?.primary_role === 'SystemMaster' || 
+    hasRole('SystemMaster') || 
+    hasRole('SuperManager') || 
+    hasRole('Manager') || 
+    hasRole('HrManager') ||
+    hasPermission('manage_roles') ||
+    hasPermission('manage_users');
 
   useEffect(() => {
     if (canManageRoles) {
@@ -76,7 +69,7 @@ export const RoleManagement = () => {
     try {
       const { data: businessData, error: businessError } = await supabase
         .from('custom_businesses')
-        .select('id, name')
+        .select('id, name, business_type')
         .order('name');
 
       if (businessError) throw businessError;
@@ -99,6 +92,22 @@ export const RoleManagement = () => {
   const filteredBranches = selectedBusinessId 
     ? branches.filter(b => b.business_id === selectedBusinessId)
     : branches;
+
+  // Get available roles for the selected business type, or all roles if no business selected
+  const availableRoles = selectedBusinessId && businessTypeRoles.length > 0
+    ? allRoles.filter(role => 
+        businessTypeRoles.some(btr => btr.role_id === role.id) || role.is_system_role
+      )
+    : allRoles;
+
+  // Filter roles based on current user's permissions
+  const getAssignableRoles = (): Role[] => {
+    const userHierarchy = hasRole('SystemMaster') ? 0 : 
+                          hasRole('SuperManager') ? 1 : 
+                          hasRole('Manager') ? 2 : 100;
+    
+    return availableRoles.filter(role => role.hierarchy_level > userHierarchy);
+  };
 
   const fetchUsers = async () => {
     try {
@@ -151,7 +160,7 @@ export const RoleManagement = () => {
         .from('user_roles')
         .insert({
           user_id: selectedUserId,
-          role: selectedRole,
+          role: selectedRole as any,
           branch_id: branchId || null,
           assigned_by: user?.id
         });
@@ -187,6 +196,14 @@ export const RoleManagement = () => {
       console.error('Error deactivating role:', error);
       toast.error(error.message || "Failed to deactivate role");
     }
+  };
+
+  const canDeactivateRole = (roleToDeactivate: string): boolean => {
+    const userHierarchy = hasRole('SystemMaster') ? 0 : 
+                          hasRole('SuperManager') ? 1 : 
+                          hasRole('Manager') ? 2 : 100;
+    const roleHierarchy = getRoleHierarchy(roleToDeactivate, allRoles);
+    return roleHierarchy > userHierarchy;
   };
 
   if (!canManageRoles) {
@@ -227,25 +244,16 @@ export const RoleManagement = () => {
               </SelectContent>
             </Select>
 
-            <Select value={selectedRole} onValueChange={(value: UserRole) => setSelectedRole(value)}>
+            <Select value={selectedRole} onValueChange={setSelectedRole}>
               <SelectTrigger>
                 <SelectValue placeholder="Select Role" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Employee">Employee</SelectItem>
-                <SelectItem value="Cashier">Cashier</SelectItem>
-                <SelectItem value="CallCenterEmp">Call Center Employee</SelectItem>
-                <SelectItem value="HallManager">Hall Manager</SelectItem>
-                <SelectItem value="HrManager">HR Manager</SelectItem>
-                {(hasRole('SuperManager') || hasRole('SystemMaster')) && (
-                  <SelectItem value="Manager">Manager</SelectItem>
-                )}
-                {hasRole('SystemMaster') && (
-                  <SelectItem value="SuperManager">Super Manager</SelectItem>
-                )}
-                {hasRole('SystemMaster') && (
-                  <SelectItem value="SystemMaster">System Master</SelectItem>
-                )}
+                {getAssignableRoles().map(role => (
+                  <SelectItem key={role.id} value={role.name}>
+                    {role.display_name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
@@ -311,22 +319,20 @@ export const RoleManagement = () => {
                         : user.email}
                     </div>
                     <div className="text-sm text-muted-foreground">{user.email}</div>
-                    <div className="flex gap-2 mt-2">
+                    <div className="flex gap-2 mt-2 flex-wrap">
                       {user.roles
                         .filter(role => role.is_active)
-                        .sort((a, b) => ROLE_HIERARCHY[a.role] - ROLE_HIERARCHY[b.role])
+                        .sort((a, b) => getRoleHierarchy(a.role, allRoles) - getRoleHierarchy(b.role, allRoles))
                         .map(role => (
                           <div key={role.id} className="flex items-center gap-2">
                             <Badge 
                               variant="secondary" 
-                              className={ROLE_COLORS[role.role]}
+                              className={getRoleColor(role.role, allRoles)}
                             >
-                              {role.role}
+                              {getRoleDisplayName(role.role, allRoles)}
                               {role.branch_id && ` (${role.branch_id})`}
                             </Badge>
-                            {(hasRole('SystemMaster') || 
-                              (hasRole('SuperManager') && ROLE_HIERARCHY[role.role] > ROLE_HIERARCHY['SuperManager']) ||
-                              (hasRole('Manager') && ROLE_HIERARCHY[role.role] > ROLE_HIERARCHY['Manager'])) && (
+                            {canDeactivateRole(role.role) && (
                               <Button
                                 size="sm"
                                 variant="ghost"

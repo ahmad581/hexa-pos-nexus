@@ -4,21 +4,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Shield, Users, Settings, AlertCircle } from "lucide-react";
 import { useRole } from "@/hooks/useRole";
 import { Badge } from "@/components/ui/badge";
+import { useRoles } from "@/hooks/useRoles";
 
 export const RoleManagement = () => {
   const { 
     primaryRole, 
-    userRoles, 
     canManageUsers, 
     canViewAnalytics, 
     canManageInventory,
     canHandleOrders,
     canHandleCalls,
     canAccessBusinessManagement,
-    canAccessMenu,
-    canAccessTables,
+    canManageRoles,
     canAccessEmployees
   } = useRole();
+
+  const { data: roles = [] } = useRoles();
 
   return (
     <RoleBasedRoute allowedRoles={['SystemMaster', 'SuperManager', 'Manager', 'HrManager']}>
@@ -92,6 +93,20 @@ export const RoleManagement = () => {
                   {canHandleCalls() ? 'Allowed' : 'Not Allowed'}
                 </div>
               </div>
+              <div className={`p-3 rounded-lg border ${canManageRoles() ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
+                <Shield className={`h-5 w-5 mb-2 ${canManageRoles() ? 'text-green-600' : 'text-gray-400'}`} />
+                <div className="text-sm font-medium">Manage Roles</div>
+                <div className="text-xs text-muted-foreground">
+                  {canManageRoles() ? 'Allowed' : 'Not Allowed'}
+                </div>
+              </div>
+              <div className={`p-3 rounded-lg border ${canAccessEmployees() ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
+                <Users className={`h-5 w-5 mb-2 ${canAccessEmployees() ? 'text-green-600' : 'text-gray-400'}`} />
+                <div className="text-sm font-medium">Access Employees</div>
+                <div className="text-xs text-muted-foreground">
+                  {canAccessEmployees() ? 'Allowed' : 'Not Allowed'}
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -99,65 +114,21 @@ export const RoleManagement = () => {
         {/* Role Management Component */}
         <RoleManagementComponent />
 
-        {/* Role Descriptions */}
+        {/* Dynamic Role Descriptions */}
         <Card>
           <CardHeader>
             <CardTitle>Role Descriptions</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-3">
-                <div className="border-l-4 border-purple-500 pl-4">
-                  <h4 className="font-semibold text-purple-700">SystemMaster</h4>
+              {roles.map(role => (
+                <div key={role.id} className={`border-l-4 pl-4 ${role.color_class.replace('bg-', 'border-')}`}>
+                  <h4 className="font-semibold">{role.display_name}</h4>
                   <p className="text-sm text-muted-foreground">
-                    Complete system access, can manage all businesses and assign any role
+                    {role.description || 'No description available'}
                   </p>
                 </div>
-                <div className="border-l-4 border-red-500 pl-4">
-                  <h4 className="font-semibold text-red-700">SuperManager</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Full business access, can manage all features except business management and cross-business access
-                  </p>
-                </div>
-                <div className="border-l-4 border-blue-500 pl-4">
-                  <h4 className="font-semibold text-blue-700">Manager</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Most features access, cannot view analytics or manage businesses
-                  </p>
-                </div>
-                <div className="border-l-4 border-purple-500 pl-4">
-                  <h4 className="font-semibold text-purple-700">HR Manager</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Employee management only
-                  </p>
-                </div>
-              </div>
-              <div className="space-y-3">
-                <div className="border-l-4 border-green-500 pl-4">
-                  <h4 className="font-semibold text-green-700">Hall Manager</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Menu and tables access, inventory management
-                  </p>
-                </div>
-                <div className="border-l-4 border-orange-500 pl-4">
-                  <h4 className="font-semibold text-orange-700">Call Center Employee</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Menu, orders, tables, and call center access
-                  </p>
-                </div>
-                <div className="border-l-4 border-yellow-500 pl-4">
-                  <h4 className="font-semibold text-yellow-700">Cashier</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Menu, orders, and tables access
-                  </p>
-                </div>
-                <div className="border-l-4 border-gray-500 pl-4">
-                  <h4 className="font-semibold text-gray-700">Employee</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Check-in/check-out only
-                  </p>
-                </div>
-              </div>
+              ))}
             </div>
           </CardContent>
         </Card>
