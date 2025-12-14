@@ -10,8 +10,9 @@
 6. [Business Types](#business-types)
 7. [Features System](#features-system)
 8. [Branch Management](#branch-management)
-9. [Database Schema](#database-schema)
-10. [Security](#security)
+9. [Employee Management](#employee-management)
+10. [Database Schema](#database-schema)
+11. [Security](#security)
 
 ---
 
@@ -358,6 +359,108 @@ The following data is scoped to branches:
 
 ---
 
+## Employee Management
+
+### Employee Information
+
+Employees are stored in the `employees` table with the following key fields:
+
+```sql
+employees (
+  id: UUID (Primary Key)
+  branch_id: TEXT
+  employee_number: TEXT
+  first_name: TEXT
+  last_name: TEXT
+  email: TEXT
+  phone: TEXT
+  position: TEXT
+  department: TEXT
+  hire_date: DATE
+  salary: DECIMAL
+  hourly_rate: DECIMAL
+  address: TEXT
+  emergency_contact_name: TEXT
+  emergency_contact_phone: TEXT
+  is_active: BOOLEAN
+)
+```
+
+### Employee Documents
+
+The system supports PDF document uploads for employee records (personal documents, legal documents, contracts, certifications, etc.).
+
+**Storage**: Documents are stored in the `employee-documents` Supabase storage bucket.
+
+```sql
+employee_documents (
+  id: UUID (Primary Key)
+  employee_id: UUID (References employees)
+  branch_id: TEXT
+  document_name: TEXT
+  document_type: TEXT (e.g., 'personal', 'legal', 'contract', 'certification')
+  description: TEXT
+  file_url: TEXT
+  file_size: INTEGER
+  mime_type: TEXT
+  uploaded_by: UUID
+  created_at: TIMESTAMP
+  updated_at: TIMESTAMP
+)
+```
+
+**Supported Operations**:
+- Upload PDF documents (max 10MB)
+- View documents with signed URLs
+- Download documents
+- Delete documents
+
+**Document Types**:
+| Type | Description |
+|------|-------------|
+| personal | Personal identification documents |
+| legal | Legal documents and agreements |
+| contract | Employment contracts |
+| certification | Professional certifications and licenses |
+| other | Other documents |
+
+### Salary Calculator
+
+The salary calculator allows managers to calculate employee salaries for any chosen date range.
+
+**Features**:
+- Select employee from dropdown
+- Choose date range (start and end date)
+- Automatic calculation based on work sessions
+- Displays regular hours and overtime hours (1.5x rate)
+- Shows detailed breakdown of earnings
+
+**Calculation Logic**:
+```
+Regular Hours: Hours worked up to 8 hours per session
+Overtime Hours: Hours worked beyond 8 hours per session
+Overtime Rate: 1.5x the regular hourly rate
+
+Total Salary = (Regular Hours × Hourly Rate) + (Overtime Hours × Hourly Rate × 1.5)
+```
+
+**Work Sessions Table**:
+```sql
+employee_work_sessions (
+  id: UUID (Primary Key)
+  employee_id: UUID (References employees)
+  branch_id: TEXT
+  check_in_time: TIMESTAMP
+  check_out_time: TIMESTAMP
+  break_duration: INTEGER (minutes)
+  session_type: TEXT
+  location: TEXT
+  notes: TEXT
+)
+```
+
+---
+
 ## Database Schema
 
 ### Core Tables
@@ -562,6 +665,7 @@ Creates a new client with user account and business.
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0 | 2024 | Initial release |
+| 1.1 | December 2024 | Added employee email field, document uploads, and salary calculator |
 
 ---
 
