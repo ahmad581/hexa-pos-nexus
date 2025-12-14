@@ -217,6 +217,45 @@ export type Database = {
           },
         ]
       }
+      business_type_roles: {
+        Row: {
+          business_type_id: string
+          created_at: string | null
+          id: string
+          is_default: boolean | null
+          role_id: string
+        }
+        Insert: {
+          business_type_id: string
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          role_id: string
+        }
+        Update: {
+          business_type_id?: string
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          role_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_type_roles_business_type_id_fkey"
+            columns: ["business_type_id"]
+            isOneToOne: false
+            referencedRelation: "business_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_type_roles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_types: {
         Row: {
           category: string
@@ -1084,6 +1123,80 @@ export type Database = {
           },
         ]
       }
+      role_permissions: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_granted: boolean | null
+          permission_key: string
+          role_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_granted?: boolean | null
+          permission_key: string
+          role_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_granted?: boolean | null
+          permission_key?: string
+          role_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_permissions_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      roles: {
+        Row: {
+          color_class: string | null
+          created_at: string | null
+          description: string | null
+          display_name: string
+          hierarchy_level: number
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          is_system_role: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          color_class?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_name: string
+          hierarchy_level?: number
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_system_role?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          color_class?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_name?: string
+          hierarchy_level?: number
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_system_role?: boolean | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       rooms: {
         Row: {
           amenities: string[] | null
@@ -1344,6 +1457,19 @@ export type Database = {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
         Returns: boolean
       }
+      get_role_by_name: {
+        Args: { _role_name: string }
+        Returns: {
+          color_class: string
+          description: string
+          display_name: string
+          hierarchy_level: number
+          icon: string
+          id: string
+          is_system_role: boolean
+          name: string
+        }[]
+      }
       get_user_primary_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -1364,6 +1490,10 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { user_id: string }; Returns: boolean }
+      user_has_permission: {
+        Args: { _permission_key: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role:
