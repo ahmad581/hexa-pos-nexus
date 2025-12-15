@@ -437,6 +437,83 @@ export type Database = {
           },
         ]
       }
+      employee_loans: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          branch_id: string
+          created_at: string
+          employee_id: string
+          end_date: string | null
+          id: string
+          interest_rate: number
+          loan_amount: number
+          monthly_payment: number
+          next_payment_date: string | null
+          paid_amount: number
+          payment_period_months: number
+          reason: string | null
+          rejected_reason: string | null
+          remaining_amount: number | null
+          start_date: string | null
+          status: string
+          total_repayment: number
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          branch_id: string
+          created_at?: string
+          employee_id: string
+          end_date?: string | null
+          id?: string
+          interest_rate?: number
+          loan_amount: number
+          monthly_payment: number
+          next_payment_date?: string | null
+          paid_amount?: number
+          payment_period_months: number
+          reason?: string | null
+          rejected_reason?: string | null
+          remaining_amount?: number | null
+          start_date?: string | null
+          status?: string
+          total_repayment: number
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          branch_id?: string
+          created_at?: string
+          employee_id?: string
+          end_date?: string | null
+          id?: string
+          interest_rate?: number
+          loan_amount?: number
+          monthly_payment?: number
+          next_payment_date?: string | null
+          paid_amount?: number
+          payment_period_months?: number
+          reason?: string | null
+          rejected_reason?: string | null
+          remaining_amount?: number | null
+          start_date?: string | null
+          status?: string
+          total_repayment?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_loans_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employee_work_sessions: {
         Row: {
           branch_id: string
@@ -754,6 +831,111 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      loan_payments: {
+        Row: {
+          branch_id: string
+          created_at: string
+          employee_id: string
+          id: string
+          loan_id: string
+          notes: string | null
+          payment_amount: number
+          payment_date: string
+          payment_method: string | null
+        }
+        Insert: {
+          branch_id: string
+          created_at?: string
+          employee_id: string
+          id?: string
+          loan_id: string
+          notes?: string | null
+          payment_amount: number
+          payment_date: string
+          payment_method?: string | null
+        }
+        Update: {
+          branch_id?: string
+          created_at?: string
+          employee_id?: string
+          id?: string
+          loan_id?: string
+          notes?: string | null
+          payment_amount?: number
+          payment_date?: string
+          payment_method?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_payments_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_payments_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "employee_loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loan_settings: {
+        Row: {
+          branch_id: string
+          created_at: string
+          id: string
+          interest_rate_percentage: number
+          is_active: boolean
+          max_active_loans: number
+          max_loan_amount: number
+          max_monthly_payment_percentage: number
+          max_payment_period_months: number
+          min_employment_months: number
+          min_loan_amount: number
+          min_payment_period_months: number
+          notes: string | null
+          require_approval: boolean
+          updated_at: string
+        }
+        Insert: {
+          branch_id: string
+          created_at?: string
+          id?: string
+          interest_rate_percentage?: number
+          is_active?: boolean
+          max_active_loans?: number
+          max_loan_amount?: number
+          max_monthly_payment_percentage?: number
+          max_payment_period_months?: number
+          min_employment_months?: number
+          min_loan_amount?: number
+          min_payment_period_months?: number
+          notes?: string | null
+          require_approval?: boolean
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string
+          created_at?: string
+          id?: string
+          interest_rate_percentage?: number
+          is_active?: boolean
+          max_active_loans?: number
+          max_loan_amount?: number
+          max_monthly_payment_percentage?: number
+          max_payment_period_months?: number
+          min_employment_months?: number
+          min_loan_amount?: number
+          min_payment_period_months?: number
+          notes?: string | null
+          require_approval?: boolean
+          updated_at?: string
+        }
+        Relationships: []
       }
       members: {
         Row: {

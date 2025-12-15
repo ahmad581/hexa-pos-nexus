@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Edit, Trash2, Search, DollarSign, Clock, QrCode, Fingerprint, LogIn, LogOut, Calendar, Upload, FileText, Scan, X, Mail, Calculator } from "lucide-react";
+import { Plus, Edit, Trash2, Search, DollarSign, Clock, QrCode, Fingerprint, LogIn, LogOut, Calendar, Upload, FileText, Scan, X, Mail, Calculator, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -16,6 +16,7 @@ import { BiometricAuth } from "@/components/BiometricAuth";
 import { useTranslation } from "@/contexts/TranslationContext";
 import { EmployeeDocumentsManager } from "@/components/EmployeeDocumentsManager";
 import { SalaryCalculator } from "@/components/SalaryCalculator";
+import { LoanManagement } from "@/components/loans/LoanManagement";
 import { useBranch } from "@/contexts/BranchContext";
 
 interface WorkSession {
@@ -180,6 +181,7 @@ export const Employees = () => {
   const [showQRGenerator, setShowQRGenerator] = useState<{show: boolean, employee: Employee | null}>({show: false, employee: null});
   const [showDocuments, setShowDocuments] = useState<{show: boolean, employee: Employee | null}>({show: false, employee: null});
   const [showSalaryCalculator, setShowSalaryCalculator] = useState(false);
+  const [showLoanManagement, setShowLoanManagement] = useState(false);
   const { toast } = useToast();
   const { t } = useTranslation();
   const { selectedBranch } = useBranch();
@@ -458,8 +460,16 @@ export const Employees = () => {
         <h1 className="text-3xl font-bold">{t('employeesPage.title')}</h1>
         <div className="flex gap-3">
           <Button 
+            variant={showLoanManagement ? "default" : "outline"}
+            onClick={() => { setShowLoanManagement(!showLoanManagement); if (!showLoanManagement) setShowSalaryCalculator(false); }}
+            className={showLoanManagement ? "bg-primary" : "border-amber-600 text-amber-600 hover:bg-amber-600/10"}
+          >
+            <Wallet size={20} className="mr-2" />
+            Loans
+          </Button>
+          <Button 
             variant={showSalaryCalculator ? "default" : "outline"}
-            onClick={() => setShowSalaryCalculator(!showSalaryCalculator)}
+            onClick={() => { setShowSalaryCalculator(!showSalaryCalculator); if (!showSalaryCalculator) setShowLoanManagement(false); }}
             className={showSalaryCalculator ? "bg-primary" : "border-primary text-primary hover:bg-primary/10"}
           >
             <Calculator size={20} className="mr-2" />
@@ -493,6 +503,19 @@ export const Employees = () => {
           />
         </div>
       </div>
+
+      {/* Loan Management */}
+      {showLoanManagement && selectedBranch && (
+        <LoanManagement 
+          branchId={selectedBranch.id} 
+          employees={employees.map(e => ({
+            id: String(e.id),
+            first_name: e.name.split(' ')[0],
+            last_name: e.name.split(' ').slice(1).join(' ') || '',
+            salary: e.monthlySalary,
+          }))} 
+        />
+      )}
 
       {/* Salary Calculator */}
       {showSalaryCalculator && (
