@@ -5,14 +5,16 @@
 1. [System Overview](#system-overview)
 2. [Authentication & Login](#authentication--login)
 3. [User Roles & Permissions](#user-roles--permissions)
-4. [System Master Dashboard](#system-master-dashboard)
-5. [Client Management](#client-management)
-6. [Business Types](#business-types)
-7. [Features System](#features-system)
-8. [Branch Management](#branch-management)
-9. [Employee Management](#employee-management)
-10. [Database Schema](#database-schema)
-11. [Security](#security)
+4. [Roles Management System](#roles-management-system)
+5. [System Master Dashboard](#system-master-dashboard)
+6. [Client Management](#client-management)
+7. [Business Types](#business-types)
+8. [Features System](#features-system)
+9. [Branch Management](#branch-management)
+10. [Employee Management](#employee-management)
+11. [Employee Loans System](#employee-loans-system)
+12. [Database Schema](#database-schema)
+13. [Security](#security)
 
 ---
 
@@ -27,9 +29,10 @@ BizHub POS is a multi-tenant business management platform that supports various 
 ### Key Features
 
 - Multi-business support with isolated data
-- Role-based access control (RBAC)
+- Role-based access control (RBAC) with granular permissions
 - Branch management for multi-location businesses
 - Customizable feature sets per business
+- Employee loan management with configurable settings
 - Real-time data synchronization
 
 ---
@@ -99,16 +102,16 @@ For testing purposes, the following demo accounts are available:
 
 ### Role Hierarchy
 
-| Priority | Role | Description |
-|----------|------|-------------|
-| 0 | SystemMaster | Full system access, manages all clients |
-| 1 | SuperManager | Full access to their business |
-| 2 | Manager | Branch-level management |
-| 3 | HrManager | Employee management, HR functions |
-| 4 | HallManager | Floor/hall operations management |
-| 5 | CallCenterEmp | Call center operations |
-| 6 | Cashier | Point of sale operations |
-| 7 | Employee | Basic employee access |
+| Priority | Role | Description | Hierarchy Level |
+|----------|------|-------------|-----------------|
+| 0 | SystemMaster | Full system access, manages all clients | 0 |
+| 1 | SuperManager | Full access to their business | 1 |
+| 2 | Manager | Branch-level management | 2 |
+| 3 | HrManager | Employee management, HR functions | 3 |
+| 4 | HallManager | Floor/hall operations management | 4 |
+| 5 | CallCenterEmp | Call center operations | 5 |
+| 6 | Cashier | Point of sale operations | 6 |
+| 7 | Employee | Basic employee access | 7 |
 
 ### Role Permissions Matrix
 
@@ -122,6 +125,9 @@ For testing purposes, the following demo accounts are available:
 | Manage Business | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Manage Branches | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Manage Employees | ❌ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Manage Loans | ❌ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Configure Loan Settings | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Approve/Reject Loans | ❌ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | View Analytics | ❌ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
 | Manage Orders | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
 | Process Payments | ❌ | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ |
@@ -144,6 +150,99 @@ user_roles (
 ```
 
 **Note**: A user can have multiple roles, but the `primary_role` in the `profiles` table is determined by the highest-priority active role.
+
+---
+
+## Roles Management System
+
+### Roles Table
+
+The system now includes a dedicated `roles` table for flexible role configuration:
+
+```sql
+roles (
+  id: UUID (Primary Key)
+  name: TEXT (Unique role identifier, e.g., 'Manager')
+  display_name: TEXT (Human-readable name)
+  description: TEXT
+  icon: TEXT (Icon identifier)
+  hierarchy_level: INTEGER (Lower = higher priority)
+  color_class: TEXT (Tailwind color class for badges)
+  is_system_role: BOOLEAN (Cannot be deleted if true)
+  is_active: BOOLEAN
+)
+```
+
+### Role Permissions Table
+
+Granular permissions are managed via the `role_permissions` table:
+
+```sql
+role_permissions (
+  id: UUID (Primary Key)
+  role_id: UUID (References roles)
+  permission_key: TEXT (e.g., 'manage_employees', 'view_analytics')
+  is_granted: BOOLEAN
+)
+```
+
+### Business Type Roles
+
+Different business types can have different available roles:
+
+```sql
+business_type_roles (
+  id: UUID (Primary Key)
+  business_type_id: TEXT (References business_types)
+  role_id: UUID (References roles)
+  is_default: BOOLEAN
+)
+```
+
+### Available Permission Keys
+
+| Permission Key | Description |
+|---------------|-------------|
+| `access_system_dashboard` | Access the System Master dashboard |
+| `manage_users` | Create/edit/delete users |
+| `assign_roles` | Assign roles to users |
+| `manage_business` | Configure business settings |
+| `manage_branches` | Create/edit branches |
+| `manage_employees` | Manage employee records |
+| `manage_loans` | Handle employee loans |
+| `configure_loan_settings` | Configure loan parameters |
+| `approve_loans` | Approve/reject loan applications |
+| `view_analytics` | View reports and analytics |
+| `manage_orders` | Handle orders |
+| `process_payments` | Process transactions |
+| `manage_inventory` | Manage stock levels |
+| `manage_menu` | Edit menu items |
+
+### Role Hooks
+
+The system provides React hooks for role management:
+
+```typescript
+// Fetch all active roles
+const { data: roles } = useRoles();
+
+// Fetch roles for a specific business type
+const { data: businessTypeRoles } = useBusinessTypeRoles(businessTypeId);
+
+// Get role permissions
+const { data: permissions } = useRolePermissions(roleId);
+
+// Check user permissions
+const { hasPermission, permissions } = useHasPermission();
+
+// Comprehensive role checking
+const { 
+  checkRole, 
+  isSystemMaster, 
+  canManageEmployees,
+  canManageLoans 
+} = useRole();
+```
 
 ---
 
@@ -196,6 +295,9 @@ Manage user roles across the entire system.
 - Assign new roles to users
 - Select business and branch for role assignment
 - Filter users by role or search
+- View all system roles with hierarchy levels
+- Manage role permissions
+- Configure business type roles
 
 ---
 
@@ -235,7 +337,7 @@ For each client, you can:
 
 ## Business Types
 
-The system supports multiple business types, each with tailored features:
+The system supports multiple business types, each with tailored features and roles:
 
 ### Supported Business Types
 
@@ -253,6 +355,19 @@ The system supports multiple business types, each with tailored features:
 | gym | Gym/Fitness | Health & Fitness | Dumbbell |
 | pet-care | Pet Care | Services | PawPrint |
 | auto-repair | Auto Repair | Services | Wrench |
+
+### Business Types Table
+
+```sql
+business_types (
+  id: TEXT (Primary Key)
+  name: TEXT
+  icon: TEXT
+  category: TEXT
+  terminology: JSONB (Custom terminology for the business type)
+  is_active: BOOLEAN
+)
+```
 
 ### Business Type Features
 
@@ -308,6 +423,19 @@ business_features (
 )
 ```
 
+### Business Type Features
+
+Default features per business type are managed via:
+
+```sql
+business_type_features (
+  id: UUID (Primary Key)
+  business_type_id: TEXT (References business_types)
+  feature_id: TEXT (References available_features)
+  is_default: BOOLEAN
+)
+```
+
 ### Feature Categories
 
 | Category | Description |
@@ -349,6 +477,8 @@ The following data is scoped to branches:
 - Tables
 - Inventory
 - Appointments (for service businesses)
+- Loan Settings
+- Employee Loans
 
 ### Multi-Branch Features
 
@@ -356,6 +486,7 @@ The following data is scoped to branches:
 - Employees can be assigned to specific branches
 - Reports can be filtered by branch
 - Inventory can be tracked per branch
+- Loan settings can be configured per branch
 
 ---
 
@@ -459,6 +590,170 @@ employee_work_sessions (
 )
 ```
 
+**Daily Summaries Table**:
+```sql
+employee_daily_summaries (
+  id: UUID (Primary Key)
+  employee_id: UUID (References employees)
+  branch_id: TEXT
+  work_date: DATE
+  total_hours: DECIMAL
+  regular_hours: DECIMAL
+  overtime_hours: DECIMAL
+  break_hours: DECIMAL
+  total_earnings: DECIMAL
+  session_count: INTEGER
+  first_check_in: TIMESTAMP
+  last_check_out: TIMESTAMP
+)
+```
+
+---
+
+## Employee Loans System
+
+### Overview
+
+The Employee Loans System allows employees to apply for loans with configurable settings per branch. Managers can approve or reject loan applications, and the system automatically calculates monthly payments and total repayment amounts.
+
+### Loan Settings
+
+Each branch can configure its own loan settings:
+
+```sql
+loan_settings (
+  id: UUID (Primary Key)
+  branch_id: TEXT (Unique)
+  min_loan_amount: DECIMAL (Default: 1000)
+  max_loan_amount: DECIMAL (Default: 50000)
+  min_payment_period_months: INTEGER (Default: 1)
+  max_payment_period_months: INTEGER (Default: 24)
+  interest_rate_percentage: DECIMAL (Default: 0)
+  max_monthly_payment_percentage: DECIMAL (Default: 30, % of salary)
+  require_approval: BOOLEAN (Default: true)
+  min_employment_months: INTEGER (Default: 3)
+  max_active_loans: INTEGER (Default: 1)
+  is_active: BOOLEAN (Default: true)
+  notes: TEXT
+)
+```
+
+**Configurable Parameters**:
+| Setting | Description | Default |
+|---------|-------------|---------|
+| Min Loan Amount | Minimum amount an employee can borrow | 1,000 |
+| Max Loan Amount | Maximum amount an employee can borrow | 50,000 |
+| Min Payment Period | Minimum repayment duration in months | 1 |
+| Max Payment Period | Maximum repayment duration in months | 24 |
+| Interest Rate | Annual interest rate percentage | 0% |
+| Max Monthly Payment | Maximum % of salary for monthly payment | 30% |
+| Require Approval | Whether loans need manager approval | Yes |
+| Min Employment | Minimum months employed to be eligible | 3 |
+| Max Active Loans | Maximum concurrent active loans | 1 |
+
+### Employee Loans
+
+```sql
+employee_loans (
+  id: UUID (Primary Key)
+  employee_id: UUID (References employees)
+  branch_id: TEXT
+  loan_amount: DECIMAL
+  payment_period_months: INTEGER
+  interest_rate: DECIMAL
+  monthly_payment: DECIMAL
+  total_repayment: DECIMAL
+  paid_amount: DECIMAL (Default: 0)
+  remaining_amount: DECIMAL (Computed)
+  status: TEXT (Default: 'pending')
+  reason: TEXT (Why the employee needs the loan)
+  approved_by: TEXT
+  approved_at: TIMESTAMP
+  rejected_reason: TEXT
+  start_date: DATE
+  end_date: DATE
+  next_payment_date: DATE
+)
+```
+
+**Loan Statuses**:
+| Status | Description |
+|--------|-------------|
+| pending | Awaiting approval |
+| approved | Approved, repayment in progress |
+| rejected | Application was rejected |
+| completed | Fully repaid |
+| cancelled | Cancelled before completion |
+
+### Loan Payments
+
+```sql
+loan_payments (
+  id: UUID (Primary Key)
+  loan_id: UUID (References employee_loans)
+  employee_id: UUID (References employees)
+  branch_id: TEXT
+  payment_amount: DECIMAL
+  payment_date: DATE
+  payment_method: TEXT (Default: 'salary_deduction')
+  notes: TEXT
+)
+```
+
+### Loan Application Flow
+
+1. **Employee Applies**:
+   - Selects loan amount within allowed range
+   - Chooses payment period in months
+   - Sees calculated monthly payment and total repayment
+   - Provides reason for the loan
+   - Confirms and submits application
+
+2. **Calculation Preview**:
+   ```
+   Monthly Payment = (Loan Amount × (1 + Interest Rate)) / Payment Period
+   Total Repayment = Monthly Payment × Payment Period
+   ```
+
+3. **Manager Reviews**:
+   - Views pending loan applications
+   - Sees employee details and salary
+   - Checks loan amount vs. monthly payment affordability
+   - Approves or rejects with optional reason
+
+4. **After Approval**:
+   - Start date is set
+   - End date is calculated (start + payment period)
+   - Next payment date is set (start + 1 month)
+   - Status changes to 'approved'
+
+5. **Repayment**:
+   - Payments can be recorded manually or deducted from salary
+   - Remaining amount is updated
+   - Status changes to 'completed' when fully paid
+
+### Loan Hooks
+
+```typescript
+// Get loan settings for a branch
+const { data: settings, isLoading } = useLoanSettings(branchId);
+
+// Get loans for a branch (with optional employee filter)
+const { data: loans } = useEmployeeLoans(branchId, employeeId);
+
+// Mutations
+const { updateLoanSettings } = useUpdateLoanSettings();
+const { applyForLoan } = useApplyForLoan();
+const { approveLoan } = useApproveLoan();
+const { rejectLoan } = useRejectLoan();
+```
+
+### UI Components
+
+- **LoanSettingsDialog**: Configure loan parameters for a branch
+- **LoanApplicationDialog**: Employee loan application form with real-time calculations
+- **LoanManagement**: Dashboard for viewing and managing loans (pending, active, history)
+
 ---
 
 ## Database Schema
@@ -478,6 +773,7 @@ profiles (
   business_id: UUID (References custom_businesses)
   branch_id: TEXT
   primary_role: app_role
+  role_updated_at: TIMESTAMP
   is_active: BOOLEAN
   is_super_admin: BOOLEAN
 )
@@ -558,6 +854,34 @@ Checks if a user is a super admin.
 is_super_admin(user_id UUID) → BOOLEAN
 ```
 
+#### user_has_permission(user_id, permission_key)
+Checks if a user has a specific permission based on their roles.
+
+```sql
+user_has_permission(_user_id UUID, _permission_key TEXT) → BOOLEAN
+```
+
+#### current_user_has_primary_role(role)
+Checks if the current authenticated user has a specific primary role.
+
+```sql
+current_user_has_primary_role(_role app_role) → BOOLEAN
+```
+
+#### get_role_by_name(role_name)
+Gets role details by name.
+
+```sql
+get_role_by_name(_role_name TEXT) → TABLE(id, name, display_name, description, icon, hierarchy_level, color_class, is_system_role)
+```
+
+#### calculate_session_hours(check_in, check_out, break_minutes)
+Calculates hours worked for a session.
+
+```sql
+calculate_session_hours(check_in TIMESTAMP, check_out TIMESTAMP, break_minutes INTEGER) → DECIMAL
+```
+
 ---
 
 ## Security
@@ -574,6 +898,11 @@ All tables have RLS enabled with appropriate policies:
 - Role checks use `SECURITY DEFINER` functions to prevent RLS recursion
 - Policies check user roles before allowing operations
 
+#### Loan Data Security
+- Employees can view their own loans
+- Managers can view all loans in their branch
+- Loan settings are protected and only editable by managers
+
 ### Authentication Security
 
 1. **Password Requirements**: Handled by Supabase Auth
@@ -586,6 +915,7 @@ All tables have RLS enabled with appropriate policies:
 2. **Use server-side role validation** - Don't trust client-side checks
 3. **Implement proper RLS policies** - Data access is controlled at database level
 4. **Use SECURITY DEFINER functions** - Prevents RLS recursion issues
+5. **Use permission keys** - Granular access control via role_permissions table
 
 ---
 
@@ -645,6 +975,16 @@ Creates a new client with user account and business.
 - Verify `is_active` is true
 - Check browser console for auth errors
 
+#### Loan application fails
+- Check if loan settings are configured for the branch
+- Verify employee meets minimum employment requirement
+- Ensure loan amount is within configured limits
+- Check if employee has exceeded maximum active loans
+
+#### Cannot approve loans
+- Verify user has `approve_loans` permission or Manager/HrManager role
+- Check if the loan is in 'pending' status
+
 ---
 
 ## Glossary
@@ -657,6 +997,9 @@ Creates a new client with user account and business.
 | Primary Role | The highest-priority role assigned to a user |
 | RLS | Row-Level Security - database-level access control |
 | RBAC | Role-Based Access Control |
+| Permission Key | A string identifier for a specific permission |
+| Loan Settings | Branch-specific configuration for employee loans |
+| Hierarchy Level | Numeric priority of a role (lower = more privileges) |
 
 ---
 
@@ -666,6 +1009,8 @@ Creates a new client with user account and business.
 |---------|------|---------|
 | 1.0 | 2024 | Initial release |
 | 1.1 | December 2024 | Added employee email field, document uploads, and salary calculator |
+| 1.2 | December 2024 | Added Roles Management System with roles table, role_permissions, and business_type_roles |
+| 1.3 | December 2024 | Added Employee Loans System with loan_settings, employee_loans, and loan_payments tables |
 
 ---
 
