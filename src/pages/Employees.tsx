@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Edit, Trash2, Search, DollarSign, Clock, QrCode, Fingerprint, LogIn, LogOut, Calendar, Upload, FileText, Scan, X, Mail, Calculator, Wallet } from "lucide-react";
+import { Plus, Edit, Trash2, Search, DollarSign, Clock, QrCode, Fingerprint, LogIn, LogOut, Calendar, Upload, FileText, Scan, X, Mail, Calculator, Wallet, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -18,6 +18,8 @@ import { EmployeeDocumentsManager } from "@/components/EmployeeDocumentsManager"
 import { SalaryCalculator } from "@/components/SalaryCalculator";
 import { LoanManagement } from "@/components/loans/LoanManagement";
 import { useBranch } from "@/contexts/BranchContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 interface WorkSession {
   checkInTime: string;
@@ -61,6 +63,7 @@ interface Employee {
 interface EmployeeFormData {
   name: string;
   email: string;
+  password: string;
   role: string;
   phone: string;
   monthlySalary: number;
@@ -182,9 +185,11 @@ export const Employees = () => {
   const [showDocuments, setShowDocuments] = useState<{show: boolean, employee: Employee | null}>({show: false, employee: null});
   const [showSalaryCalculator, setShowSalaryCalculator] = useState(false);
   const [showLoanManagement, setShowLoanManagement] = useState(false);
+  const [isAddingEmployee, setIsAddingEmployee] = useState(false);
   const { toast } = useToast();
   const { t } = useTranslation();
   const { selectedBranch } = useBranch();
+  const { userProfile } = useAuth();
 
   const form = useForm<EmployeeFormData>();
   const salaryForm = useForm<SalaryFormData>();
@@ -293,28 +298,67 @@ export const Employees = () => {
     toast({ title: t('employeesPage.checkedOutSuccess') });
   };
 
-  const handleAddEmployee = (data: EmployeeFormData) => {
-    const newEmployee: Employee = {
-      id: Math.max(...employees.map(e => e.id)) + 1,
-      ...data,
-      status: "Active",
-      hireDate: new Date().toISOString().split('T')[0],
-      actualHoursWorked: 0,
-      currentMonthHours: data.workingDaysPerMonth * data.workingHoursPerDay,
-      isCheckedIn: false,
-      documents: [],
-      qrCode: `QR${String(Math.max(...employees.map(e => e.id)) + 1).padStart(3, '0')}-${data.name.toUpperCase().replace(' ', '-')}`,
-      fingerprintId: `FP${String(Math.max(...employees.map(e => e.id)) + 1).padStart(3, '0')}-${data.name.split(' ').map(n => n[0]).join('')}`,
-      dailyHours: 0,
-      todayEarnings: 0,
-      biometricRegistered: false,
-      workDays: []
-    };
+  const handleAddEmployee = async (data: EmployeeFormData) => {
+    if (!userProfile?.business_id) {
+      toast({ title: "Error", description: "No business found. Please contact support.", variant: "destructive" });
+      return;
+    }
 
-    setEmployees(prev => [...prev, newEmployee]);
-    setIsAddDialogOpen(false);
-    form.reset();
-    toast({ title: t('employeesPage.employeeAdded') });
+    if (!data.password || data.password.length < 6) {
+      toast({ title: "Error", description: "Password must be at least 6 characters", variant: "destructive" });
+      return;
+    }
+
+    setIsAddingEmployee(true);
+    try {
+      // Create auth user via edge function
+      const nameParts = data.name.trim().split(' ');
+      const firstName = nameParts[0] || data.name;
+      const lastName = nameParts.slice(1).join(' ') || '';
+
+      const { data: result, error } = await supabase.functions.invoke('create-employee', {
+        body: {
+          email: data.email,
+          password: data.password,
+          first_name: firstName,
+          last_name: lastName,
+          role: data.role || 'Employee',
+          business_id: userProfile.business_id,
+          branch_id: selectedBranch?.id || null
+        }
+      });
+
+      if (error) throw error;
+      if (result?.error) throw new Error(result.error);
+
+      // Also add to local state for immediate UI update
+      const newEmployee: Employee = {
+        id: Math.max(...employees.map(e => e.id), 0) + 1,
+        ...data,
+        status: "Active",
+        hireDate: new Date().toISOString().split('T')[0],
+        actualHoursWorked: 0,
+        currentMonthHours: data.workingDaysPerMonth * data.workingHoursPerDay,
+        isCheckedIn: false,
+        documents: [],
+        qrCode: `QR${String(Math.max(...employees.map(e => e.id), 0) + 1).padStart(3, '0')}-${data.name.toUpperCase().replace(' ', '-')}`,
+        fingerprintId: `FP${String(Math.max(...employees.map(e => e.id), 0) + 1).padStart(3, '0')}-${data.name.split(' ').map(n => n[0]).join('')}`,
+        dailyHours: 0,
+        todayEarnings: 0,
+        biometricRegistered: false,
+        workDays: []
+      };
+
+      setEmployees(prev => [...prev, newEmployee]);
+      setIsAddDialogOpen(false);
+      form.reset();
+      toast({ title: t('employeesPage.employeeAdded'), description: `${data.email} can now login with their password.` });
+    } catch (error: any) {
+      console.error('Error creating employee:', error);
+      toast({ title: "Error", description: error.message || "Failed to create employee", variant: "destructive" });
+    } finally {
+      setIsAddingEmployee(false);
+    }
   };
 
   const handleEditEmployee = (data: EmployeeFormData) => {
@@ -791,6 +835,28 @@ export const Employees = () => {
 
               <FormField
                 control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-300">Password</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                        <Input 
+                          {...field} 
+                          type="password" 
+                          placeholder="Min. 6 characters" 
+                          className="bg-gray-700 border-gray-600 text-white pl-10" 
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="role"
                 render={({ field }) => (
                   <FormItem>
@@ -837,13 +903,14 @@ export const Employees = () => {
               />
               
               <div className="flex gap-2">
-                <Button type="submit" className="bg-green-600 hover:bg-green-700">
-                  {t('employeesPage.addEmployee')}
+                <Button type="submit" className="bg-green-600 hover:bg-green-700" disabled={isAddingEmployee}>
+                  {isAddingEmployee ? "Creating..." : t('employeesPage.addEmployee')}
                 </Button>
                 <Button 
                   type="button" 
                   variant="outline" 
                   onClick={() => setIsAddDialogOpen(false)}
+                  disabled={isAddingEmployee}
                 >
                   {t('common.cancel')}
                 </Button>
