@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +21,16 @@ import { LoanManagement } from "@/components/loans/LoanManagement";
 import { useBranch } from "@/contexts/BranchContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+
+const VALID_ROLES = [
+  { value: 'Employee', label: 'Employee' },
+  { value: 'Cashier', label: 'Cashier' },
+  { value: 'HallManager', label: 'Hall Manager' },
+  { value: 'HrManager', label: 'HR Manager' },
+  { value: 'CallCenterEmp', label: 'Call Center Employee' },
+  { value: 'Manager', label: 'Manager' },
+  { value: 'SuperManager', label: 'Super Manager' },
+];
 
 interface WorkSession {
   checkInTime: string;
@@ -861,9 +872,20 @@ export const Employees = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-gray-300">{t('employees.role')}</FormLabel>
-                    <FormControl>
-                      <Input {...field} className="bg-gray-700 border-gray-600 text-white" />
-                    </FormControl>
+                    <Select onValueChange={field.onChange} defaultValue={field.value || 'Employee'}>
+                      <FormControl>
+                        <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                          <SelectValue placeholder="Select a role" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="bg-gray-700 border-gray-600">
+                        {VALID_ROLES.map((role) => (
+                          <SelectItem key={role.value} value={role.value} className="text-white hover:bg-gray-600">
+                            {role.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -965,9 +987,20 @@ export const Employees = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-gray-300">Role</FormLabel>
-                    <FormControl>
-                      <Input {...field} className="bg-gray-700 border-gray-600 text-white" />
-                    </FormControl>
+                    <Select onValueChange={field.onChange} value={field.value || 'Employee'}>
+                      <FormControl>
+                        <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                          <SelectValue placeholder="Select a role" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="bg-gray-700 border-gray-600">
+                        {VALID_ROLES.map((role) => (
+                          <SelectItem key={role.value} value={role.value} className="text-white hover:bg-gray-600">
+                            {role.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
