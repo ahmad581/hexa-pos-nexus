@@ -565,16 +565,22 @@ export const Employees = () => {
       </div>
 
       {/* Loan Management */}
-      {showLoanManagement && selectedBranch && (
-        <LoanManagement 
-          branchId={selectedBranch.id} 
-          employees={employees.map(e => ({
-            id: String(e.id),
-            first_name: e.name.split(' ')[0],
-            last_name: e.name.split(' ').slice(1).join(' ') || '',
-            salary: e.monthlySalary,
-          }))} 
-        />
+      {showLoanManagement && (
+        selectedBranch ? (
+          <LoanManagement 
+            branchId={selectedBranch.id} 
+            employees={employees.map(e => ({
+              id: String(e.id),
+              first_name: e.name.split(' ')[0],
+              last_name: e.name.split(' ').slice(1).join(' ') || '',
+              salary: e.monthlySalary,
+            }))} 
+          />
+        ) : (
+          <Card className="bg-gray-800 border-gray-700 p-6">
+            <p className="text-gray-400 text-center">Please select a branch to manage loans.</p>
+          </Card>
+        )
       )}
 
       {/* Salary Calculator */}
