@@ -190,7 +190,7 @@ export const Employees = () => {
   const [isAddingEmployee, setIsAddingEmployee] = useState(false);
   const { toast } = useToast();
   const { t } = useTranslation();
-  const { selectedBranch } = useBranch();
+  const { selectedBranch, branches, setSelectedBranch } = useBranch();
   const { userProfile } = useAuth();
   const { data: allRoles = [] } = useRoles();
 
@@ -578,7 +578,24 @@ export const Employees = () => {
           />
         ) : (
           <Card className="bg-gray-800 border-gray-700 p-6">
-            <p className="text-gray-400 text-center">Please select a branch to manage loans.</p>
+            <div className="flex flex-col items-center gap-4">
+              <p className="text-gray-400">Please select a branch to manage loans.</p>
+              <Select onValueChange={(value) => {
+                const branch = branches.find(b => b.id === value);
+                if (branch) setSelectedBranch(branch);
+              }}>
+                <SelectTrigger className="w-64 bg-gray-700 border-gray-600 text-white">
+                  <SelectValue placeholder="Select a branch" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-700 border-gray-600">
+                  {branches.map((branch) => (
+                    <SelectItem key={branch.id} value={branch.id} className="text-white hover:bg-gray-600">
+                      {branch.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </Card>
         )
       )}
