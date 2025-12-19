@@ -71,6 +71,7 @@ interface EmployeeFormData {
   monthlySalary: number;
   workingDaysPerMonth: number;
   workingHoursPerDay: number;
+  branch_id: string;
 }
 
 interface SalaryFormData {
@@ -339,8 +340,7 @@ export const Employees = () => {
           first_name: firstName,
           last_name: lastName,
           role: data.role || 'Employee',
-          business_id: userProfile.business_id,
-          branch_id: selectedBranch?.id || null
+          branch_id: data.branch_id || selectedBranch?.id || null
         }
       });
 
@@ -910,6 +910,31 @@ export const Employees = () => {
                         {availableRoles.map((role) => (
                           <SelectItem key={role.value} value={role.value} className="text-white hover:bg-gray-600">
                             {role.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="branch_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-300">Branch</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value || selectedBranch?.id}>
+                      <FormControl>
+                        <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                          <SelectValue placeholder="Select a branch" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="bg-gray-700 border-gray-600">
+                        {branches.map((branch) => (
+                          <SelectItem key={branch.id} value={branch.id} className="text-white hover:bg-gray-600">
+                            {branch.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
