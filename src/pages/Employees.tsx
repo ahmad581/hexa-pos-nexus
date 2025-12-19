@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Plus, Edit, Trash2, Search, DollarSign, Clock, QrCode, Fingerprint, LogIn, LogOut, Calendar, Upload, FileText, Scan, X, Mail, Calculator, Wallet, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,16 +21,7 @@ import { LoanManagement } from "@/components/loans/LoanManagement";
 import { useBranch } from "@/contexts/BranchContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-
-const VALID_ROLES = [
-  { value: 'Employee', label: 'Employee' },
-  { value: 'Cashier', label: 'Cashier' },
-  { value: 'HallManager', label: 'Hall Manager' },
-  { value: 'HrManager', label: 'HR Manager' },
-  { value: 'CallCenterEmp', label: 'Call Center Employee' },
-  { value: 'Manager', label: 'Manager' },
-  { value: 'SuperManager', label: 'Super Manager' },
-];
+import { useRoles, getRoleHierarchy } from "@/hooks/useRoles";
 
 interface WorkSession {
   checkInTime: string;
@@ -201,6 +192,20 @@ export const Employees = () => {
   const { t } = useTranslation();
   const { selectedBranch } = useBranch();
   const { userProfile } = useAuth();
+  const { data: allRoles = [] } = useRoles();
+
+  // Filter roles to only show roles below the current user's hierarchy level
+  const availableRoles = useMemo(() => {
+    const currentUserRole = userProfile?.primary_role || 'Employee';
+    const currentUserHierarchy = getRoleHierarchy(currentUserRole, allRoles);
+    
+    return allRoles
+      .filter(role => role.hierarchy_level > currentUserHierarchy)
+      .map(role => ({
+        value: role.name,
+        label: role.display_name
+      }));
+  }, [allRoles, userProfile]);
 
   const form = useForm<EmployeeFormData>();
   const salaryForm = useForm<SalaryFormData>();
@@ -879,7 +884,7 @@ export const Employees = () => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent className="bg-gray-700 border-gray-600">
-                        {VALID_ROLES.map((role) => (
+                        {availableRoles.map((role) => (
                           <SelectItem key={role.value} value={role.value} className="text-white hover:bg-gray-600">
                             {role.label}
                           </SelectItem>
@@ -994,7 +999,7 @@ export const Employees = () => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent className="bg-gray-700 border-gray-600">
-                        {VALID_ROLES.map((role) => (
+                        {availableRoles.map((role) => (
                           <SelectItem key={role.value} value={role.value} className="text-white hover:bg-gray-600">
                             {role.label}
                           </SelectItem>
