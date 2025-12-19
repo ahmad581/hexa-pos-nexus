@@ -302,24 +302,26 @@ export const ClientManagement = ({ clients, isLoading }: { clients: Client[], is
 
   const addEmployeeMutation = useMutation({
     mutationFn: async () => {
-      if (!selectedClient) throw new Error("No client selected");
+      if (!selectedClient || !clientBusiness) throw new Error("No client selected");
       
-      // Create user and assign to client's business
-      const { data, error } = await supabase.functions.invoke('create-client', {
+      // Create employee auth user and link to client's business
+      const { data, error } = await supabase.functions.invoke('create-employee', {
         body: {
-          name: `${newEmployee.first_name} ${newEmployee.last_name}`,
           email: newEmployee.email,
           password: newEmployee.password,
-          business_type: selectedClient.business_type,
-          role: newEmployee.role
+          first_name: newEmployee.first_name,
+          last_name: newEmployee.last_name,
+          role: newEmployee.role,
+          business_id: clientBusiness.id
         }
       });
 
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       return data;
     },
     onSuccess: () => {
-      toast.success("Employee added successfully!");
+      toast.success("Employee added successfully! They can now login with their email and password.");
       queryClient.invalidateQueries({ queryKey: ['client-employees'] });
       setShowEmployeeDialog(false);
       setNewEmployee({ email: "", first_name: "", last_name: "", role: "Employee", password: "" });
