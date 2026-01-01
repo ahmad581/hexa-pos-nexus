@@ -5,9 +5,9 @@ import { Fingerprint, Shield, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface BiometricAuthProps {
-  employeeId: number;
+  employeeId: string | number;
   employeeName: string;
-  onAuthSuccess: (employeeId: number) => void;
+  onAuthSuccess: (employeeId: string | number) => void;
   onClose: () => void;
   mode: 'register' | 'authenticate';
 }
