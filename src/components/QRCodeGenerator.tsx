@@ -6,7 +6,7 @@ import { Download, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface QRCodeGeneratorProps {
-  employeeId: number;
+  employeeId: string | number;
   employeeName: string;
   qrCodeData: string;
 }

@@ -1,9 +1,9 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Plus, Edit, Trash2, Search, DollarSign, Clock, QrCode, Fingerprint, LogIn, LogOut, Calendar, Upload, FileText, Scan, X, Mail, Calculator, Wallet, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
@@ -22,55 +22,9 @@ import { useBranch } from "@/contexts/BranchContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useRoles, getRoleHierarchy } from "@/hooks/useRoles";
-import { useQuery } from "@tanstack/react-query";
-
-interface SupabaseEmployee {
-  id: string;
-  first_name: string;
-  last_name: string;
-  salary: number | null;
-  hourly_rate: number | null;
-  branch_id: string;
-}
-
-interface WorkSession {
-  checkInTime: string;
-  checkOutTime: string;
-  hoursWorked: number;
-  earnings: number;
-}
-
-interface WorkDay {
-  date: string;
-  sessions: WorkSession[];
-  totalHours: number;
-  totalEarnings: number;
-}
-
-interface Employee {
-  id: number;
-  name: string;
-  email: string;
-  documents: string[]; // Array of PDF file URLs
-  role: string;
-  status: "Active" | "Inactive";
-  phone: string;
-  hireDate: string;
-  monthlySalary: number;
-  workingDaysPerMonth: number;
-  workingHoursPerDay: number;
-  actualHoursWorked: number;
-  currentMonthHours: number;
-  checkInTime?: string;
-  checkOutTime?: string;
-  isCheckedIn: boolean;
-  qrCode: string;
-  fingerprintId: string;
-  dailyHours: number;
-  todayEarnings: number;
-  workDays: WorkDay[];
-  biometricRegistered: boolean;
-}
+import { useEmployees, DatabaseEmployee } from "@/hooks/useEmployees";
+import { Skeleton } from "@/components/ui/skeleton";
+import { format } from "date-fns";
 
 interface EmployeeFormData {
   name: string;
@@ -79,148 +33,50 @@ interface EmployeeFormData {
   role: string;
   phone: string;
   monthlySalary: number;
-  workingDaysPerMonth: number;
-  workingHoursPerDay: number;
   branch_id: string;
 }
 
 interface SalaryFormData {
   monthlySalary: number;
-  workingDaysPerMonth: number;
-  workingHoursPerDay: number;
+  hourlyRate: number;
 }
 
 export const Employees = () => {
-  const [employees, setEmployees] = useState<Employee[]>([
-    {
-      id: 1,
-      name: "John Doe",
-      email: "john.doe@example.com",
-      documents: ["contract.pdf", "id_copy.pdf"],
-      role: "Manager",
-      status: "Active",
-      phone: "(555) 123-4567",
-      hireDate: "2023-01-15",
-      monthlySalary: 5000,
-      workingDaysPerMonth: 22,
-      workingHoursPerDay: 8,
-      actualHoursWorked: 0,
-      currentMonthHours: 176,
-      isCheckedIn: false,
-      qrCode: "QR001-JOHN-DOE",
-      fingerprintId: "FP001-JD",
-      dailyHours: 0,
-      todayEarnings: 0,
-      biometricRegistered: false,
-      workDays: [
-        {
-          date: "2025-01-01",
-          sessions: [
-            {
-              checkInTime: "09:00 AM",
-              checkOutTime: "01:00 PM",
-              hoursWorked: 4,
-              earnings: 90.91
-            },
-            {
-              checkInTime: "02:00 PM",
-              checkOutTime: "05:00 PM",
-              hoursWorked: 3,
-              earnings: 68.18
-            }
-          ],
-          totalHours: 7,
-          totalEarnings: 159.09
-        },
-        {
-          date: "2025-01-02",
-          sessions: [
-            {
-              checkInTime: "09:15 AM",
-              checkOutTime: "05:30 PM",
-              hoursWorked: 8.25,
-              earnings: 187.50
-            }
-          ],
-          totalHours: 8.25,
-          totalEarnings: 187.50
-        }
-      ]
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      email: "jane.smith@example.com",
-      documents: ["contract.pdf"],
-      role: "Cashier",
-      status: "Active",
-      phone: "(555) 987-6543",
-      hireDate: "2023-03-20",
-      monthlySalary: 3000,
-      workingDaysPerMonth: 20,
-      workingHoursPerDay: 8,
-      actualHoursWorked: 0,
-      currentMonthHours: 160,
-      isCheckedIn: true,
-      checkInTime: "09:00 AM",
-      qrCode: "QR002-JANE-SMITH",
-      fingerprintId: "FP002-JS",
-      dailyHours: 3.5,
-      todayEarnings: 52.5,
-      biometricRegistered: true,
-      workDays: [
-        {
-          date: "2025-01-01",
-          sessions: [
-            {
-              checkInTime: "08:45 AM",
-              checkOutTime: "04:45 PM",
-              hoursWorked: 8,
-              earnings: 150.00
-            }
-          ],
-          totalHours: 8,
-          totalEarnings: 150.00
-        }
-      ]
-    }
-  ]);
-
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [selectedEmployee, setSelectedEmployee] = useState<DatabaseEmployee | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isSalaryDialogOpen, setIsSalaryDialogOpen] = useState(false);
-  const [expandedEmployees, setExpandedEmployees] = useState<Set<number>>(new Set());
+  const [expandedEmployees, setExpandedEmployees] = useState<Set<string>>(new Set());
   const [showQRScanner, setShowQRScanner] = useState(false);
-  const [showBiometric, setShowBiometric] = useState<{show: boolean, employeeId: number, mode: 'register' | 'authenticate'}>({show: false, employeeId: 0, mode: 'register'});
-  const [showQRGenerator, setShowQRGenerator] = useState<{show: boolean, employee: Employee | null}>({show: false, employee: null});
-  const [showDocuments, setShowDocuments] = useState<{show: boolean, employee: Employee | null}>({show: false, employee: null});
+  const [showBiometric, setShowBiometric] = useState<{show: boolean, employeeId: string, mode: 'register' | 'authenticate'}>({show: false, employeeId: '', mode: 'register'});
+  const [showQRGenerator, setShowQRGenerator] = useState<{show: boolean, employee: DatabaseEmployee | null}>({show: false, employee: null});
+  const [showDocuments, setShowDocuments] = useState<{show: boolean, employee: DatabaseEmployee | null}>({show: false, employee: null});
   const [showSalaryCalculator, setShowSalaryCalculator] = useState(false);
   const [showLoanManagement, setShowLoanManagement] = useState(false);
   const [isAddingEmployee, setIsAddingEmployee] = useState(false);
+  
   const { toast } = useToast();
   const { t } = useTranslation();
   const { selectedBranch, branches, setSelectedBranch } = useBranch();
   const { userProfile } = useAuth();
   const { data: allRoles = [] } = useRoles();
+  
+  // Use the new hook to fetch employees from Supabase
+  const {
+    employees,
+    isLoading,
+    todaySessions,
+    dailySummaries,
+    isEmployeeCheckedIn,
+    getCurrentSession,
+    checkIn,
+    checkOut,
+    updateEmployee,
+    deleteEmployee,
+  } = useEmployees(selectedBranch?.id);
 
-  // Fetch real employees from Supabase for loan management
-  const { data: supabaseEmployees = [] } = useQuery({
-    queryKey: ['employees-for-loans', selectedBranch?.id],
-    queryFn: async () => {
-      if (!selectedBranch?.id) return [];
-      const { data, error } = await supabase
-        .from('employees')
-        .select('id, first_name, last_name, salary, hourly_rate, branch_id')
-        .eq('branch_id', selectedBranch.id)
-        .eq('is_active', true);
-      if (error) throw error;
-      return data as SupabaseEmployee[];
-    },
-    enabled: !!selectedBranch?.id && showLoanManagement,
-  });
-
+  // Filter roles to only show roles below the current user's hierarchy level
   const availableRoles = useMemo(() => {
     const currentUserRole = userProfile?.primary_role || 'Employee';
     const currentUserHierarchy = getRoleHierarchy(currentUserRole, allRoles);
@@ -236,18 +92,37 @@ export const Employees = () => {
   const form = useForm<EmployeeFormData>();
   const salaryForm = useForm<SalaryFormData>();
 
-  const filteredEmployees = employees.filter(employee =>
-    employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    employee.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    employee.phone.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter employees based on search term
+  const filteredEmployees = useMemo(() => {
+    return employees.filter(employee => {
+      const fullName = `${employee.first_name} ${employee.last_name}`.toLowerCase();
+      const search = searchTerm.toLowerCase();
+      return fullName.includes(search) ||
+        employee.position?.toLowerCase().includes(search) ||
+        employee.email?.toLowerCase().includes(search) ||
+        employee.phone?.toLowerCase().includes(search);
+    });
+  }, [employees, searchTerm]);
 
-  const calculateHourlyRate = (employee: Employee) => {
-    const totalMonthlyHours = employee.workingDaysPerMonth * employee.workingHoursPerDay;
-    return employee.monthlySalary / totalMonthlyHours;
+  // Get display name for an employee
+  const getEmployeeName = (employee: DatabaseEmployee) => {
+    return `${employee.first_name} ${employee.last_name}`.trim();
   };
 
-  const toggleEmployeeExpansion = (employeeId: number) => {
+  // Calculate hourly rate from salary
+  const calculateHourlyRate = (employee: DatabaseEmployee) => {
+    if (employee.hourly_rate) return employee.hourly_rate;
+    if (employee.salary) return employee.salary / (22 * 8); // Assume 22 days, 8 hours
+    return 0;
+  };
+
+  // Get today's summary for an employee
+  const getTodaySummary = (employeeId: string) => {
+    const today = new Date().toISOString().split('T')[0];
+    return dailySummaries.find(s => s.employee_id === employeeId && s.work_date === today);
+  };
+
+  const toggleEmployeeExpansion = (employeeId: string) => {
     const newExpanded = new Set(expandedEmployees);
     if (newExpanded.has(employeeId)) {
       newExpanded.delete(employeeId);
@@ -257,87 +132,15 @@ export const Employees = () => {
     setExpandedEmployees(newExpanded);
   };
 
-  const handleCheckIn = (employeeId: number) => {
-    const now = new Date();
-    const timeString = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    
-    setEmployees(prev => prev.map(emp => 
-      emp.id === employeeId 
-        ? { ...emp, isCheckedIn: true, checkInTime: timeString }
-        : emp
-    ));
-    
-    toast({ title: t('employeesPage.checkedInSuccess') });
+  const handleCheckIn = (employeeId: string) => {
+    if (!selectedBranch?.id) return;
+    checkIn.mutate({ employeeId, branchId: selectedBranch.id });
   };
 
-  const handleCheckOut = (employeeId: number) => {
-    const now = new Date();
-    const timeString = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    const dateString = now.toISOString().split('T')[0];
-    
-    setEmployees(prev => prev.map(emp => {
-      if (emp.id === employeeId && emp.checkInTime) {
-        const checkInTime = new Date(`1970/01/01 ${emp.checkInTime}`);
-        const checkOutTime = new Date(`1970/01/01 ${timeString}`);
-        const hoursWorked = (checkOutTime.getTime() - checkInTime.getTime()) / (1000 * 60 * 60);
-        const hourlyRate = calculateHourlyRate(emp);
-        const sessionEarnings = hoursWorked * hourlyRate;
-        
-        const newSession: WorkSession = {
-          checkInTime: emp.checkInTime,
-          checkOutTime: timeString,
-          hoursWorked: hoursWorked,
-          earnings: sessionEarnings
-        };
-
-        // Find or create work day for today
-        const existingDayIndex = emp.workDays.findIndex(day => day.date === dateString);
-        let updatedWorkDays;
-        
-        if (existingDayIndex >= 0) {
-          // Add session to existing day
-          const existingDay = emp.workDays[existingDayIndex];
-          const updatedSessions = [...existingDay.sessions, newSession];
-          const totalHours = updatedSessions.reduce((sum, session) => sum + session.hoursWorked, 0);
-          const totalEarnings = updatedSessions.reduce((sum, session) => sum + session.earnings, 0);
-          
-          updatedWorkDays = [...emp.workDays];
-          updatedWorkDays[existingDayIndex] = {
-            ...existingDay,
-            sessions: updatedSessions,
-            totalHours,
-            totalEarnings
-          };
-        } else {
-          // Create new work day
-          const newWorkDay: WorkDay = {
-            date: dateString,
-            sessions: [newSession],
-            totalHours: hoursWorked,
-            totalEarnings: sessionEarnings
-          };
-          updatedWorkDays = [...emp.workDays, newWorkDay];
-        }
-        
-        // Calculate cumulative daily hours and earnings for today
-        const todayWorkDay = updatedWorkDays.find(day => day.date === dateString);
-        const cumulativeDailyHours = todayWorkDay ? todayWorkDay.totalHours : 0;
-        const cumulativeTodayEarnings = todayWorkDay ? todayWorkDay.totalEarnings : 0;
-        
-        return {
-          ...emp,
-          isCheckedIn: false,
-          checkOutTime: timeString,
-          dailyHours: cumulativeDailyHours,
-          todayEarnings: cumulativeTodayEarnings,
-          actualHoursWorked: emp.actualHoursWorked + hoursWorked,
-          workDays: updatedWorkDays
-        };
-      }
-      return emp;
-    }));
-    
-    toast({ title: t('employeesPage.checkedOutSuccess') });
+  const handleCheckOut = (employeeId: string) => {
+    const session = getCurrentSession(employeeId);
+    if (!session) return;
+    checkOut.mutate({ sessionId: session.id });
   };
 
   const handleAddEmployee = async (data: EmployeeFormData) => {
@@ -353,7 +156,6 @@ export const Employees = () => {
 
     setIsAddingEmployee(true);
     try {
-      // Create auth user via edge function
       const nameParts = data.name.trim().split(' ');
       const firstName = nameParts[0] || data.name;
       const lastName = nameParts.slice(1).join(' ') || '';
@@ -365,32 +167,15 @@ export const Employees = () => {
           first_name: firstName,
           last_name: lastName,
           role: data.role || 'Employee',
-          branch_id: data.branch_id || selectedBranch?.id || null
+          branch_id: data.branch_id || selectedBranch?.id || null,
+          salary: data.monthlySalary || null,
+          phone: data.phone || null,
         }
       });
 
       if (error) throw error;
       if (result?.error) throw new Error(result.error);
 
-      // Also add to local state for immediate UI update
-      const newEmployee: Employee = {
-        id: Math.max(...employees.map(e => e.id), 0) + 1,
-        ...data,
-        status: "Active",
-        hireDate: new Date().toISOString().split('T')[0],
-        actualHoursWorked: 0,
-        currentMonthHours: data.workingDaysPerMonth * data.workingHoursPerDay,
-        isCheckedIn: false,
-        documents: [],
-        qrCode: `QR${String(Math.max(...employees.map(e => e.id), 0) + 1).padStart(3, '0')}-${data.name.toUpperCase().replace(' ', '-')}`,
-        fingerprintId: `FP${String(Math.max(...employees.map(e => e.id), 0) + 1).padStart(3, '0')}-${data.name.split(' ').map(n => n[0]).join('')}`,
-        dailyHours: 0,
-        todayEarnings: 0,
-        biometricRegistered: false,
-        workDays: []
-      };
-
-      setEmployees(prev => [...prev, newEmployee]);
       setIsAddDialogOpen(false);
       form.reset();
       toast({ title: t('employeesPage.employeeAdded'), description: `${data.email} can now login with their password.` });
@@ -405,62 +190,64 @@ export const Employees = () => {
   const handleEditEmployee = (data: EmployeeFormData) => {
     if (!selectedEmployee) return;
 
-    setEmployees(prev => prev.map(emp => 
-      emp.id === selectedEmployee.id 
-        ? { 
-            ...emp, 
-            ...data,
-            currentMonthHours: data.workingDaysPerMonth * data.workingHoursPerDay
-          }
-        : emp
-    ));
+    const nameParts = data.name.trim().split(' ');
+    const firstName = nameParts[0] || data.name;
+    const lastName = nameParts.slice(1).join(' ') || '';
+
+    updateEmployee.mutate({
+      id: selectedEmployee.id,
+      first_name: firstName,
+      last_name: lastName,
+      email: data.email,
+      phone: data.phone,
+      position: data.role,
+      salary: data.monthlySalary,
+    });
 
     setIsDialogOpen(false);
     setSelectedEmployee(null);
     form.reset();
-    toast({ title: t('employeesPage.employeeUpdated') });
   };
 
-  const handleDeleteEmployee = (employeeId: number) => {
-    setEmployees(prev => prev.filter(emp => emp.id !== employeeId));
-    toast({ title: t('employeesPage.employeeDeleted') });
+  const handleDeleteEmployee = (employeeId: string) => {
+    deleteEmployee.mutate(employeeId);
   };
 
   const handleSalaryUpdate = (data: SalaryFormData) => {
     if (!selectedEmployee) return;
 
-    setEmployees(prev => prev.map(emp => 
-      emp.id === selectedEmployee.id 
-        ? { 
-            ...emp, 
-            ...data,
-            currentMonthHours: data.workingDaysPerMonth * data.workingHoursPerDay
-          }
-        : emp
-    ));
+    updateEmployee.mutate({
+      id: selectedEmployee.id,
+      salary: data.monthlySalary,
+      hourly_rate: data.hourlyRate,
+    });
 
-    toast({ title: `Salary updated for ${selectedEmployee.name}` });
     setIsSalaryDialogOpen(false);
     setSelectedEmployee(null);
     salaryForm.reset();
   };
 
-  const openEditDialog = (employee: Employee) => {
+  const openEditDialog = (employee: DatabaseEmployee) => {
     setSelectedEmployee(employee);
-    form.setValue("name", employee.name);
-    form.setValue("email", employee.email);
-    form.setValue("role", employee.role);
-    form.setValue("phone", employee.phone);
-    form.setValue("monthlySalary", employee.monthlySalary);
-    form.setValue("workingDaysPerMonth", employee.workingDaysPerMonth);
-    form.setValue("workingHoursPerDay", employee.workingHoursPerDay);
+    form.setValue("name", getEmployeeName(employee));
+    form.setValue("email", employee.email || '');
+    form.setValue("role", employee.position);
+    form.setValue("phone", employee.phone || '');
+    form.setValue("monthlySalary", employee.salary || 0);
     setIsDialogOpen(true);
+  };
+
+  const openSalaryDialog = (employee: DatabaseEmployee) => {
+    setSelectedEmployee(employee);
+    salaryForm.setValue("monthlySalary", employee.salary || 0);
+    salaryForm.setValue("hourlyRate", employee.hourly_rate || 0);
+    setIsSalaryDialogOpen(true);
   };
 
   const handleQRScan = (employeeData: any) => {
     const employee = employees.find(emp => emp.id === employeeData.employeeId);
     if (employee) {
-      if (employee.isCheckedIn) {
+      if (isEmployeeCheckedIn(employee.id)) {
         handleCheckOut(employee.id);
       } else {
         handleCheckIn(employee.id);
@@ -475,69 +262,64 @@ export const Employees = () => {
     setShowQRScanner(false);
   };
 
-  const handleBiometricAuth = (employeeId: number) => {
-    const employee = employees.find(emp => emp.id === employeeId);
-    if (employee) {
-      if (showBiometric.mode === 'register') {
-        // Register biometric
-        setEmployees(prev => prev.map(emp => 
-          emp.id === employeeId 
-            ? { ...emp, biometricRegistered: true }
-            : emp
-        ));
+  const handleBiometricAuth = (employeeId: string) => {
+    if (showBiometric.mode === 'authenticate') {
+      if (isEmployeeCheckedIn(employeeId)) {
+        handleCheckOut(employeeId);
       } else {
-        // Authenticate and check in/out
-        if (employee.isCheckedIn) {
-          handleCheckOut(employee.id);
-        } else {
-          handleCheckIn(employee.id);
-        }
+        handleCheckIn(employeeId);
       }
     }
-    setShowBiometric({show: false, employeeId: 0, mode: 'register'});
+    setShowBiometric({show: false, employeeId: '', mode: 'register'});
   };
 
-  const handleFileUpload = (employeeId: number, files: FileList | null) => {
-    if (!files) return;
-    
-    const newDocuments: string[] = [];
-    Array.from(files).forEach(file => {
-      if (file.type === 'application/pdf') {
-        // In a real implementation, you would upload to Supabase storage
-        // For now, we'll just store the filename
-        newDocuments.push(file.name);
-      }
-    });
-    
-    if (newDocuments.length > 0) {
-      setEmployees(prev => prev.map(emp => 
-        emp.id === employeeId 
-          ? { ...emp, documents: [...emp.documents, ...newDocuments] }
-          : emp
-      ));
-      toast({ title: `${newDocuments.length} ${t('employees.documentsUploaded')}` });
-    }
-  };
+  // Get employee summaries for salary calculator
+  const employeeSalaryData = useMemo(() => {
+    return employees.map(emp => ({
+      id: Number(emp.employee_number) || 0,
+      name: getEmployeeName(emp),
+      email: emp.email || '',
+      documents: [],
+      role: emp.position,
+      status: emp.is_active ? "Active" as const : "Inactive" as const,
+      phone: emp.phone || '',
+      hireDate: emp.hire_date,
+      monthlySalary: emp.salary || 0,
+      workingDaysPerMonth: 22,
+      workingHoursPerDay: 8,
+      actualHoursWorked: dailySummaries
+        .filter(s => s.employee_id === emp.id)
+        .reduce((sum, s) => sum + (s.total_hours || 0), 0),
+      currentMonthHours: 176,
+      isCheckedIn: isEmployeeCheckedIn(emp.id),
+      qrCode: `QR-${emp.id.slice(0, 8)}`,
+      fingerprintId: `FP-${emp.id.slice(0, 8)}`,
+      dailyHours: getTodaySummary(emp.id)?.total_hours || 0,
+      todayEarnings: getTodaySummary(emp.id)?.total_earnings || 0,
+      workDays: [],
+      biometricRegistered: false,
+    }));
+  }, [employees, dailySummaries]);
 
-  const removeDocument = (employeeId: number, documentIndex: number) => {
-    setEmployees(prev => prev.map(emp => 
-      emp.id === employeeId 
-        ? { 
-            ...emp, 
-            documents: emp.documents.filter((_, index) => index !== documentIndex) 
-          }
-        : emp
-    ));
-    toast({ title: t('employees.documentRemoved') });
-  };
-
-  const openSalaryDialog = (employee: Employee) => {
-    setSelectedEmployee(employee);
-    salaryForm.setValue("monthlySalary", employee.monthlySalary);
-    salaryForm.setValue("workingDaysPerMonth", employee.workingDaysPerMonth);
-    salaryForm.setValue("workingHoursPerDay", employee.workingHoursPerDay);
-    setIsSalaryDialogOpen(true);
-  };
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <Skeleton className="h-10 w-48" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <div className="grid gap-4">
+          {[1, 2, 3].map(i => (
+            <Card key={i} className="bg-gray-800 border-gray-700 p-6">
+              <Skeleton className="h-6 w-48 mb-4" />
+              <Skeleton className="h-4 w-full mb-2" />
+              <Skeleton className="h-4 w-3/4" />
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -587,6 +369,11 @@ export const Employees = () => {
             className="pl-10 bg-gray-700 border-gray-600"
           />
         </div>
+        {selectedBranch && (
+          <Badge variant="outline" className="text-sm">
+            Branch: {selectedBranch.name}
+          </Badge>
+        )}
       </div>
 
       {/* Loan Management */}
@@ -594,7 +381,7 @@ export const Employees = () => {
         selectedBranch ? (
           <LoanManagement 
             branchId={selectedBranch.id} 
-            employees={supabaseEmployees.map(e => ({
+            employees={employees.map(e => ({
               id: e.id,
               first_name: e.first_name,
               last_name: e.last_name,
@@ -628,238 +415,258 @@ export const Employees = () => {
 
       {/* Salary Calculator */}
       {showSalaryCalculator && (
-        <SalaryCalculator employees={employees} />
+        <SalaryCalculator employees={employeeSalaryData} />
       )}
 
-      <div className="grid gap-4">
-        {filteredEmployees.map((employee) => (
-          <Card key={employee.id} className="bg-gray-800 border-gray-700 p-6">
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <div className="flex items-center gap-4 mb-2">
-                  <h3 className="text-xl font-semibold text-white">{employee.name}</h3>
-                  <Badge className={employee.status === "Active" ? "bg-green-600" : "bg-red-600"}>
-                    {employee.status === "Active" ? t('employees.statusActive') : t('employees.statusInactive')}
-                  </Badge>
-                  <Badge className={employee.isCheckedIn ? "bg-blue-600" : "bg-gray-600"}>
-                    {employee.isCheckedIn ? t('employees.checkedIn') : t('employees.checkedOut')}
-                  </Badge>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4 text-gray-300 mb-4">
-                  <div>
-                    <p><strong>{t('employees.role')}:</strong> {employee.role}</p>
-                    <p><strong>{t('employees.phone')}:</strong> {employee.phone}</p>
-                    <p className="flex items-center gap-1">
-                      <Mail size={14} />
-                      <strong>Email:</strong> {employee.email || 'Not set'}
-                    </p>
-                    <p><strong>{t('employees.hireDate')}:</strong> {employee.hireDate}</p>
-                    <div className="mt-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setShowDocuments({ show: true, employee })}
-                        className="border-blue-600 text-blue-400 hover:bg-blue-600/20"
-                      >
-                        <FileText size={14} className="mr-1" />
-                        Manage Documents ({employee.documents.length})
-                      </Button>
-                    </div>
-                  </div>
-                  <div>
-                    <p><strong>Monthly Salary:</strong> ${employee.monthlySalary.toLocaleString()}</p>
-                    <p><strong>Hourly Rate:</strong> ${calculateHourlyRate(employee).toFixed(2)}</p>
-                    <p><strong>QR Code:</strong> {employee.qrCode}</p>
-                    <p><strong>Fingerprint ID:</strong> {employee.fingerprintId}</p>
-                  </div>
-                </div>
+      {/* Employee list */}
+      {filteredEmployees.length === 0 ? (
+        <Card className="bg-gray-800 border-gray-700 p-8 text-center">
+          <p className="text-gray-400 mb-4">
+            {employees.length === 0 
+              ? "No employees found for this branch. Add your first employee!" 
+              : "No employees match your search."}
+          </p>
+          {employees.length === 0 && (
+            <Button onClick={() => setIsAddDialogOpen(true)} className="bg-green-600 hover:bg-green-700">
+              <Plus size={16} className="mr-2" />
+              Add Employee
+            </Button>
+          )}
+        </Card>
+      ) : (
+        <div className="grid gap-4">
+          {filteredEmployees.map((employee) => {
+            const isCheckedIn = isEmployeeCheckedIn(employee.id);
+            const currentSession = getCurrentSession(employee.id);
+            const todaySummary = getTodaySummary(employee.id);
+            const hourlyRate = calculateHourlyRate(employee);
 
-                {/* Check In/Out Section */}
-                <div className="bg-gray-700 p-4 rounded-lg mb-4">
-                  <div className="grid grid-cols-4 gap-4 text-sm mb-3">
-                    <div>
-                      <p className="text-gray-400">{t('employees.checkInTime')}</p>
-                      <p className="text-white font-semibold">{employee.checkInTime || t('employees.notCheckedIn')}</p>
+            return (
+              <Card key={employee.id} className="bg-gray-800 border-gray-700 p-6">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-4 mb-2">
+                      <h3 className="text-xl font-semibold text-white">{getEmployeeName(employee)}</h3>
+                      <Badge className={employee.is_active ? "bg-green-600" : "bg-red-600"}>
+                        {employee.is_active ? t('employees.statusActive') : t('employees.statusInactive')}
+                      </Badge>
+                      <Badge className={isCheckedIn ? "bg-blue-600" : "bg-gray-600"}>
+                        {isCheckedIn ? t('employees.checkedIn') : t('employees.checkedOut')}
+                      </Badge>
                     </div>
-                    <div>
-                      <p className="text-gray-400">{t('employees.checkOutTime')}</p>
-                      <p className="text-white font-semibold">{employee.checkOutTime || t('employees.notCheckedOut')}</p>
+                    
+                    <div className="grid grid-cols-2 gap-4 text-gray-300 mb-4">
+                      <div>
+                        <p><strong>{t('employees.role')}:</strong> {employee.position}</p>
+                        <p><strong>{t('employees.phone')}:</strong> {employee.phone || 'Not set'}</p>
+                        <p className="flex items-center gap-1">
+                          <Mail size={14} />
+                          <strong>Email:</strong> {employee.email || 'Not set'}
+                        </p>
+                        <p><strong>{t('employees.hireDate')}:</strong> {format(new Date(employee.hire_date), 'MMM d, yyyy')}</p>
+                        <div className="mt-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setShowDocuments({ show: true, employee })}
+                            className="border-blue-600 text-blue-400 hover:bg-blue-600/20"
+                          >
+                            <FileText size={14} className="mr-1" />
+                            Manage Documents
+                          </Button>
+                        </div>
+                      </div>
+                      <div>
+                        <p><strong>Monthly Salary:</strong> ${(employee.salary || 0).toLocaleString()}</p>
+                        <p><strong>Hourly Rate:</strong> ${hourlyRate.toFixed(2)}</p>
+                        <p><strong>Employee #:</strong> {employee.employee_number}</p>
+                        <p><strong>Department:</strong> {employee.department || 'N/A'}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-gray-400">{t('employees.dailyHours')}</p>
-                      <p className="text-white font-semibold">{employee.dailyHours.toFixed(2)}h</p>
+
+                    {/* Check In/Out Section */}
+                    <div className="bg-gray-700 p-4 rounded-lg mb-4">
+                      <div className="grid grid-cols-4 gap-4 text-sm mb-3">
+                        <div>
+                          <p className="text-gray-400">{t('employees.checkInTime')}</p>
+                          <p className="text-white font-semibold">
+                            {currentSession 
+                              ? format(new Date(currentSession.check_in_time), 'hh:mm a')
+                              : t('employees.notCheckedIn')}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-gray-400">{t('employees.checkOutTime')}</p>
+                          <p className="text-white font-semibold">
+                            {currentSession?.check_out_time 
+                              ? format(new Date(currentSession.check_out_time), 'hh:mm a')
+                              : t('employees.notCheckedOut')}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-gray-400">{t('employees.dailyHours')}</p>
+                          <p className="text-white font-semibold">{(todaySummary?.total_hours || 0).toFixed(2)}h</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-400">{t('employees.todaysEarnings')}</p>
+                          <p className="text-green-400 font-semibold">${(todaySummary?.total_earnings || 0).toFixed(2)}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <Button 
+                          size="sm" 
+                          onClick={() => handleCheckIn(employee.id)}
+                          disabled={isCheckedIn || checkIn.isPending}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          <LogIn size={14} className="mr-1" />
+                          {t('employeesPage.checkIn')}
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          onClick={() => handleCheckOut(employee.id)}
+                          disabled={!isCheckedIn || checkOut.isPending}
+                          className="bg-red-600 hover:bg-red-700"
+                        >
+                          <LogOut size={14} className="mr-1" />
+                          {t('employeesPage.checkOut')}
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          onClick={() => setShowBiometric({show: true, employeeId: employee.id, mode: 'authenticate'})}
+                          className="bg-blue-600 hover:bg-blue-700"
+                        >
+                          <Fingerprint size={14} className="mr-1" />
+                          {t('employees.biometricAuth')}
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          onClick={() => setShowQRGenerator({show: true, employee})}
+                          className="bg-purple-600 hover:bg-purple-700"
+                        >
+                          <QrCode size={14} className="mr-1" />
+                          {t('employees.showQR')}
+                        </Button>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-gray-400">{t('employees.todaysEarnings')}</p>
-                      <p className="text-green-400 font-semibold">${employee.todayEarnings.toFixed(2)}</p>
+
+                    {/* Work History */}
+                    <Collapsible 
+                      open={expandedEmployees.has(employee.id)} 
+                      onOpenChange={() => toggleEmployeeExpansion(employee.id)}
+                    >
+                      <CollapsibleTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          className="w-full mb-4 border-gray-600 text-gray-300"
+                        >
+                          <Calendar size={16} className="mr-2" />
+                          {expandedEmployees.has(employee.id) ? t('common.close') : t('common.view')} {t('employeesPage.workingDays')}
+                        </Button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="mb-4">
+                        <div className="bg-gray-700 p-4 rounded-lg">
+                          <h4 className="text-white font-semibold mb-3">Work History</h4>
+                          {dailySummaries.filter(s => s.employee_id === employee.id).length > 0 ? (
+                            <Table>
+                              <TableHeader>
+                                <TableRow className="border-gray-600">
+                                  <TableHead className="text-gray-300">Date</TableHead>
+                                  <TableHead className="text-gray-300">Sessions</TableHead>
+                                  <TableHead className="text-gray-300">Total Hours</TableHead>
+                                  <TableHead className="text-gray-300">Total Earnings</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {dailySummaries
+                                  .filter(s => s.employee_id === employee.id)
+                                  .slice(0, 10)
+                                  .map((summary) => (
+                                    <TableRow key={summary.id} className="border-gray-600">
+                                      <TableCell className="text-white">
+                                        {format(new Date(summary.work_date), 'MMM d, yyyy')}
+                                      </TableCell>
+                                      <TableCell className="text-white">
+                                        {summary.session_count || 1} session(s)
+                                      </TableCell>
+                                      <TableCell className="text-white">{(summary.total_hours || 0).toFixed(2)}h</TableCell>
+                                      <TableCell className="text-green-400 font-semibold">
+                                        ${(summary.total_earnings || 0).toFixed(2)}
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                              </TableBody>
+                            </Table>
+                          ) : (
+                            <p className="text-gray-400 text-center py-4">No work history recorded</p>
+                          )}
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
+
+                    {/* Salary Summary */}
+                    <div className="bg-gray-700 p-4 rounded-lg">
+                      <div className="grid grid-cols-3 gap-4 text-sm">
+                        <div>
+                          <p className="text-gray-400">Monthly Salary</p>
+                          <p className="text-white font-semibold">${(employee.salary || 0).toLocaleString()}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-400">Total Hours (This Month)</p>
+                          <p className="text-white font-semibold">
+                            {dailySummaries
+                              .filter(s => s.employee_id === employee.id)
+                              .reduce((sum, s) => sum + (s.total_hours || 0), 0)
+                              .toFixed(2)}h
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-gray-400">Total Earnings</p>
+                          <p className="text-green-400 font-semibold">
+                            ${dailySummaries
+                              .filter(s => s.employee_id === employee.id)
+                              .reduce((sum, s) => sum + (s.total_earnings || 0), 0)
+                              .toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   
-                  <div className="flex gap-2">
-                    <Button 
-                      size="sm" 
-                      onClick={() => handleCheckIn(employee.id)}
-                      disabled={employee.isCheckedIn}
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      <LogIn size={14} className="mr-1" />
-                      {t('employeesPage.checkIn')}
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      onClick={() => handleCheckOut(employee.id)}
-                      disabled={!employee.isCheckedIn}
-                      className="bg-red-600 hover:bg-red-700"
-                    >
-                      <LogOut size={14} className="mr-1" />
-                      {t('employeesPage.checkOut')}
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      onClick={() => setShowBiometric({show: true, employeeId: employee.id, mode: employee.biometricRegistered ? 'authenticate' : 'register'})}
-                      className={employee.biometricRegistered ? "bg-blue-600 hover:bg-blue-700" : "bg-orange-600 hover:bg-orange-700"}
-                    >
-                      <Fingerprint size={14} className="mr-1" />
-                      {employee.biometricRegistered ? t('employees.biometricAuth') : t('employees.registerBiometric')}
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      onClick={() => setShowQRGenerator({show: true, employee})}
-                      className="bg-purple-600 hover:bg-purple-700"
-                    >
-                      <QrCode size={14} className="mr-1" />
-                      {t('employees.showQR')}
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Monthly Work Days Table */}
-                <Collapsible 
-                  open={expandedEmployees.has(employee.id)} 
-                  onOpenChange={() => toggleEmployeeExpansion(employee.id)}
-                >
-                  <CollapsibleTrigger asChild>
+                  <div className="flex flex-col gap-2 ml-4">
                     <Button 
                       variant="outline" 
-                      className="w-full mb-4 border-gray-600 text-gray-300"
+                      size="sm" 
+                      className="border-gray-600 text-gray-300"
+                      onClick={() => openSalaryDialog(employee)}
                     >
-                      <Calendar size={16} className="mr-2" />
-                      {expandedEmployees.has(employee.id) ? t('common.close') : t('common.view')} {t('employeesPage.workingDays')} ({employee.workDays.length} days)
+                      <DollarSign size={16} className="mr-1" />
+                      {t('employees.salary')}
                     </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="mb-4">
-                    <div className="bg-gray-700 p-4 rounded-lg">
-                      <h4 className="text-white font-semibold mb-3">Work Days - {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}</h4>
-                      {employee.workDays.length > 0 ? (
-                        <Table>
-                          <TableHeader>
-                            <TableRow className="border-gray-600">
-                              <TableHead className="text-gray-300">Date</TableHead>
-                              <TableHead className="text-gray-300">Sessions</TableHead>
-                              <TableHead className="text-gray-300">Total Hours</TableHead>
-                              <TableHead className="text-gray-300">Total Earnings</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {employee.workDays.map((workDay, index) => (
-                              <TableRow key={index} className="border-gray-600">
-                                <TableCell className="text-white">
-                                  {new Date(workDay.date).toLocaleDateString()}
-                                </TableCell>
-                                <TableCell className="text-white">
-                                  <div className="space-y-1">
-                                    {workDay.sessions.map((session, sessionIndex) => (
-                                      <div key={sessionIndex} className="text-sm">
-                                        {session.checkInTime} - {session.checkOutTime} 
-                                        <span className="text-gray-400 ml-2">
-                                          ({session.hoursWorked.toFixed(2)}h, ${session.earnings.toFixed(2)})
-                                        </span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </TableCell>
-                                <TableCell className="text-white">{workDay.totalHours.toFixed(2)}h</TableCell>
-                                <TableCell className="text-green-400 font-semibold">
-                                  ${workDay.totalEarnings.toFixed(2)}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      ) : (
-                        <p className="text-gray-400 text-center py-4">No work days recorded this month</p>
-                      )}
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-
-                {/* Salary Calculation Section */}
-                <div className="bg-gray-700 p-4 rounded-lg">
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <p className="text-gray-400">Expected Monthly Hours</p>
-                      <p className="text-white font-semibold">{employee.currentMonthHours}h</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-400">Total Hours Worked</p>
-                      <p className="text-white font-semibold">{employee.actualHoursWorked.toFixed(2)}h</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-400">Estimated Salary</p>
-                      <p className="text-green-400 font-semibold">
-                        ${(calculateHourlyRate(employee) * employee.actualHoursWorked).toFixed(2)}
-                      </p>
-                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="border-gray-600 text-gray-300"
+                      onClick={() => openEditDialog(employee)}
+                    >
+                      <Edit size={16} />
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="border-gray-600 text-gray-300"
+                      onClick={() => handleDeleteEmployee(employee.id)}
+                    >
+                      <Trash2 size={16} />
+                    </Button>
                   </div>
                 </div>
-              </div>
-              
-              <div className="flex flex-col gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="border-gray-600 text-gray-300"
-                  onClick={() => openSalaryDialog(employee)}
-                >
-                  <DollarSign size={16} className="mr-1" />
-                  {t('employees.salary')}
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="border-gray-600 text-gray-300"
-                  onClick={() => openEditDialog(employee)}
-                >
-                  <Edit size={16} />
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="border-gray-600 text-gray-300"
-                  onClick={() => handleDeleteEmployee(employee.id)}
-                >
-                  <Trash2 size={16} />
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="border-gray-600 text-gray-300"
-                >
-                  <QrCode size={16} />
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="border-gray-600 text-gray-300"
-                >
-                  <Fingerprint size={16} />
-                </Button>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
 
       {/* Add Employee Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
@@ -1026,7 +833,7 @@ export const Employees = () => {
         <DialogContent className="bg-gray-800 border-gray-700">
           <DialogHeader>
             <DialogTitle className="text-white">
-              Edit Employee - {selectedEmployee?.name}
+              Edit Employee - {selectedEmployee ? getEmployeeName(selectedEmployee) : ''}
             </DialogTitle>
           </DialogHeader>
           
@@ -1053,7 +860,7 @@ export const Employees = () => {
                   <FormItem>
                     <FormLabel className="text-gray-300">Email</FormLabel>
                     <FormControl>
-                      <Input {...field} type="email" placeholder="employee@example.com" className="bg-gray-700 border-gray-600 text-white" />
+                      <Input {...field} type="email" className="bg-gray-700 border-gray-600 text-white" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -1065,21 +872,10 @@ export const Employees = () => {
                 name="role"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-300">Role</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || 'Employee'}>
-                      <FormControl>
-                        <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                          <SelectValue placeholder="Select a role" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent className="bg-gray-700 border-gray-600">
-                        {availableRoles.map((role) => (
-                          <SelectItem key={role.value} value={role.value} className="text-white hover:bg-gray-600">
-                            {role.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormLabel className="text-gray-300">Role/Position</FormLabel>
+                    <FormControl>
+                      <Input {...field} className="bg-gray-700 border-gray-600 text-white" />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -1118,47 +914,9 @@ export const Employees = () => {
                 )}
               />
               
-              <FormField
-                control={form.control}
-                name="workingDaysPerMonth"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-gray-300">Working Days per Month</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                        className="bg-gray-700 border-gray-600 text-white"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="workingHoursPerDay"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-gray-300">Working Hours per Day</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                        className="bg-gray-700 border-gray-600 text-white"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
               <div className="flex gap-2">
-                <Button type="submit" className="bg-green-600 hover:bg-green-700">
-                  Update Employee
+                <Button type="submit" className="bg-green-600 hover:bg-green-700" disabled={updateEmployee.isPending}>
+                  {updateEmployee.isPending ? "Updating..." : "Update Employee"}
                 </Button>
                 <Button 
                   type="button" 
@@ -1178,7 +936,7 @@ export const Employees = () => {
         <DialogContent className="bg-gray-800 border-gray-700">
           <DialogHeader>
             <DialogTitle className="text-white">
-              Configure Salary - {selectedEmployee?.name}
+              Configure Salary - {selectedEmployee ? getEmployeeName(selectedEmployee) : ''}
             </DialogTitle>
           </DialogHeader>
           
@@ -1206,34 +964,14 @@ export const Employees = () => {
               
               <FormField
                 control={salaryForm.control}
-                name="workingDaysPerMonth"
+                name="hourlyRate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-300">Working Days per Month</FormLabel>
+                    <FormLabel className="text-gray-300">Hourly Rate ($)</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
-                        placeholder="22"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                        className="bg-gray-700 border-gray-600 text-white"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={salaryForm.control}
-                name="workingHoursPerDay"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-gray-300">Working Hours per Day</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="8"
+                        placeholder="25"
                         {...field}
                         onChange={(e) => field.onChange(Number(e.target.value))}
                         className="bg-gray-700 border-gray-600 text-white"
@@ -1245,8 +983,8 @@ export const Employees = () => {
               />
               
               <div className="flex gap-2">
-                <Button type="submit" className="bg-green-600 hover:bg-green-700">
-                  Update Salary
+                <Button type="submit" className="bg-green-600 hover:bg-green-700" disabled={updateEmployee.isPending}>
+                  {updateEmployee.isPending ? "Updating..." : "Update Salary"}
                 </Button>
                 <Button 
                   type="button" 
@@ -1279,10 +1017,12 @@ export const Employees = () => {
           <div className="bg-gray-900 p-6 rounded-lg max-w-md w-full mx-4">
             <BiometricAuth 
               employeeId={showBiometric.employeeId}
-              employeeName={employees.find(emp => emp.id === showBiometric.employeeId)?.name || ''}
+              employeeName={employees.find(emp => emp.id === showBiometric.employeeId) 
+                ? getEmployeeName(employees.find(emp => emp.id === showBiometric.employeeId)!) 
+                : ''}
               mode={showBiometric.mode}
-              onAuthSuccess={handleBiometricAuth}
-              onClose={() => setShowBiometric({show: false, employeeId: 0, mode: 'register'})}
+              onAuthSuccess={() => handleBiometricAuth(showBiometric.employeeId)}
+              onClose={() => setShowBiometric({show: false, employeeId: '', mode: 'register'})}
             />
           </div>
         </div>
@@ -1305,8 +1045,8 @@ export const Employees = () => {
             </div>
             <QRCodeGenerator 
               employeeId={showQRGenerator.employee.id}
-              employeeName={showQRGenerator.employee.name}
-              qrCodeData={showQRGenerator.employee.qrCode}
+              employeeName={getEmployeeName(showQRGenerator.employee)}
+              qrCodeData={`QR-${showQRGenerator.employee.id}`}
             />
           </div>
         </div>
@@ -1315,11 +1055,11 @@ export const Employees = () => {
       {/* Documents Manager Modal */}
       {showDocuments.show && showDocuments.employee && (
         <EmployeeDocumentsManager
-          employeeId={String(showDocuments.employee.id)}
-          branchId={selectedBranch?.id || 'default'}
+          employeeId={showDocuments.employee.id}
+          branchId={selectedBranch?.id || showDocuments.employee.branch_id}
           isOpen={showDocuments.show}
           onClose={() => setShowDocuments({ show: false, employee: null })}
-          employeeName={showDocuments.employee.name}
+          employeeName={getEmployeeName(showDocuments.employee)}
         />
       )}
     </div>
