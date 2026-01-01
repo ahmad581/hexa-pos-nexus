@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Plus, Edit, Trash2, Search, DollarSign, Clock, QrCode, Fingerprint, LogIn, LogOut, Calendar, Upload, FileText, Scan, X, Mail, Calculator, Wallet, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,16 @@ import { useBranch } from "@/contexts/BranchContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useRoles, getRoleHierarchy } from "@/hooks/useRoles";
+import { useQuery } from "@tanstack/react-query";
+
+interface SupabaseEmployee {
+  id: string;
+  first_name: string;
+  last_name: string;
+  salary: number | null;
+  hourly_rate: number | null;
+  branch_id: string;
+}
 
 interface WorkSession {
   checkInTime: string;
@@ -195,7 +205,22 @@ export const Employees = () => {
   const { userProfile } = useAuth();
   const { data: allRoles = [] } = useRoles();
 
-  // Filter roles to only show roles below the current user's hierarchy level
+  // Fetch real employees from Supabase for loan management
+  const { data: supabaseEmployees = [] } = useQuery({
+    queryKey: ['employees-for-loans', selectedBranch?.id],
+    queryFn: async () => {
+      if (!selectedBranch?.id) return [];
+      const { data, error } = await supabase
+        .from('employees')
+        .select('id, first_name, last_name, salary, hourly_rate, branch_id')
+        .eq('branch_id', selectedBranch.id)
+        .eq('is_active', true);
+      if (error) throw error;
+      return data as SupabaseEmployee[];
+    },
+    enabled: !!selectedBranch?.id && showLoanManagement,
+  });
+
   const availableRoles = useMemo(() => {
     const currentUserRole = userProfile?.primary_role || 'Employee';
     const currentUserHierarchy = getRoleHierarchy(currentUserRole, allRoles);
@@ -569,11 +594,12 @@ export const Employees = () => {
         selectedBranch ? (
           <LoanManagement 
             branchId={selectedBranch.id} 
-            employees={employees.map(e => ({
-              id: String(e.id),
-              first_name: e.name.split(' ')[0],
-              last_name: e.name.split(' ').slice(1).join(' ') || '',
-              salary: e.monthlySalary,
+            employees={supabaseEmployees.map(e => ({
+              id: e.id,
+              first_name: e.first_name,
+              last_name: e.last_name,
+              salary: e.salary ?? undefined,
+              hourly_rate: e.hourly_rate ?? undefined,
             }))} 
           />
         ) : (
