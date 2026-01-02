@@ -167,6 +167,7 @@ export const Employees = () => {
           first_name: firstName,
           last_name: lastName,
           role: data.role || 'Employee',
+          business_id: userProfile.business_id,
           branch_id: data.branch_id || selectedBranch?.id || null,
           salary: data.monthlySalary || null,
           phone: data.phone || null,
