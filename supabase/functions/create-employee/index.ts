@@ -31,12 +31,21 @@ serve(async (req) => {
       last_name, 
       role, 
       business_id, 
-      branch_id 
+      branch_id,
+      position,
+      salary,
+      hourly_rate,
+      phone
     } = await req.json()
 
     // Validate required fields
     if (!email || !password || !first_name || !role || !business_id) {
       throw new Error('Missing required fields: email, password, first_name, role, and business_id are required')
+    }
+
+    // branch_id is required for employee creation
+    if (!branch_id) {
+      throw new Error('Branch is required to create an employee')
     }
 
     // Validate role is a valid app_role
@@ -97,11 +106,42 @@ serve(async (req) => {
       throw roleError
     }
 
+    // 4. Create employee record in the employees table
+    // Generate employee number (timestamp-based for uniqueness)
+    const employeeNumber = `EMP-${Date.now().toString().slice(-8)}`
+    
+    const { data: employee, error: employeeError } = await supabaseAdmin
+      .from('employees')
+      .insert({
+        employee_number: employeeNumber,
+        first_name,
+        last_name: last_name || '',
+        email: normalizedEmail,
+        phone: phone || null,
+        position: position || role,
+        branch_id,
+        hire_date: new Date().toISOString().split('T')[0],
+        salary: salary || null,
+        hourly_rate: hourly_rate || null,
+        is_active: true,
+      })
+      .select()
+      .single()
+
+    if (employeeError) {
+      // If employee creation fails, clean up everything
+      await supabaseAdmin.from('user_roles').delete().eq('user_id', authData.user.id)
+      await supabaseAdmin.from('profiles').delete().eq('id', profile.id)
+      await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
+      throw employeeError
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
         user: authData.user,
-        profile
+        profile,
+        employee
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
