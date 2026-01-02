@@ -69,7 +69,8 @@ export const ClientManagement = ({ clients, isLoading }: { clients: Client[], is
     first_name: "",
     last_name: "",
     role: "Employee",
-    password: ""
+    password: "",
+    branch_id: ""
   });
   const [newBranch, setNewBranch] = useState({
     name: "",
@@ -304,6 +305,8 @@ export const ClientManagement = ({ clients, isLoading }: { clients: Client[], is
     mutationFn: async () => {
       if (!selectedClient || !clientBusiness) throw new Error("No client selected");
       
+      if (!newEmployee.branch_id) throw new Error("Please select a branch");
+      
       // Create employee auth user and link to client's business
       const { data, error } = await supabase.functions.invoke('create-employee', {
         body: {
@@ -312,7 +315,8 @@ export const ClientManagement = ({ clients, isLoading }: { clients: Client[], is
           first_name: newEmployee.first_name,
           last_name: newEmployee.last_name,
           role: newEmployee.role,
-          business_id: clientBusiness.id
+          business_id: clientBusiness.id,
+          branch_id: newEmployee.branch_id
         }
       });
 
@@ -324,7 +328,7 @@ export const ClientManagement = ({ clients, isLoading }: { clients: Client[], is
       toast.success("Employee added successfully! They can now login with their email and password.");
       queryClient.invalidateQueries({ queryKey: ['client-employees'] });
       setShowEmployeeDialog(false);
-      setNewEmployee({ email: "", first_name: "", last_name: "", role: "Employee", password: "" });
+      setNewEmployee({ email: "", first_name: "", last_name: "", role: "Employee", password: "", branch_id: "" });
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to add employee");
@@ -851,6 +855,24 @@ export const ClientManagement = ({ clients, isLoading }: { clients: Client[], is
                 </SelectContent>
               </Select>
             </div>
+            <div className="grid gap-2">
+              <Label htmlFor="emp-branch">Branch *</Label>
+              <Select value={newEmployee.branch_id} onValueChange={(value) => setNewEmployee(prev => ({ ...prev, branch_id: value }))}>
+                <SelectTrigger id="emp-branch">
+                  <SelectValue placeholder="Select a branch" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clientBranches.map((branch: any) => (
+                    <SelectItem key={branch.id} value={branch.id}>
+                      {branch.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {clientBranches.length === 0 && (
+                <p className="text-sm text-muted-foreground">No branches available. Please add a branch first.</p>
+              )}
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowEmployeeDialog(false)}>
@@ -858,7 +880,7 @@ export const ClientManagement = ({ clients, isLoading }: { clients: Client[], is
             </Button>
             <Button 
               onClick={() => addEmployeeMutation.mutate()}
-              disabled={addEmployeeMutation.isPending || !newEmployee.email || !newEmployee.first_name || !newEmployee.last_name || !newEmployee.password}
+              disabled={addEmployeeMutation.isPending || !newEmployee.email || !newEmployee.first_name || !newEmployee.last_name || !newEmployee.password || !newEmployee.branch_id}
             >
               {addEmployeeMutation.isPending ? "Adding..." : "Add Employee"}
             </Button>
