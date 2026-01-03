@@ -364,8 +364,8 @@ export const Employees = () => {
         </div>
       </div>
 
-      <div className="flex gap-4 items-center">
-        <div className="relative flex-1 max-w-md">
+      <div className="flex flex-wrap gap-4 items-center">
+        <div className="relative flex-1 max-w-md min-w-[240px]">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
           <Input
             placeholder={t('employeesPage.searchEmployees')}
@@ -374,6 +374,28 @@ export const Employees = () => {
             className="pl-10 bg-gray-700 border-gray-600"
           />
         </div>
+
+        <Select
+          value={selectedBranch?.id ?? undefined}
+          onValueChange={(value) => {
+            const branch = branches.find((b) => b.id === value);
+            if (branch) setSelectedBranch(branch);
+          }}
+        >
+          <SelectTrigger className="w-56 bg-gray-700 border-gray-600 text-white">
+            <SelectValue placeholder="Select branch" />
+          </SelectTrigger>
+          <SelectContent className="bg-gray-700 border-gray-600">
+            {branches
+              .filter((b) => b.isActive)
+              .map((branch) => (
+                <SelectItem key={branch.id} value={branch.id} className="text-white hover:bg-gray-600">
+                  {branch.name}
+                </SelectItem>
+              ))}
+          </SelectContent>
+        </Select>
+
         {selectedBranch && (
           <Badge variant="outline" className="text-sm">
             Branch: {selectedBranch.name}
