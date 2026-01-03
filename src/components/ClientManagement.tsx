@@ -27,11 +27,11 @@ interface Client {
 
 interface ClientEmployee {
   id: string;
-  email: string;
+  email: string | null;
   first_name: string;
   last_name: string;
-  primary_role: string;
-  branch_id: string | null;
+  position: string;
+  branch_id: string;
   is_active: boolean;
 }
 
@@ -92,18 +92,28 @@ export const ClientManagement = ({ clients, isLoading }: { clients: Client[], is
     enabled: !!selectedClient
   });
 
-  // Fetch employees for selected client
+  // Fetch employees for selected client from the employees table
   const { data: clientEmployees = [] } = useQuery({
     queryKey: ['client-employees', clientBusiness?.id],
     queryFn: async () => {
       if (!clientBusiness) return [];
 
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('*')
+      // Get branches for this business first
+      const { data: branches } = await supabase
+        .from('branches')
+        .select('id')
         .eq('business_id', clientBusiness.id);
+      
+      if (!branches || branches.length === 0) return [];
+      
+      const branchIds = branches.map(b => b.id);
+      
+      const { data: employees } = await supabase
+        .from('employees')
+        .select('id, email, first_name, last_name, position, branch_id, is_active')
+        .in('branch_id', branchIds);
 
-      return profiles as ClientEmployee[];
+      return (employees || []) as ClientEmployee[];
     },
     enabled: !!clientBusiness
   });
@@ -374,7 +384,7 @@ export const ClientManagement = ({ clients, isLoading }: { clients: Client[], is
   const toggleEmployeeStatusMutation = useMutation({
     mutationFn: async ({ employeeId, currentStatus }: { employeeId: string; currentStatus: boolean }) => {
       const { error } = await supabase
-        .from('profiles')
+        .from('employees')
         .update({ is_active: !currentStatus })
         .eq('id', employeeId);
 
@@ -383,6 +393,7 @@ export const ClientManagement = ({ clients, isLoading }: { clients: Client[], is
     onSuccess: () => {
       toast.success("Employee status updated!");
       queryClient.invalidateQueries({ queryKey: ['client-employees'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to update employee status");
@@ -554,7 +565,7 @@ export const ClientManagement = ({ clients, isLoading }: { clients: Client[], is
                           <p className="text-sm text-muted-foreground">{employee.email}</p>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Badge variant="secondary">{employee.primary_role}</Badge>
+                          <Badge variant="secondary">{employee.position}</Badge>
                           <Badge variant={employee.is_active ? "default" : "secondary"}>
                             {employee.is_active ? "Active" : "Inactive"}
                           </Badge>
@@ -638,7 +649,7 @@ export const ClientManagement = ({ clients, isLoading }: { clients: Client[], is
                         <div>
                           <p className="font-medium">{role.label}</p>
                           <p className="text-sm text-muted-foreground">
-                            {clientEmployees.filter(e => e.primary_role === role.value).length} employee(s)
+                            {clientEmployees.filter(e => e.position === role.value).length} employee(s)
                           </p>
                         </div>
                         <Button 
