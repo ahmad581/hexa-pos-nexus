@@ -327,6 +327,7 @@ export const ClientManagement = ({ clients, isLoading }: { clients: Client[], is
     onSuccess: () => {
       toast.success("Employee added successfully! They can now login with their email and password.");
       queryClient.invalidateQueries({ queryKey: ['client-employees'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
       setShowEmployeeDialog(false);
       setNewEmployee({ email: "", first_name: "", last_name: "", role: "Employee", password: "", branch_id: "" });
     },
