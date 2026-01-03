@@ -25,6 +25,7 @@ import { useRoles, getRoleHierarchy } from "@/hooks/useRoles";
 import { useEmployees, DatabaseEmployee } from "@/hooks/useEmployees";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
+import { useQueryClient } from '@tanstack/react-query';
 
 interface EmployeeFormData {
   name: string;
@@ -61,6 +62,7 @@ export const Employees = () => {
   const { selectedBranch, branches, setSelectedBranch } = useBranch();
   const { userProfile } = useAuth();
   const { data: allRoles = [] } = useRoles();
+  const queryClient = useQueryClient();
   
   // Use the new hook to fetch employees from Supabase
   const {
@@ -179,6 +181,8 @@ export const Employees = () => {
 
       setIsAddDialogOpen(false);
       form.reset();
+      // Invalidate queries to refetch employees
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
       toast({ title: t('employeesPage.employeeAdded'), description: `${data.email} can now login with their password.` });
     } catch (error: any) {
       console.error('Error creating employee:', error);
