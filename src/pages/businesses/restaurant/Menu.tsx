@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { PhoneOff } from "lucide-react";
+import { PhoneOff, FileText, Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useOrder } from "@/contexts/OrderContext";
 import { useCall } from "@/contexts/CallContext";
 import { useToast } from "@/hooks/use-toast";
@@ -15,6 +16,7 @@ import { MenuModern } from "./MenuModern";
 import { MenuSimple } from "./MenuSimple";
 import { CreateCategoryDialog } from "@/components/menu/CreateCategoryDialog";
 import { CreateMenuItemDialog } from "@/components/menu/CreateMenuItemDialog";
+import { SalesCalculator } from "@/components/SalesCalculator";
 
 interface MenuItem {
   id: string;
@@ -267,96 +269,115 @@ export const Menu = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-        <div className="flex justify-between items-center">
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold text-white">
-              {isEditingOrder ? `${t('order.editOrder')} #${editingOrderId}` : t('menu.title')}
-            </h1>
-            {isInCall && activeCallInfo && !isEditingOrder && (
-              <p className="text-green-400">
-                📞 {t('order.takingOrderFor')}: {activeCallInfo.customerName} ({activeCallInfo.phoneNumber})
-              </p>
-            )}
-            {isEditingOrder && (
-              <p className="text-blue-400">
-                ✏️ {t('order.editingExisting')}
-              </p>
-            )}
-          </div>
-          <div className="flex gap-2 items-center">
-            {canManageMenu && !isEditingOrder && (
-              <>
-                <CreateCategoryDialog onCategoryCreate={handleCreateCategory} />
-                <CreateMenuItemDialog categories={categories} onItemCreate={handleCreateItem} />
-              </>
-            )}
-            {isEditingOrder && (
-              <>
-                <Button
-                  onClick={handleCancelEdit}
-                  variant="outline"
-                  className="border-gray-600 text-gray-300"
-                >
-                  {t('order.cancelEdit')}
-                </Button>
-                <Button
-                  onClick={handleSaveEdit}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  {t('order.saveChanges')}
-                </Button>
-              </>
-            )}
-            {isInCall && !isEditingOrder && (
-              <Button
-                onClick={handleEndCall}
-                variant="outline"
-                className="border-red-500 text-red-400 hover:bg-red-500/10"
-              >
-                <PhoneOff size={16} className="mr-2" />
-                {t('order.endCall')}
-              </Button>
-            )}
-          </div>
-        </div>
+      <Tabs defaultValue="menu" className="w-full">
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="menu" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            {t('menu.title') || 'Menu'}
+          </TabsTrigger>
+          <TabsTrigger value="calculator" className="flex items-center gap-2">
+            <Calculator className="h-4 w-4" />
+            {t('calculator.title') || 'Sales Calculator'}
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Menu Content */}
-      {menuDesign === 'simple' ? (
-        <div className={currentOrder.length > 0 ? "grid grid-cols-1 lg:grid-cols-3 gap-6" : ""}>
-          <div className={currentOrder.length > 0 ? "lg:col-span-2" : ""}>
-            <MenuSimple 
-              menuItems={menuItems}
-              categories={categories}
-              toggleSoldOut={toggleSoldOut}
-              isEditingOrder={isEditingOrder}
-              canManageMenu={canManageMenu}
-            />
+        <TabsContent value="menu" className="space-y-6 mt-6">
+          {/* Header */}
+          <div className="flex justify-between items-center">
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold text-foreground">
+                {isEditingOrder ? `${t('order.editOrder')} #${editingOrderId}` : t('menu.title')}
+              </h1>
+              {isInCall && activeCallInfo && !isEditingOrder && (
+                <p className="text-green-400">
+                  📞 {t('order.takingOrderFor')}: {activeCallInfo.customerName} ({activeCallInfo.phoneNumber})
+                </p>
+              )}
+              {isEditingOrder && (
+                <p className="text-blue-400">
+                  ✏️ {t('order.editingExisting')}
+                </p>
+              )}
+            </div>
+            <div className="flex gap-2 items-center">
+              {canManageMenu && !isEditingOrder && (
+                <>
+                  <CreateCategoryDialog onCategoryCreate={handleCreateCategory} />
+                  <CreateMenuItemDialog categories={categories} onItemCreate={handleCreateItem} />
+                </>
+              )}
+              {isEditingOrder && (
+                <>
+                  <Button
+                    onClick={handleCancelEdit}
+                    variant="outline"
+                    className="border-border text-muted-foreground"
+                  >
+                    {t('order.cancelEdit')}
+                  </Button>
+                  <Button
+                    onClick={handleSaveEdit}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    {t('order.saveChanges')}
+                  </Button>
+                </>
+              )}
+              {isInCall && !isEditingOrder && (
+                <Button
+                  onClick={handleEndCall}
+                  variant="outline"
+                  className="border-red-500 text-red-400 hover:bg-red-500/10"
+                >
+                  <PhoneOff size={16} className="mr-2" />
+                  {t('order.endCall')}
+                </Button>
+              )}
+            </div>
           </div>
-          {currentOrder.length > 0 && (
-            <div className="space-y-6">
-              <OrderSummary />
+
+          {/* Menu Content */}
+          {menuDesign === 'simple' ? (
+            <div className={currentOrder.length > 0 ? "grid grid-cols-1 lg:grid-cols-3 gap-6" : ""}>
+              <div className={currentOrder.length > 0 ? "lg:col-span-2" : ""}>
+                <MenuSimple 
+                  menuItems={menuItems}
+                  categories={categories}
+                  toggleSoldOut={toggleSoldOut}
+                  isEditingOrder={isEditingOrder}
+                  canManageMenu={canManageMenu}
+                />
+              </div>
+              {currentOrder.length > 0 && (
+                <div className="space-y-6">
+                  <OrderSummary />
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className={currentOrder.length > 0 ? "grid grid-cols-1 lg:grid-cols-3 gap-6" : ""}>
+              <div className={currentOrder.length > 0 ? "lg:col-span-2" : ""}>
+                <MenuModern 
+                  menuItems={menuItems}
+                  categories={categories}
+                  toggleSoldOut={toggleSoldOut}
+                  isEditingOrder={isEditingOrder}
+                  canManageMenu={canManageMenu}
+                />
+              </div>
+              {currentOrder.length > 0 && (
+                <div className="space-y-6">
+                  <OrderSummary />
+                </div>
+              )}
             </div>
           )}
-        </div>
-      ) : (
-        <div className={currentOrder.length > 0 ? "grid grid-cols-1 lg:grid-cols-3 gap-6" : ""}>
-          <div className={currentOrder.length > 0 ? "lg:col-span-2" : ""}>
-            <MenuModern 
-              menuItems={menuItems}
-              categories={categories}
-              toggleSoldOut={toggleSoldOut}
-              isEditingOrder={isEditingOrder}
-              canManageMenu={canManageMenu}
-            />
-          </div>
-          {currentOrder.length > 0 && (
-            <div className="space-y-6">
-              <OrderSummary />
-            </div>
-          )}
-        </div>
-      )}
+        </TabsContent>
+
+        <TabsContent value="calculator" className="mt-6">
+          <SalesCalculator />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
