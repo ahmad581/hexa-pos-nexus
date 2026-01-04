@@ -1,10 +1,11 @@
-
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Users } from "lucide-react";
+import { Clock, Users, UtensilsCrossed } from "lucide-react";
 import { useTranslation } from "@/contexts/TranslationContext";
+import { useOrder } from "@/contexts/OrderContext";
 
 interface Table {
   id: string;
@@ -31,6 +32,14 @@ const initialTables: Table[] = [
 export const Tables = () => {
   const [tables, setTables] = useState<Table[]>(initialTables);
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { setSelectedTable, setOrderType } = useOrder();
+
+  const handleTakeOrder = (table: Table) => {
+    setOrderType('dine-in');
+    setSelectedTable(table.number);
+    navigate('/menu');
+  };
 
   const getStatusColor = (status: Table["status"]) => {
     switch (status) {
@@ -90,6 +99,15 @@ export const Tables = () => {
                   </div>
                 </div>
               )}
+
+              <Button
+                onClick={() => handleTakeOrder(table)}
+                className="w-full mt-4"
+                variant="default"
+              >
+                <UtensilsCrossed size={16} className="mr-2" />
+                {t('tables.takeOrder') || 'Take Order'}
+              </Button>
             </div>
           </Card>
         ))}
