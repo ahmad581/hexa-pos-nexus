@@ -159,7 +159,6 @@ export const Sidebar = () => {
     { to: "/", icon: LayoutDashboard, label: t('nav.dashboard') },
     ...(isSystemMaster() ? [{ to: "/system-master", icon: Crown, label: "SystemMaster Dashboard" }] : []),
     ...(canAccessEmployees() && hasRouteAccess('/employees') ? [{ to: "/employees", icon: UserPlus, label: t('nav.employees') }] : []),
-    ...(canViewAnalytics() && hasRouteAccess('/analytics') ? [{ to: "/analytics", icon: BarChartBig, label: t('nav.analytics') }] : []),
     ...(canHandleCalls() && hasRouteAccess('/call-center') ? [{ to: "/call-center", icon: Phone, label: t('nav.callCenter') }] : []),
     { to: "/settings", icon: Settings, label: t('nav.settings') },
   ];

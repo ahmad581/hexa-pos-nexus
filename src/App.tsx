@@ -17,7 +17,6 @@ import { Layout } from "./components/Layout";
 import { Login } from "./pages/Login";
 import { Dashboard } from "./pages/Dashboard";
 import { Employees } from "./pages/Employees";
-import { Analytics } from "./pages/Analytics";
 import { CallCenter } from "./pages/CallCenter";
 import { Settings } from "./pages/Settings";
 import { SystemMasterDashboard } from "./pages/SystemMasterDashboard";
@@ -96,7 +95,6 @@ const App = () => (
                       }>
                         <Route index element={<Dashboard />} />
                         <Route path="employees" element={<Employees />} />
-                        <Route path="analytics" element={<Analytics />} />
                         <Route path="call-center" element={<CallCenter />} />
                         <Route path="settings" element={<Settings />} />
                         
