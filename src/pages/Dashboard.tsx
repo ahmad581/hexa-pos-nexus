@@ -1,400 +1,469 @@
-import { useState } from "react";
-import { StatCard } from "@/components/StatCard";
+import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
-import { DollarSign, ShoppingBag, Users, TrendingUp, Download, Filter } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LineChart, Line, Tooltip, Legend } from "recharts";
+import { Download, Filter, BarChart3, LineChartIcon } from "lucide-react";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { useBranch } from "@/contexts/BranchContext";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/contexts/TranslationContext";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, parseISO } from "date-fns";
 
-// Data type definitions
-type BaseDataItem = {
-  period: string;
-  sales: number;
-  orders: number;
-  deletedOrders: number;
-  updatedOrders: number;
-  burgers: number;
-  pizza: number;
-  drinks: number;
-};
+type ChartType = "bar" | "line";
 
-type ProcessedDataItem = BaseDataItem & {
-  value: number;
-};
+type OrderMetric = "total" | "completed" | "pending" | "cancelled" | "updated";
 
-// Comprehensive dummy data for different time periods and metrics
-const allTimeData = [
-  { period: "Jan", sales: 4000, orders: 240, deletedOrders: 8, updatedOrders: 45, burgers: 120, pizza: 80, drinks: 40 },
-  { period: "Feb", sales: 3000, orders: 198, deletedOrders: 5, updatedOrders: 32, burgers: 90, pizza: 70, drinks: 38 },
-  { period: "Mar", sales: 5000, orders: 300, deletedOrders: 12, updatedOrders: 58, burgers: 150, pizza: 90, drinks: 60 },
-  { period: "Apr", sales: 4500, orders: 270, deletedOrders: 7, updatedOrders: 41, burgers: 135, pizza: 85, drinks: 50 },
-  { period: "May", sales: 6000, orders: 350, deletedOrders: 15, updatedOrders: 67, burgers: 175, pizza: 105, drinks: 70 },
-  { period: "Jun", sales: 5500, orders: 320, deletedOrders: 9, updatedOrders: 52, burgers: 160, pizza: 95, drinks: 65 }
-];
-
-const monthlyData = [
-  { period: "Week 1", sales: 1200, orders: 80, deletedOrders: 3, updatedOrders: 12, burgers: 40, pizza: 25, drinks: 15 },
-  { period: "Week 2", sales: 1800, orders: 120, deletedOrders: 2, updatedOrders: 18, burgers: 60, pizza: 35, drinks: 25 },
-  { period: "Week 3", sales: 1500, orders: 100, deletedOrders: 4, updatedOrders: 15, burgers: 50, pizza: 30, drinks: 20 },
-  { period: "Week 4", sales: 1700, orders: 110, deletedOrders: 1, updatedOrders: 16, burgers: 55, pizza: 32, drinks: 23 }
-];
-
-const weeklyData = [
-  { period: "Mon", sales: 1200, orders: 45, deletedOrders: 2, updatedOrders: 8, burgers: 22, pizza: 13, drinks: 10 },
-  { period: "Tue", sales: 1800, orders: 62, deletedOrders: 1, updatedOrders: 12, burgers: 31, pizza: 18, drinks: 13 },
-  { period: "Wed", sales: 1500, orders: 58, deletedOrders: 3, updatedOrders: 9, burgers: 29, pizza: 16, drinks: 13 },
-  { period: "Thu", sales: 2200, orders: 78, deletedOrders: 0, updatedOrders: 15, burgers: 39, pizza: 22, drinks: 17 },
-  { period: "Fri", sales: 2800, orders: 95, deletedOrders: 4, updatedOrders: 18, burgers: 47, pizza: 28, drinks: 20 },
-  { period: "Sat", sales: 3200, orders: 112, deletedOrders: 2, updatedOrders: 22, burgers: 56, pizza: 32, drinks: 24 },
-  { period: "Sun", sales: 2900, orders: 105, deletedOrders: 1, updatedOrders: 16, burgers: 52, pizza: 30, drinks: 23 }
-];
-
-const getProductData = (businessType?: string) => {
-  switch (businessType) {
-    case 'restaurant':
-      return [
-        { name: "Burgers", value: 35, color: "#10B981" },
-        { name: "Pizza", value: 25, color: "#3B82F6" },
-        { name: "Drinks", value: 20, color: "#F59E0B" },
-        { name: "Desserts", value: 15, color: "#EF4444" },
-        { name: "Others", value: 5, color: "#8B5CF6" }
-      ];
-    case 'hair-salon':
-      return [
-        { name: "Haircuts", value: 40, color: "#10B981" },
-        { name: "Coloring", value: 30, color: "#3B82F6" },
-        { name: "Styling", value: 20, color: "#F59E0B" },
-        { name: "Treatments", value: 10, color: "#EF4444" }
-      ];
-    case 'hotel':
-      return [
-        { name: "Standard Rooms", value: 45, color: "#10B981" },
-        { name: "Deluxe Rooms", value: 30, color: "#3B82F6" },
-        { name: "Suites", value: 15, color: "#F59E0B" },
-        { name: "Services", value: 10, color: "#EF4444" }
-      ];
-    default:
-      return [
-        { name: "Product A", value: 40, color: "#10B981" },
-        { name: "Product B", value: 30, color: "#3B82F6" },
-        { name: "Product C", value: 20, color: "#F59E0B" },
-        { name: "Product D", value: 10, color: "#EF4444" }
-      ];
-  }
-};
-
-const recentTransactions = [
-  { id: "TR-001-12345", product: "Burger Deluxe", amount: "$14", status: "Completed", date: "Dec 12, 2023" },
-  { id: "TR-002-12346", product: "Pizza Margherita", amount: "$24", status: "Pending", date: "Dec 12, 2023" },
-  { id: "TR-003-12347", product: "Pasta Carbonara", amount: "$18", status: "Completed", date: "Dec 11, 2023" },
-  { id: "TR-004-12348", product: "Caesar Salad", amount: "$12", status: "Completed", date: "Dec 11, 2023" }
-];
+type PeriodType = "today" | "week" | "month" | "custom";
 
 export const Dashboard = () => {
   const { selectedBusinessType } = useBusinessType();
-  const { branches } = useBranch();
+  const { branches, selectedBranch: contextBranch } = useBranch();
   const { toast } = useToast();
   const { t } = useTranslation();
-  const [selectedMetric, setSelectedMetric] = useState("sales");
-  const [selectedProduct, setSelectedProduct] = useState("all");
+  
+  // Filter states
+  const [orderMetric, setOrderMetric] = useState<OrderMetric>("total");
+  const [selectedItem, setSelectedItem] = useState("all");
   const [selectedBranch, setSelectedBranch] = useState("all");
-  const [dateRange, setDateRange] = useState("week");
+  const [periodType, setPeriodType] = useState<PeriodType>("week");
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
+  const [customStartTime, setCustomStartTime] = useState("00:00");
+  const [customEndTime, setCustomEndTime] = useState("23:59");
+  const [chartType, setChartType] = useState<ChartType>("bar");
 
   const businessTerms = selectedBusinessType?.terminology || {
-    service: 'Product',
-    services: 'Products'
+    service: 'Item',
+    services: 'Items'
   };
 
-  const productData = getProductData(selectedBusinessType?.id);
-
-  const getData = (): BaseDataItem[] => {
-    switch (dateRange) {
-      case "year": return allTimeData;
-      case "month": return monthlyData;
-      case "week": return weeklyData;
-      default: return weeklyData;
+  // Get date range based on period type
+  const getDateRange = () => {
+    const now = new Date();
+    switch (periodType) {
+      case "today":
+        return { start: startOfDay(now), end: endOfDay(now) };
+      case "week":
+        return { start: startOfWeek(now), end: endOfWeek(now) };
+      case "month":
+        return { start: startOfMonth(now), end: endOfMonth(now) };
+      case "custom":
+        if (customStartDate && customEndDate) {
+          const start = parseISO(`${customStartDate}T${customStartTime}`);
+          const end = parseISO(`${customEndDate}T${customEndTime}`);
+          return { start, end };
+        }
+        return { start: startOfWeek(now), end: endOfWeek(now) };
+      default:
+        return { start: startOfWeek(now), end: endOfWeek(now) };
     }
   };
 
-  const getFilteredData = (): ProcessedDataItem[] => {
-    let data = getData();
+  // Fetch menu items for the item filter
+  const { data: menuItems = [] } = useQuery({
+    queryKey: ['dashboard-menu-items', selectedBranch],
+    queryFn: async () => {
+      let query = supabase.from('menu_items').select('id, name, category');
+      
+      if (selectedBranch !== "all") {
+        query = query.eq('branch_id', selectedBranch);
+      }
+      
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    }
+  });
+
+  // Fetch orders data
+  const { data: ordersData = [], isLoading } = useQuery({
+    queryKey: ['dashboard-orders', selectedBranch, periodType, customStartDate, customEndDate, customStartTime, customEndTime],
+    queryFn: async () => {
+      const { start, end } = getDateRange();
+      
+      let query = supabase
+        .from('orders')
+        .select(`
+          id,
+          order_number,
+          status,
+          total_amount,
+          created_at,
+          updated_at,
+          branch_id,
+          order_items (
+            id,
+            product_name,
+            quantity,
+            total_price,
+            menu_item_id
+          )
+        `)
+        .gte('created_at', start.toISOString())
+        .lte('created_at', end.toISOString());
+      
+      if (selectedBranch !== "all") {
+        query = query.eq('branch_id', selectedBranch);
+      }
+      
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    }
+  });
+
+  // Process chart data
+  const chartData = useMemo(() => {
+    if (!ordersData.length) return [];
+
+    // Filter orders by selected item
+    let filteredOrders = ordersData;
+    if (selectedItem !== "all") {
+      filteredOrders = ordersData.filter(order => 
+        order.order_items?.some((item: any) => 
+          item.menu_item_id === selectedItem || item.product_name.toLowerCase() === selectedItem.toLowerCase()
+        )
+      );
+    }
+
+    // Filter by order metric
+    const filterByMetric = (orders: typeof filteredOrders) => {
+      switch (orderMetric) {
+        case "completed":
+          return orders.filter(o => o.status === 'completed');
+        case "pending":
+          return orders.filter(o => o.status === 'pending');
+        case "cancelled":
+          return orders.filter(o => o.status === 'cancelled');
+        case "updated":
+          return orders.filter(o => o.updated_at !== o.created_at);
+        default:
+          return orders;
+      }
+    };
+
+    const metricFilteredOrders = filterByMetric(filteredOrders);
+
+    // Group by period
+    const { start, end } = getDateRange();
+    const groupedData: Record<string, { period: string; orders: number; revenue: number }> = {};
+
+    // Determine grouping format based on period
+    const getGroupKey = (date: Date) => {
+      if (periodType === "today") {
+        return format(date, "HH:00");
+      } else if (periodType === "week") {
+        return format(date, "EEE");
+      } else if (periodType === "month") {
+        return format(date, "MMM d");
+      } else {
+        // For custom, use appropriate grouping
+        const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+        if (diffDays <= 1) {
+          return format(date, "HH:00");
+        } else if (diffDays <= 7) {
+          return format(date, "EEE");
+        } else {
+          return format(date, "MMM d");
+        }
+      }
+    };
+
+    metricFilteredOrders.forEach(order => {
+      const orderDate = new Date(order.created_at);
+      const key = getGroupKey(orderDate);
+      
+      if (!groupedData[key]) {
+        groupedData[key] = { period: key, orders: 0, revenue: 0 };
+      }
+      
+      groupedData[key].orders += 1;
+      
+      // Calculate revenue for selected item or total
+      if (selectedItem !== "all") {
+        const itemRevenue = order.order_items
+          ?.filter((item: any) => item.menu_item_id === selectedItem || item.product_name.toLowerCase() === selectedItem.toLowerCase())
+          .reduce((sum: number, item: any) => sum + (item.total_price || 0), 0) || 0;
+        groupedData[key].revenue += itemRevenue;
+      } else {
+        groupedData[key].revenue += order.total_amount || 0;
+      }
+    });
+
+    return Object.values(groupedData).sort((a, b) => {
+      // Sort by period appropriately
+      if (periodType === "today" || (periodType === "custom" && a.period.includes(":"))) {
+        return parseInt(a.period) - parseInt(b.period);
+      }
+      return 0;
+    });
+  }, [ordersData, selectedItem, orderMetric, periodType]);
+
+  // Calculate summary stats
+  const summaryStats = useMemo(() => {
+    const totalOrders = chartData.reduce((sum, d) => sum + d.orders, 0);
+    const totalRevenue = chartData.reduce((sum, d) => sum + d.revenue, 0);
+    const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
     
-    // Filter by selected product and add value property
-    if (selectedProduct !== "all") {
-      const productKey = selectedProduct.toLowerCase() as keyof BaseDataItem;
-      return data.map(item => ({
-        ...item,
-        value: typeof item[productKey] === 'number' ? item[productKey] as number : 0
-      }));
-    } else {
-      // Use the selected metric and add value property
-      const metricKey = selectedMetric as keyof BaseDataItem;
-      return data.map(item => ({
-        ...item,
-        value: typeof item[metricKey] === 'number' ? item[metricKey] as number : 0
-      }));
-    }
-  };
+    return { totalOrders, totalRevenue, avgOrderValue };
+  }, [chartData]);
 
   const exportReport = () => {
-    const reportData = getFilteredData();
     const csvContent = [
-      ["Period", "Value", "Sales", "Orders", "Deleted Orders", "Updated Orders"],
-      ...reportData.map(item => [
-        item.period,
-        item.value,
-        item.sales,
-        item.orders,
-        item.deletedOrders,
-        item.updatedOrders
-      ])
+      ["Period", "Orders", "Revenue"],
+      ...chartData.map(item => [item.period, item.orders, item.revenue.toFixed(2)])
     ].map(row => row.join(",")).join("\n");
 
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `dashboard-report-${selectedMetric}-${selectedProduct}-${dateRange}-${Date.now()}.csv`;
+    a.download = `dashboard-report-${orderMetric}-${periodType}-${Date.now()}.csv`;
     a.click();
-    toast({ title: "Dashboard report exported successfully!" });
+    toast({ title: "Report exported successfully!" });
+  };
+
+  const getMetricLabel = () => {
+    switch (orderMetric) {
+      case "total": return "Total Orders";
+      case "completed": return "Completed Orders";
+      case "pending": return "Pending Orders";
+      case "cancelled": return "Cancelled Orders";
+      case "updated": return "Updated Orders";
+      default: return "Orders";
+    }
   };
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">{t('dashboard.title')}</h1>
-          <p className="text-gray-400">{t('dashboard.overview')}</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">{t('dashboard.title')}</h1>
+          <p className="text-muted-foreground">{t('dashboard.overview')}</p>
         </div>
-        <Button onClick={exportReport} className="bg-green-600 hover:bg-green-700">
-          <Download size={16} className="mr-2" />
-          Export Report
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant={chartType === "bar" ? "default" : "outline"}
+            size="icon"
+            onClick={() => setChartType("bar")}
+          >
+            <BarChart3 size={18} />
+          </Button>
+          <Button
+            variant={chartType === "line" ? "default" : "outline"}
+            size="icon"
+            onClick={() => setChartType("line")}
+          >
+            <LineChartIcon size={18} />
+          </Button>
+          <Button onClick={exportReport} className="bg-primary hover:bg-primary/90">
+            <Download size={16} className="mr-2" />
+            Export
+          </Button>
+        </div>
       </div>
 
-      <Card className="bg-gray-800 border-gray-700 p-6">
-        <div className="flex flex-wrap gap-4 items-center">
-          <div className="flex items-center space-x-2">
-            <Filter size={16} className="text-gray-400" />
-            <span className="text-white font-medium">Analytics Filters:</span>
-          </div>
-          
-          <Select value={selectedMetric} onValueChange={setSelectedMetric}>
-            <SelectTrigger className="w-48 bg-gray-700 border-gray-600">
-              <SelectValue placeholder="Select metric" />
-            </SelectTrigger>
-            <SelectContent className="bg-gray-800 border-gray-700">
-              <SelectItem value="sales">Sales Revenue</SelectItem>
-              <SelectItem value="orders">Total Orders</SelectItem>
-              <SelectItem value="deletedOrders">Deleted Orders</SelectItem>
-              <SelectItem value="updatedOrders">Updated Orders</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={selectedProduct} onValueChange={setSelectedProduct}>
-            <SelectTrigger className="w-48 bg-gray-700 border-gray-600">
-              <SelectValue placeholder={`Select ${businessTerms.service.toLowerCase()}`} />
-            </SelectTrigger>
-            <SelectContent className="bg-gray-800 border-gray-700">
-              <SelectItem value="all">All {businessTerms.services}</SelectItem>
-              {productData.map(product => (
-                <SelectItem key={product.name} value={product.name.toLowerCase()}>
-                  {product.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={selectedBranch} onValueChange={setSelectedBranch}>
-            <SelectTrigger className="w-48 bg-gray-700 border-gray-600">
-              <SelectValue placeholder="Select branch" />
-            </SelectTrigger>
-            <SelectContent className="bg-gray-800 border-gray-700">
-              <SelectItem value="all">All Branches</SelectItem>
-              {branches.map(branch => (
-                <SelectItem key={branch.id} value={branch.id}>{branch.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={dateRange} onValueChange={setDateRange}>
-            <SelectTrigger className="w-48 bg-gray-700 border-gray-600">
-              <SelectValue placeholder="Date range" />
-            </SelectTrigger>
-            <SelectContent className="bg-gray-800 border-gray-700">
-              <SelectItem value="week">This Week</SelectItem>
-              <SelectItem value="month">This Month</SelectItem>
-              <SelectItem value="year">This Year</SelectItem>
-            </SelectContent>
-          </Select>
+      {/* Filters Card */}
+      <Card className="bg-card border-border p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Filter size={16} className="text-muted-foreground" />
+          <span className="text-foreground font-medium">Chart Filters</span>
         </div>
-      </Card>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          title={t('dashboard.totalRevenue')}
-          value="$12,234.99"
-          change="+2.5%"
-          changeType="increase"
-          icon={DollarSign}
-          color="bg-green-500"
-        />
-        <StatCard
-          title={t('dashboard.totalOrders')}
-          value="3,847"
-          change="+1.8%"
-          changeType="increase"
-          icon={ShoppingBag}
-          color="bg-blue-500"
-        />
-        <StatCard
-          title="Deleted Orders"
-          value="89"
-          change="-0.5%"
-          changeType="decrease"
-          icon={TrendingUp}
-          color="bg-red-500"
-        />
-        <StatCard
-          title="Updated Orders"
-          value="234"
-          change="+5.2%"
-          changeType="increase"
-          icon={Users}
-          color="bg-orange-500"
-        />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="bg-gray-800 border-gray-700 p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-white">
-              {selectedProduct !== "all" ? selectedProduct.charAt(0).toUpperCase() + selectedProduct.slice(1) : selectedMetric.charAt(0).toUpperCase() + selectedMetric.slice(1)} Overview
-            </h3>
-            <div className="flex gap-2">
-              <Select value={selectedMetric} onValueChange={setSelectedMetric}>
-                <SelectTrigger className="w-32 bg-gray-700 border-gray-600 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-800 border-gray-700">
-                  <SelectItem value="sales">Sales</SelectItem>
-                  <SelectItem value="orders">Orders</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={getFilteredData()}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis dataKey="period" stroke="#9CA3AF" />
-              <YAxis stroke="#9CA3AF" />
-              <Bar dataKey="value" fill="#10B981" radius={4} />
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
-
-        <Card className="bg-gray-800 border-gray-700 p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-white">{businessTerms.services} Distribution</h3>
-            <Select value={selectedBranch} onValueChange={setSelectedBranch}>
-              <SelectTrigger className="w-32 bg-gray-700 border-gray-600 text-xs">
-                <SelectValue placeholder="Branch" />
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Order Metric Filter */}
+          <div className="space-y-2">
+            <Label className="text-muted-foreground text-sm">Order Status</Label>
+            <Select value={orderMetric} onValueChange={(v) => setOrderMetric(v as OrderMetric)}>
+              <SelectTrigger className="bg-background border-border">
+                <SelectValue placeholder="Select metric" />
               </SelectTrigger>
-              <SelectContent className="bg-gray-800 border-gray-700">
-                <SelectItem value="all">All</SelectItem>
-                {branches.slice(0, 3).map(branch => (
+              <SelectContent className="bg-popover border-border">
+                <SelectItem value="total">Total Orders</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
+                <SelectItem value="updated">Updated</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Item Filter */}
+          <div className="space-y-2">
+            <Label className="text-muted-foreground text-sm">{businessTerms.services}</Label>
+            <Select value={selectedItem} onValueChange={setSelectedItem}>
+              <SelectTrigger className="bg-background border-border">
+                <SelectValue placeholder={`Select ${businessTerms.service.toLowerCase()}`} />
+              </SelectTrigger>
+              <SelectContent className="bg-popover border-border">
+                <SelectItem value="all">All {businessTerms.services}</SelectItem>
+                {menuItems.map((item: any) => (
+                  <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Branch Filter */}
+          <div className="space-y-2">
+            <Label className="text-muted-foreground text-sm">Branch</Label>
+            <Select value={selectedBranch} onValueChange={setSelectedBranch}>
+              <SelectTrigger className="bg-background border-border">
+                <SelectValue placeholder="Select branch" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover border-border">
+                <SelectItem value="all">All Branches</SelectItem>
+                {branches.map(branch => (
                   <SelectItem key={branch.id} value={branch.id}>{branch.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={productData}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={120}
-                dataKey="value"
-                label={({ name, value }) => `${name}: ${value}%`}
-              >
-                {productData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
-        </Card>
-      </div>
 
-      <Card className="bg-gray-800 border-gray-700 p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-white">Sales Trend</h3>
-          <div className="flex gap-2">
-            <Select value={dateRange} onValueChange={setDateRange}>
-              <SelectTrigger className="w-32 bg-gray-700 border-gray-600 text-xs">
-                <SelectValue />
+          {/* Period Filter */}
+          <div className="space-y-2">
+            <Label className="text-muted-foreground text-sm">Period</Label>
+            <Select value={periodType} onValueChange={(v) => setPeriodType(v as PeriodType)}>
+              <SelectTrigger className="bg-background border-border">
+                <SelectValue placeholder="Select period" />
               </SelectTrigger>
-              <SelectContent className="bg-gray-800 border-gray-700">
-                <SelectItem value="week">Week</SelectItem>
-                <SelectItem value="month">Month</SelectItem>
-                <SelectItem value="year">Year</SelectItem>
+              <SelectContent className="bg-popover border-border">
+                <SelectItem value="today">Today</SelectItem>
+                <SelectItem value="week">This Week</SelectItem>
+                <SelectItem value="month">This Month</SelectItem>
+                <SelectItem value="custom">Custom Range</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={getData()}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-            <XAxis dataKey="period" stroke="#9CA3AF" />
-            <YAxis stroke="#9CA3AF" />
-            <Line type="monotone" dataKey="orders" stroke="#10B981" strokeWidth={3} />
-          </LineChart>
-        </ResponsiveContainer>
+
+        {/* Custom Date/Time Range */}
+        {periodType === "custom" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4 pt-4 border-t border-border">
+            <div className="space-y-2">
+              <Label className="text-muted-foreground text-sm">Start Date</Label>
+              <Input
+                type="date"
+                value={customStartDate}
+                onChange={(e) => setCustomStartDate(e.target.value)}
+                className="bg-background border-border"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-muted-foreground text-sm">Start Time</Label>
+              <Input
+                type="time"
+                value={customStartTime}
+                onChange={(e) => setCustomStartTime(e.target.value)}
+                className="bg-background border-border"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-muted-foreground text-sm">End Date</Label>
+              <Input
+                type="date"
+                value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}
+                className="bg-background border-border"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-muted-foreground text-sm">End Time</Label>
+              <Input
+                type="time"
+                value={customEndTime}
+                onChange={(e) => setCustomEndTime(e.target.value)}
+                className="bg-background border-border"
+              />
+            </div>
+          </div>
+        )}
       </Card>
 
-      <Card className="bg-gray-800 border-gray-700 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-white">Latest Transactions</h3>
-          <button className="text-green-400 hover:text-green-300 text-sm">View All</button>
+      {/* Summary Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="bg-card border-border p-4">
+          <p className="text-muted-foreground text-sm">{getMetricLabel()}</p>
+          <p className="text-2xl font-bold text-foreground">{summaryStats.totalOrders}</p>
+        </Card>
+        <Card className="bg-card border-border p-4">
+          <p className="text-muted-foreground text-sm">Total Revenue</p>
+          <p className="text-2xl font-bold text-foreground">${summaryStats.totalRevenue.toFixed(2)}</p>
+        </Card>
+        <Card className="bg-card border-border p-4">
+          <p className="text-muted-foreground text-sm">Avg Order Value</p>
+          <p className="text-2xl font-bold text-foreground">${summaryStats.avgOrderValue.toFixed(2)}</p>
+        </Card>
+      </div>
+
+      {/* Main Chart */}
+      <Card className="bg-card border-border p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-lg font-semibold text-foreground">
+            {getMetricLabel()} {selectedItem !== "all" && `- ${menuItems.find((i: any) => i.id === selectedItem)?.name || selectedItem}`}
+          </h3>
+          <span className="text-sm text-muted-foreground">
+            {periodType === "custom" && customStartDate && customEndDate
+              ? `${customStartDate} ${customStartTime} - ${customEndDate} ${customEndTime}`
+              : periodType.charAt(0).toUpperCase() + periodType.slice(1)}
+          </span>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-700">
-                <th className="text-left py-3 text-gray-400 font-medium">Product</th>
-                <th className="text-left py-3 text-gray-400 font-medium">Transaction ID</th>
-                <th className="text-left py-3 text-gray-400 font-medium">Date</th>
-                <th className="text-left py-3 text-gray-400 font-medium">Amount</th>
-                <th className="text-left py-3 text-gray-400 font-medium">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentTransactions.map((transaction) => (
-                <tr key={transaction.id} className="border-b border-gray-700">
-                  <td className="py-3 text-white">{transaction.product}</td>
-                  <td className="py-3 text-gray-300">{transaction.id}</td>
-                  <td className="py-3 text-gray-300">{transaction.date}</td>
-                  <td className="py-3 text-white font-semibold">{transaction.amount}</td>
-                  <td className="py-3">
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      transaction.status === 'Completed' 
-                        ? 'bg-green-500/20 text-green-400' 
-                        : 'bg-yellow-500/20 text-yellow-400'
-                    }`}>
-                      {transaction.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        
+        {isLoading ? (
+          <div className="h-[400px] flex items-center justify-center text-muted-foreground">
+            Loading chart data...
+          </div>
+        ) : chartData.length === 0 ? (
+          <div className="h-[400px] flex items-center justify-center text-muted-foreground">
+            No data available for the selected filters
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height={400}>
+            {chartType === "bar" ? (
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="period" stroke="hsl(var(--muted-foreground))" />
+                <YAxis yAxisId="left" stroke="hsl(var(--muted-foreground))" />
+                <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--muted-foreground))" />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--popover))', 
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px'
+                  }}
+                  labelStyle={{ color: 'hsl(var(--foreground))' }}
+                />
+                <Legend />
+                <Bar yAxisId="left" dataKey="orders" name="Orders" fill="hsl(var(--primary))" radius={4} />
+                <Bar yAxisId="right" dataKey="revenue" name="Revenue ($)" fill="hsl(var(--chart-2))" radius={4} />
+              </BarChart>
+            ) : (
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="period" stroke="hsl(var(--muted-foreground))" />
+                <YAxis yAxisId="left" stroke="hsl(var(--muted-foreground))" />
+                <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--muted-foreground))" />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--popover))', 
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px'
+                  }}
+                  labelStyle={{ color: 'hsl(var(--foreground))' }}
+                />
+                <Legend />
+                <Line yAxisId="left" type="monotone" dataKey="orders" name="Orders" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ fill: 'hsl(var(--primary))' }} />
+                <Line yAxisId="right" type="monotone" dataKey="revenue" name="Revenue ($)" stroke="hsl(var(--chart-2))" strokeWidth={2} dot={{ fill: 'hsl(var(--chart-2))' }} />
+              </LineChart>
+            )}
+          </ResponsiveContainer>
+        )}
       </Card>
     </div>
   );
