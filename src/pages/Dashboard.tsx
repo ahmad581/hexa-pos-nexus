@@ -240,230 +240,344 @@ export const Dashboard = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-1">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">{t('dashboard.title')}</h1>
-          <p className="text-muted-foreground">{t('dashboard.overview')}</p>
+          <h1 className="text-3xl font-bold text-foreground tracking-tight">{t('dashboard.title')}</h1>
+          <p className="text-muted-foreground mt-1">{t('dashboard.overview')}</p>
         </div>
         <div className="flex gap-2">
-          <Button
-            variant={chartType === "bar" ? "default" : "outline"}
-            size="icon"
-            onClick={() => setChartType("bar")}
-          >
-            <BarChart3 size={18} />
-          </Button>
-          <Button
-            variant={chartType === "line" ? "default" : "outline"}
-            size="icon"
-            onClick={() => setChartType("line")}
-          >
-            <LineChartIcon size={18} />
-          </Button>
-          <Button onClick={exportReport} className="bg-primary hover:bg-primary/90">
-            <Download size={16} className="mr-2" />
+          <div className="flex rounded-lg border border-border overflow-hidden">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setChartType("bar")}
+              className={`rounded-none ${chartType === "bar" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+            >
+              <BarChart3 size={18} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setChartType("line")}
+              className={`rounded-none ${chartType === "line" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+            >
+              <LineChartIcon size={18} />
+            </Button>
+          </div>
+          <Button onClick={exportReport} className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2">
+            <Download size={16} />
             Export
           </Button>
         </div>
       </div>
 
-      {/* Filters Card */}
-      <Card className="bg-card border-border p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Filter size={16} className="text-muted-foreground" />
-          <span className="text-foreground font-medium">Chart Filters</span>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Order Metric Filter */}
-          <div className="space-y-2">
-            <Label className="text-muted-foreground text-sm">Order Status</Label>
-            <Select value={orderMetric} onValueChange={(v) => setOrderMetric(v as OrderMetric)}>
-              <SelectTrigger className="bg-background border-border">
-                <SelectValue placeholder="Select metric" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover border-border">
-                <SelectItem value="total">Total Orders</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-                <SelectItem value="updated">Updated</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Item Filter */}
-          <div className="space-y-2">
-            <Label className="text-muted-foreground text-sm">{businessTerms.services}</Label>
-            <Select value={selectedItem} onValueChange={setSelectedItem}>
-              <SelectTrigger className="bg-background border-border">
-                <SelectValue placeholder={`Select ${businessTerms.service.toLowerCase()}`} />
-              </SelectTrigger>
-              <SelectContent className="bg-popover border-border">
-                <SelectItem value="all">All {businessTerms.services}</SelectItem>
-                {menuItems.map((item: any) => (
-                  <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Branch Filter */}
-          <div className="space-y-2">
-            <Label className="text-muted-foreground text-sm">Branch</Label>
-            <Select value={selectedBranch} onValueChange={setSelectedBranch}>
-              <SelectTrigger className="bg-background border-border">
-                <SelectValue placeholder="Select branch" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover border-border">
-                <SelectItem value="all">All Branches</SelectItem>
-                {branches.map(branch => (
-                  <SelectItem key={branch.id} value={branch.id}>{branch.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Period Filter */}
-          <div className="space-y-2">
-            <Label className="text-muted-foreground text-sm">Period</Label>
-            <Select value={periodType} onValueChange={(v) => setPeriodType(v as PeriodType)}>
-              <SelectTrigger className="bg-background border-border">
-                <SelectValue placeholder="Select period" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover border-border">
-                <SelectItem value="today">Today</SelectItem>
-                <SelectItem value="week">This Week</SelectItem>
-                <SelectItem value="month">This Month</SelectItem>
-                <SelectItem value="custom">Custom Range</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* Custom Date/Time Range */}
-        {periodType === "custom" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4 pt-4 border-t border-border">
-            <div className="space-y-2">
-              <Label className="text-muted-foreground text-sm">Start Date</Label>
-              <Input
-                type="date"
-                value={customStartDate}
-                onChange={(e) => setCustomStartDate(e.target.value)}
-                className="bg-background border-border"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-muted-foreground text-sm">Start Time</Label>
-              <Input
-                type="time"
-                value={customStartTime}
-                onChange={(e) => setCustomStartTime(e.target.value)}
-                className="bg-background border-border"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-muted-foreground text-sm">End Date</Label>
-              <Input
-                type="date"
-                value={customEndDate}
-                onChange={(e) => setCustomEndDate(e.target.value)}
-                className="bg-background border-border"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-muted-foreground text-sm">End Time</Label>
-              <Input
-                type="time"
-                value={customEndTime}
-                onChange={(e) => setCustomEndTime(e.target.value)}
-                className="bg-background border-border"
-              />
-            </div>
-          </div>
-        )}
-      </Card>
-
-      {/* Summary Stats */}
+      {/* Summary Stats - Moved to top for better visual impact */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-card border-border p-4">
-          <p className="text-muted-foreground text-sm">{getMetricLabel()}</p>
-          <p className="text-2xl font-bold text-foreground">{summaryStats.totalOrders}</p>
+        <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-blue-500/10 via-blue-600/5 to-transparent">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-blue-500/10 rounded-full -mr-10 -mt-10" />
+          <div className="p-6">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2.5 rounded-xl bg-blue-500/20">
+                <BarChart3 className="w-5 h-5 text-blue-500" />
+              </div>
+              <p className="text-muted-foreground text-sm font-medium">{getMetricLabel()}</p>
+            </div>
+            <p className="text-3xl font-bold text-foreground">{summaryStats.totalOrders}</p>
+          </div>
         </Card>
-        <Card className="bg-card border-border p-4">
-          <p className="text-muted-foreground text-sm">Total Revenue</p>
-          <p className="text-2xl font-bold text-foreground">${summaryStats.totalRevenue.toFixed(2)}</p>
+        
+        <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-emerald-500/10 via-emerald-600/5 to-transparent">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-500/10 rounded-full -mr-10 -mt-10" />
+          <div className="p-6">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2.5 rounded-xl bg-emerald-500/20">
+                <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <p className="text-muted-foreground text-sm font-medium">Total Revenue</p>
+            </div>
+            <p className="text-3xl font-bold text-foreground">${summaryStats.totalRevenue.toFixed(2)}</p>
+          </div>
         </Card>
-        <Card className="bg-card border-border p-4">
-          <p className="text-muted-foreground text-sm">Avg Order Value</p>
-          <p className="text-2xl font-bold text-foreground">${summaryStats.avgOrderValue.toFixed(2)}</p>
+        
+        <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-purple-500/10 via-purple-600/5 to-transparent">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-purple-500/10 rounded-full -mr-10 -mt-10" />
+          <div className="p-6">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2.5 rounded-xl bg-purple-500/20">
+                <svg className="w-5 h-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <p className="text-muted-foreground text-sm font-medium">Avg Order Value</p>
+            </div>
+            <p className="text-3xl font-bold text-foreground">${summaryStats.avgOrderValue.toFixed(2)}</p>
+          </div>
         </Card>
       </div>
 
-      {/* Main Chart */}
-      <Card className="bg-card border-border p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-semibold text-foreground">
-            {getMetricLabel()} {selectedItem !== "all" && `- ${menuItems.find((i: any) => i.id === selectedItem)?.name || selectedItem}`}
-          </h3>
-          <span className="text-sm text-muted-foreground">
-            {periodType === "custom" && customStartDate && customEndDate
-              ? `${customStartDate} ${customStartTime} - ${customEndDate} ${customEndTime}`
-              : periodType.charAt(0).toUpperCase() + periodType.slice(1)}
-          </span>
+      {/* Filters Card */}
+      <Card className="border border-border/50 bg-card/50 backdrop-blur-sm">
+        <div className="p-6">
+          <div className="flex items-center gap-2 mb-5">
+            <div className="p-2 rounded-lg bg-muted">
+              <Filter size={16} className="text-muted-foreground" />
+            </div>
+            <span className="text-foreground font-semibold">Chart Filters</span>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Order Metric Filter */}
+            <div className="space-y-2">
+              <Label className="text-muted-foreground text-xs font-medium uppercase tracking-wide">Order Status</Label>
+              <Select value={orderMetric} onValueChange={(v) => setOrderMetric(v as OrderMetric)}>
+                <SelectTrigger className="bg-background/50 border-border/50 h-11">
+                  <SelectValue placeholder="Select metric" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border">
+                  <SelectItem value="total">Total Orders</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                  <SelectItem value="updated">Updated</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Item Filter */}
+            <div className="space-y-2">
+              <Label className="text-muted-foreground text-xs font-medium uppercase tracking-wide">{businessTerms.services}</Label>
+              <Select value={selectedItem} onValueChange={setSelectedItem}>
+                <SelectTrigger className="bg-background/50 border-border/50 h-11">
+                  <SelectValue placeholder={`Select ${businessTerms.service.toLowerCase()}`} />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border">
+                  <SelectItem value="all">All {businessTerms.services}</SelectItem>
+                  {menuItems.map((item: any) => (
+                    <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Branch Filter */}
+            <div className="space-y-2">
+              <Label className="text-muted-foreground text-xs font-medium uppercase tracking-wide">Branch</Label>
+              <Select value={selectedBranch} onValueChange={setSelectedBranch}>
+                <SelectTrigger className="bg-background/50 border-border/50 h-11">
+                  <SelectValue placeholder="Select branch" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border">
+                  <SelectItem value="all">All Branches</SelectItem>
+                  {branches.map(branch => (
+                    <SelectItem key={branch.id} value={branch.id}>{branch.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Period Filter */}
+            <div className="space-y-2">
+              <Label className="text-muted-foreground text-xs font-medium uppercase tracking-wide">Period</Label>
+              <Select value={periodType} onValueChange={(v) => setPeriodType(v as PeriodType)}>
+                <SelectTrigger className="bg-background/50 border-border/50 h-11">
+                  <SelectValue placeholder="Select period" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border">
+                  <SelectItem value="today">Today</SelectItem>
+                  <SelectItem value="week">This Week</SelectItem>
+                  <SelectItem value="month">This Month</SelectItem>
+                  <SelectItem value="custom">Custom Range</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Custom Date/Time Range */}
+          {periodType === "custom" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-5 pt-5 border-t border-border/50">
+              <div className="space-y-2">
+                <Label className="text-muted-foreground text-xs font-medium uppercase tracking-wide">Start Date</Label>
+                <Input
+                  type="date"
+                  value={customStartDate}
+                  onChange={(e) => setCustomStartDate(e.target.value)}
+                  className="bg-background/50 border-border/50 h-11"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-muted-foreground text-xs font-medium uppercase tracking-wide">Start Time</Label>
+                <Input
+                  type="time"
+                  value={customStartTime}
+                  onChange={(e) => setCustomStartTime(e.target.value)}
+                  className="bg-background/50 border-border/50 h-11"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-muted-foreground text-xs font-medium uppercase tracking-wide">End Date</Label>
+                <Input
+                  type="date"
+                  value={customEndDate}
+                  onChange={(e) => setCustomEndDate(e.target.value)}
+                  className="bg-background/50 border-border/50 h-11"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-muted-foreground text-xs font-medium uppercase tracking-wide">End Time</Label>
+                <Input
+                  type="time"
+                  value={customEndTime}
+                  onChange={(e) => setCustomEndTime(e.target.value)}
+                  className="bg-background/50 border-border/50 h-11"
+                />
+              </div>
+            </div>
+          )}
         </div>
-        
-        {isLoading ? (
-          <div className="h-[400px] flex items-center justify-center text-muted-foreground">
-            Loading chart data...
+      </Card>
+
+      {/* Main Chart */}
+      <Card className="border border-border/50 bg-card/50 backdrop-blur-sm">
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-lg font-semibold text-foreground">
+              {getMetricLabel()} {selectedItem !== "all" && `- ${menuItems.find((i: any) => i.id === selectedItem)?.name || selectedItem}`}
+            </h3>
+            <span className="text-xs font-medium text-muted-foreground bg-muted px-3 py-1.5 rounded-full">
+              {periodType === "custom" && customStartDate && customEndDate
+                ? `${customStartDate} ${customStartTime} - ${customEndDate} ${customEndTime}`
+                : periodType.charAt(0).toUpperCase() + periodType.slice(1)}
+            </span>
           </div>
-        ) : chartData.length === 0 ? (
-          <div className="h-[400px] flex items-center justify-center text-muted-foreground">
-            No data available for the selected filters
-          </div>
-        ) : (
-          <ResponsiveContainer width="100%" height={400}>
-            {chartType === "bar" ? (
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="period" stroke="hsl(var(--muted-foreground))" />
-                <YAxis yAxisId="left" stroke="hsl(var(--muted-foreground))" />
-                <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--muted-foreground))" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--popover))', 
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px'
-                  }}
-                  labelStyle={{ color: 'hsl(var(--foreground))' }}
-                />
-                <Legend />
-                <Bar yAxisId="left" dataKey="orders" name="Orders" fill="hsl(var(--primary))" radius={4} />
-                <Bar yAxisId="right" dataKey="revenue" name="Revenue ($)" fill="hsl(var(--chart-2))" radius={4} />
-              </BarChart>
-            ) : (
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="period" stroke="hsl(var(--muted-foreground))" />
-                <YAxis yAxisId="left" stroke="hsl(var(--muted-foreground))" />
-                <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--muted-foreground))" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--popover))', 
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px'
-                  }}
-                  labelStyle={{ color: 'hsl(var(--foreground))' }}
-                />
-                <Legend />
-                <Line yAxisId="left" type="monotone" dataKey="orders" name="Orders" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ fill: 'hsl(var(--primary))' }} />
-                <Line yAxisId="right" type="monotone" dataKey="revenue" name="Revenue ($)" stroke="hsl(var(--chart-2))" strokeWidth={2} dot={{ fill: 'hsl(var(--chart-2))' }} />
-              </LineChart>
-            )}
-          </ResponsiveContainer>
-        )}
+          
+          {isLoading ? (
+            <div className="h-[400px] flex flex-col items-center justify-center text-muted-foreground gap-3">
+              <div className="w-8 h-8 border-2 border-muted-foreground/30 border-t-primary rounded-full animate-spin" />
+              <span>Loading chart data...</span>
+            </div>
+          ) : chartData.length === 0 ? (
+            <div className="h-[400px] flex flex-col items-center justify-center text-muted-foreground gap-3">
+              <div className="p-4 rounded-full bg-muted/50">
+                <BarChart3 className="w-8 h-8" />
+              </div>
+              <span>No data available for the selected filters</span>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={400}>
+              {chartType === "bar" ? (
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                  <XAxis 
+                    dataKey="period" 
+                    stroke="hsl(var(--muted-foreground))" 
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis 
+                    yAxisId="left" 
+                    stroke="hsl(var(--muted-foreground))" 
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis 
+                    yAxisId="right" 
+                    orientation="right" 
+                    stroke="hsl(var(--muted-foreground))" 
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12 }}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--popover))', 
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '12px',
+                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                    }}
+                    labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600 }}
+                  />
+                  <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                  <Bar 
+                    yAxisId="left" 
+                    dataKey="orders" 
+                    fill="hsl(217 91% 60%)" 
+                    radius={[6, 6, 0, 0]} 
+                    name="Orders" 
+                  />
+                  <Bar 
+                    yAxisId="right" 
+                    dataKey="revenue" 
+                    fill="hsl(152 69% 45%)" 
+                    radius={[6, 6, 0, 0]} 
+                    name="Revenue ($)" 
+                  />
+                </BarChart>
+              ) : (
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                  <XAxis 
+                    dataKey="period" 
+                    stroke="hsl(var(--muted-foreground))" 
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis 
+                    yAxisId="left" 
+                    stroke="hsl(var(--muted-foreground))" 
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis 
+                    yAxisId="right" 
+                    orientation="right" 
+                    stroke="hsl(var(--muted-foreground))" 
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12 }}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--popover))', 
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '12px',
+                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                    }}
+                    labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600 }}
+                  />
+                  <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                  <Line 
+                    yAxisId="left" 
+                    type="monotone" 
+                    dataKey="orders" 
+                    stroke="hsl(217 91% 60%)" 
+                    strokeWidth={3} 
+                    dot={{ fill: 'hsl(217 91% 60%)', strokeWidth: 0, r: 5 }}
+                    activeDot={{ r: 7 }}
+                    name="Orders" 
+                  />
+                  <Line 
+                    yAxisId="right" 
+                    type="monotone" 
+                    dataKey="revenue" 
+                    stroke="hsl(152 69% 45%)" 
+                    strokeWidth={3}
+                    dot={{ fill: 'hsl(152 69% 45%)', strokeWidth: 0, r: 5 }}
+                    activeDot={{ r: 7 }}
+                    name="Revenue ($)" 
+                  />
+                </LineChart>
+              )}
+            </ResponsiveContainer>
+          )}
+        </div>
       </Card>
     </div>
   );
