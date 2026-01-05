@@ -29,9 +29,8 @@ export const RoleBasedRoute = ({
   // SystemMaster and SuperManager can access everything
   const isSystemMaster = hasRole('SystemMaster');
   const isSuperManager = hasRole('SuperManager');
-  const isWhitelistedEmail = userEmail === 'ahmadalodat530@gmail.com';
 
-  if (!hasAllowedRole && !isSuperManager && !isSystemMaster && !isWhitelistedEmail) {
+  if (!hasAllowedRole && !isSuperManager && !isSystemMaster) {
     return <Navigate to={fallbackPath} replace />;
   }
 

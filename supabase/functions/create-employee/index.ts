@@ -150,8 +150,23 @@ serve(async (req) => {
     )
   } catch (error) {
     console.error('Error creating employee:', error)
+    
+    // Map to safe user-facing error messages
+    let userMessage = 'Failed to create employee. Please try again.';
+    const errorMessage = error instanceof Error ? error.message : '';
+    
+    if (errorMessage.includes('duplicate') || errorMessage.includes('already exists')) {
+      userMessage = 'An account with this email already exists.';
+    } else if (errorMessage.includes('Missing required fields')) {
+      userMessage = 'Please fill in all required fields.';
+    } else if (errorMessage.includes('Invalid role')) {
+      userMessage = 'Invalid role selected.';
+    } else if (errorMessage.includes('Branch is required')) {
+      userMessage = 'Please select a branch.';
+    }
+    
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'An unknown error occurred' }),
+      JSON.stringify({ error: userMessage }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
