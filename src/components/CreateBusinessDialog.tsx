@@ -45,8 +45,8 @@ export const CreateBusinessDialog = ({ open, onOpenChange }: CreateBusinessDialo
   // Fetch features for selected business type
   const { features: businessTypeFeatures } = useBusinessTypeFeatures(selectedType);
 
-  // Check both authentication and SystemMaster role or specific email
-  const isSystemMaster = userProfile?.primary_role === 'SystemMaster' || user?.email === 'ahmadalodat530@gmail.com';
+  // Check both authentication and SystemMaster role
+  const isSystemMaster = userProfile?.primary_role === 'SystemMaster';
   const canCreateBusiness = isAuthenticated && user?.id && isSystemMaster;
 
   // Auto-select default features when business type changes

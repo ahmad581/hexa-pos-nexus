@@ -144,7 +144,7 @@ export const SystemMasterDashboard = () => {
 
       return clientsWithDetails as Client[];
     },
-    enabled: isAuthenticated && (userProfile?.primary_role === 'SystemMaster' || userEmail === 'ahmadalodat530@gmail.com')
+    enabled: isAuthenticated && userProfile?.primary_role === 'SystemMaster'
   });
 
   // Available features are now derived from business type features
@@ -210,7 +210,7 @@ export const SystemMasterDashboard = () => {
         revenueThisMonth
       };
     },
-    enabled: isAuthenticated && (userProfile?.primary_role === 'SystemMaster' || userEmail === 'ahmadalodat530@gmail.com')
+    enabled: isAuthenticated && userProfile?.primary_role === 'SystemMaster'
   });
 
   const createClientMutation = useMutation({
@@ -325,7 +325,7 @@ export const SystemMasterDashboard = () => {
     primaryRole: userProfile?.primary_role
   });
 
-  const isSystemMasterAccess = userProfile?.primary_role === 'SystemMaster' || userEmail === 'ahmadalodat530@gmail.com';
+  const isSystemMasterAccess = userProfile?.primary_role === 'SystemMaster';
   
   // Show loading while profile is being fetched
   if (isAuthenticated && !userProfile) {

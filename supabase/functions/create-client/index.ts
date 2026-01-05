@@ -122,8 +122,21 @@ serve(async (req) => {
     )
   } catch (error) {
     console.error('Error creating client:', error)
+    
+    // Map to safe user-facing error messages
+    let userMessage = 'Failed to create client. Please try again.';
+    const errorMessage = error instanceof Error ? error.message : '';
+    
+    if (errorMessage.includes('duplicate') || errorMessage.includes('already exists') || errorMessage.includes('already registered')) {
+      userMessage = 'An account with this email already exists.';
+    } else if (errorMessage.includes('Missing required fields')) {
+      userMessage = 'Please fill in all required fields.';
+    } else if (errorMessage.includes('invalid') && errorMessage.includes('email')) {
+      userMessage = 'Please enter a valid email address.';
+    }
+    
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'An unknown error occurred' }),
+      JSON.stringify({ error: userMessage }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
