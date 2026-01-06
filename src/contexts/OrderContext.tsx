@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { useBranch } from './BranchContext';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface OrderItem {
   id: string;
@@ -42,7 +43,7 @@ interface OrderContextType {
   setOrderType: (type: Order['orderType']) => void;
   setCustomerInfo: (info: Order['customerInfo']) => void;
   setOrderNotes: (notes: string) => void;
-  submitOrder: () => void;
+  submitOrder: () => Promise<boolean>;
   clearCurrentOrder: () => void;
   updateOrderStatus: (orderId: string, status: Order['status']) => void;
   deleteOrder: (orderId: string) => void;
@@ -100,12 +101,77 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const submitOrder = () => {
-    if (currentOrder.length === 0 || !selectedBranch) return;
+  const submitOrder = async (): Promise<boolean> => {
+    if (currentOrder.length === 0 || !selectedBranch) return false;
 
     const total = currentOrder.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    
+    // Get table UUID if dine-in
+    let tableId: string | null = null;
+    if (orderType === 'dine-in' && selectedTable) {
+      const { data: tableData } = await supabase
+        .from('tables')
+        .select('id')
+        .eq('branch_id', selectedBranch.id)
+        .eq('table_number', selectedTable.toString())
+        .single();
+      tableId = tableData?.id || null;
+    }
+
+    // Generate order number
+    const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}`;
+
+    // Insert order into database
+    const { data: orderData, error: orderError } = await supabase
+      .from('orders')
+      .insert({
+        branch_id: selectedBranch.id,
+        order_number: orderNumber,
+        table_id: tableId,
+        customer_name: customerInfo?.name || null,
+        customer_phone: customerInfo?.phone || null,
+        notes: orderNotes || null,
+        total_amount: total,
+        status: 'pending',
+        payment_status: 'pending'
+      })
+      .select()
+      .single();
+
+    if (orderError || !orderData) {
+      console.error('Error creating order:', orderError);
+      return false;
+    }
+
+    // Insert order items
+    const orderItems = currentOrder.map(item => ({
+      order_id: orderData.id,
+      product_name: item.name,
+      unit_price: item.price,
+      quantity: item.quantity,
+      total_price: item.price * item.quantity
+    }));
+
+    const { error: itemsError } = await supabase
+      .from('order_items')
+      .insert(orderItems);
+
+    if (itemsError) {
+      console.error('Error creating order items:', itemsError);
+      return false;
+    }
+
+    // Update table status to occupied if dine-in
+    if (tableId) {
+      await supabase
+        .from('tables')
+        .update({ status: 'occupied' })
+        .eq('id', tableId);
+    }
+
+    // Also update local state
     const newOrder: Order = {
-      id: Date.now().toString(),
+      id: orderData.id,
       branchId: selectedBranch.id,
       branchName: selectedBranch.name,
       tableNumber: orderType === 'dine-in' ? selectedTable || undefined : undefined,
@@ -120,6 +186,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
 
     setOrders([...orders, newOrder]);
     clearCurrentOrder();
+    return true;
   };
 
   const clearCurrentOrder = () => {

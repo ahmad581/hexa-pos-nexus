@@ -1,4 +1,6 @@
 
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,13 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Minus, Plus, Trash2, ShoppingCart, User, Phone, MapPin } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingCart, User, Loader2 } from "lucide-react";
 import { useOrder } from "@/contexts/OrderContext";
 import { useBranch } from "@/contexts/BranchContext";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/contexts/TranslationContext";
 
 export const OrderSummary = () => {
+  const navigate = useNavigate();
   const { 
     currentOrder, 
     selectedTable, 
@@ -30,10 +33,11 @@ export const OrderSummary = () => {
   const { selectedBranch } = useBranch();
   const { toast } = useToast();
   const { t } = useTranslation();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const total = currentOrder.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
-  const handleSubmitOrder = () => {
+  const handleSubmitOrder = async () => {
     if (currentOrder.length === 0) {
       toast({ title: t('orderSummary.cannotSubmitEmpty'), variant: "destructive" });
       return;
@@ -44,8 +48,18 @@ export const OrderSummary = () => {
       return;
     }
     
-    submitOrder();
-    toast({ title: t('orderSummary.orderSubmitted') });
+    setIsSubmitting(true);
+    const success = await submitOrder();
+    setIsSubmitting(false);
+    
+    if (success) {
+      toast({ title: t('orderSummary.orderSubmitted') });
+      if (orderType === 'dine-in') {
+        navigate('/tables');
+      }
+    } else {
+      toast({ title: "Failed to submit order", variant: "destructive" });
+    }
   };
 
   if (currentOrder.length === 0) {
@@ -193,8 +207,13 @@ export const OrderSummary = () => {
           <Button
             onClick={handleSubmitOrder}
             className="flex-1 bg-green-600 hover:bg-green-700"
+            disabled={isSubmitting}
           >
-            {t('orderSummary.submitOrder')}
+            {isSubmitting ? (
+              <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t('common.loading') || 'Submitting...'}</>
+            ) : (
+              t('orderSummary.submitOrder')
+            )}
           </Button>
         </div>
       </div>
