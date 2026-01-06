@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Users, UtensilsCrossed } from "lucide-react";
+import { Users, UtensilsCrossed, ShoppingCart, DollarSign } from "lucide-react";
 import { useTranslation } from "@/contexts/TranslationContext";
 import { useOrder } from "@/contexts/OrderContext";
 import { useBranch } from "@/contexts/BranchContext";
@@ -30,6 +30,32 @@ export const Tables = () => {
     },
     enabled: !!selectedBranch?.id,
   });
+
+  const { data: activeOrders = [] } = useQuery({
+    queryKey: ["table-orders", selectedBranch?.id],
+    queryFn: async () => {
+      if (!selectedBranch?.id) return [];
+      const { data: orders, error } = await supabase
+        .from("orders")
+        .select(`
+          id,
+          table_id,
+          status,
+          total_amount,
+          order_items (id, quantity)
+        `)
+        .eq("branch_id", selectedBranch.id)
+        .in("status", ["pending", "preparing", "ready"]);
+      if (error) throw error;
+      return orders;
+    },
+    enabled: !!selectedBranch?.id,
+    refetchInterval: 10000,
+  });
+
+  const getTableOrder = (tableId: string) => {
+    return activeOrders.find((order) => order.table_id === tableId);
+  };
 
   const handleTakeOrder = (tableNumber: string) => {
     setOrderType('dine-in');
@@ -89,13 +115,38 @@ export const Tables = () => {
                 </div>
               )}
 
+              {(() => {
+                const order = getTableOrder(table.id);
+                if (order) {
+                  const itemCount = order.order_items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+                  return (
+                    <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center text-primary">
+                          <ShoppingCart size={14} className="mr-1.5" />
+                          <span className="text-sm font-medium">{itemCount} items</span>
+                        </div>
+                        <Badge variant="outline" className="text-xs capitalize">
+                          {order.status}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center text-green-400">
+                        <DollarSign size={14} className="mr-1" />
+                        <span className="text-sm font-semibold">{order.total_amount?.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+
               <Button
                 onClick={() => handleTakeOrder(table.table_number)}
                 className="w-full mt-4"
                 variant="default"
               >
                 <UtensilsCrossed size={16} className="mr-2" />
-                {t('tables.takeOrder') || 'Take Order'}
+                {getTableOrder(table.id) ? (t('tables.editOrder') || 'Edit Order') : (t('tables.takeOrder') || 'Take Order')}
               </Button>
             </div>
           </Card>
