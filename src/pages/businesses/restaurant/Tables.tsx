@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,56 +5,54 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, Users, UtensilsCrossed } from "lucide-react";
 import { useTranslation } from "@/contexts/TranslationContext";
 import { useOrder } from "@/contexts/OrderContext";
-
-interface Table {
-  id: string;
-  number: number;
-  capacity: number;
-  status: "Available" | "Occupied" | "Reserved" | "Cleaning";
-  currentOrder?: {
-    customerName: string;
-    orderTime: string;
-    items: number;
-    total: number;
-  };
-}
-
-const initialTables: Table[] = [
-  { id: "1", number: 1, capacity: 2, status: "Available" },
-  { id: "2", number: 2, capacity: 4, status: "Occupied", currentOrder: { customerName: "John Doe", orderTime: "12:30 PM", items: 3, total: 45.50 } },
-  { id: "3", number: 3, capacity: 6, status: "Reserved" },
-  { id: "4", number: 4, capacity: 2, status: "Cleaning" },
-  { id: "5", number: 5, capacity: 4, status: "Available" },
-  { id: "6", number: 6, capacity: 8, status: "Occupied", currentOrder: { customerName: "Jane Smith", orderTime: "1:15 PM", items: 5, total: 78.25 } },
-];
+import { useBranch } from "@/contexts/BranchContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { AddUnitDialog } from "@/components/AddUnitDialog";
 
 export const Tables = () => {
-  const [tables, setTables] = useState<Table[]>(initialTables);
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { setSelectedTable, setOrderType } = useOrder();
+  const { selectedBranch } = useBranch();
 
-  const handleTakeOrder = (table: Table) => {
+  const { data: tables = [], refetch } = useQuery({
+    queryKey: ["tables", selectedBranch?.id],
+    queryFn: async () => {
+      if (!selectedBranch?.id) return [];
+      const { data, error } = await supabase
+        .from("tables")
+        .select("*")
+        .eq("branch_id", selectedBranch.id)
+        .order("table_number");
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedBranch?.id,
+  });
+
+  const handleTakeOrder = (tableNumber: string) => {
     setOrderType('dine-in');
-    setSelectedTable(table.number);
+    setSelectedTable(parseInt(tableNumber) || 1);
     navigate('/menu');
   };
 
-  const getStatusColor = (status: Table["status"]) => {
-    switch (status) {
-      case "Available": return "bg-green-500/20 text-green-400";
-      case "Occupied": return "bg-red-500/20 text-red-400";
-      case "Reserved": return "bg-yellow-500/20 text-yellow-400";
-      case "Cleaning": return "bg-blue-500/20 text-blue-400";
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "available": return "bg-green-500/20 text-green-400";
+      case "occupied": return "bg-red-500/20 text-red-400";
+      case "reserved": return "bg-yellow-500/20 text-yellow-400";
+      case "cleaning": return "bg-blue-500/20 text-blue-400";
+      default: return "bg-gray-500/20 text-gray-400";
     }
   };
 
-  const getStatusLabel = (status: Table["status"]) => {
-    switch (status) {
-      case "Available": return t('tables.available');
-      case "Occupied": return t('tables.occupied');
-      case "Reserved": return t('tables.reserved');
-      case "Cleaning": return t('tables.cleaning');
+  const getStatusLabel = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "available": return t('tables.available') || 'Available';
+      case "occupied": return t('tables.occupied') || 'Occupied';
+      case "reserved": return t('tables.reserved') || 'Reserved';
+      case "cleaning": return t('tables.cleaning') || 'Cleaning';
       default: return status;
     }
   };
@@ -67,13 +64,14 @@ export const Tables = () => {
           <h1 className="text-3xl font-bold text-white">{t('tables.title')}</h1>
           <p className="text-gray-400">{t('tablesPage.monitor')}</p>
         </div>
+        <AddUnitDialog unitType="table" onSuccess={() => refetch()} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {tables.map((table) => (
           <Card key={table.id} className="bg-gray-800 border-gray-700 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-white">{t('tables.tableNumber')} {table.number}</h3>
+              <h3 className="text-xl font-bold text-white">{t('tables.tableNumber')} {table.table_number}</h3>
               <Badge className={getStatusColor(table.status)}>
                 {getStatusLabel(table.status)}
               </Badge>
@@ -85,23 +83,14 @@ export const Tables = () => {
                 <span className="text-sm">{t('tables.seats')} {table.capacity}</span>
               </div>
 
-              {table.currentOrder && (
-                <div className="border-t border-gray-700 pt-3">
-                  <div className="text-gray-300 mb-2">
-                    <span className="text-sm font-medium">{table.currentOrder.customerName}</span>
-                  </div>
-                  <div className="flex items-center text-gray-300 mb-2">
-                    <Clock size={16} className="mr-2" />
-                    <span className="text-sm">{t('tables.since')} {table.currentOrder.orderTime}</span>
-                  </div>
-                  <div className="text-green-400">
-                    <span className="text-sm">{table.currentOrder.items} {t('ordersPage.itemsCount')} • ${table.currentOrder.total}</span>
-                  </div>
+              {table.location && (
+                <div className="text-gray-400 text-sm">
+                  Location: {table.location}
                 </div>
               )}
 
               <Button
-                onClick={() => handleTakeOrder(table)}
+                onClick={() => handleTakeOrder(table.table_number)}
                 className="w-full mt-4"
                 variant="default"
               >
@@ -111,6 +100,12 @@ export const Tables = () => {
             </div>
           </Card>
         ))}
+
+        {tables.length === 0 && (
+          <div className="col-span-full text-center py-12 text-gray-400">
+            No tables found. Add your first table to get started.
+          </div>
+        )}
       </div>
     </div>
   );
