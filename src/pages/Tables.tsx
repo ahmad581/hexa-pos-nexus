@@ -57,12 +57,12 @@ export const Tables = () => {
 
   const handleTakeOrder = (tableNumber: number) => {
     setOrderType('dine-in');
-    setSelectedTable(tableNumber);
+    setSelectedTable(tableNumber.toString());
     navigate('/menu');
   };
 
   const getTableOrders = (tableNumber: number) => {
-    return orders.filter(order => order.tableNumber === tableNumber);
+    return orders.filter(order => order.tableNumber === tableNumber.toString());
   };
 
   return (

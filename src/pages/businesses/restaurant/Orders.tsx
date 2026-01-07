@@ -19,7 +19,7 @@ interface Order {
   status: "Pending" | "Preparing" | "Ready" | "Delivered";
   orderTime: string;
   type: "Dine-in" | "Takeout" | "Delivery";
-  tableNumber?: number;
+  tableNumber?: string;
   address?: string;
   notes?: string;
   isDeleted?: boolean;
@@ -39,7 +39,7 @@ const initialOrders: Order[] = [
     status: "Preparing",
     orderTime: "12:30 PM",
     type: "Dine-in",
-    tableNumber: 5
+    tableNumber: "5"
   },
   {
     id: "2",

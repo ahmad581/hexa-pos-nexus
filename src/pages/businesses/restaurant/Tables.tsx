@@ -57,9 +57,10 @@ export const Tables = () => {
     return activeOrders.filter((order) => order.table_id === tableId);
   };
 
-  const handleTakeOrder = (tableNumber: string) => {
+  const handleTakeOrder = (tableId: string, tableNumber: string) => {
     setOrderType('dine-in');
-    setSelectedTable(parseInt(tableNumber) || 1);
+    // Store the table_number as-is (it's a string in the DB)
+    setSelectedTable(tableNumber);
     navigate('/menu');
   };
 
@@ -143,7 +144,7 @@ export const Tables = () => {
               })()}
 
               <Button
-                onClick={() => handleTakeOrder(table.table_number)}
+                onClick={() => handleTakeOrder(table.id, table.table_number)}
                 className="w-full mt-4"
                 variant="default"
               >
