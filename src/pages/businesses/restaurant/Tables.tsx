@@ -13,7 +13,7 @@ import { AddUnitDialog } from "@/components/AddUnitDialog";
 export const Tables = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { setSelectedTable, setOrderType } = useOrder();
+  const { setSelectedTable, setOrderType, loadOrderForEditing } = useOrder();
   const { selectedBranch } = useBranch();
 
   const { data: tables = [], refetch } = useQuery({
@@ -57,10 +57,15 @@ export const Tables = () => {
     return activeOrders.filter((order) => order.table_id === tableId);
   };
 
-  const handleTakeOrder = (tableId: string, tableNumber: string) => {
+  const handleTakeOrder = async (tableId: string, tableNumber: string) => {
     setOrderType('dine-in');
-    // Store the table_number as-is (it's a string in the DB)
     setSelectedTable(tableNumber);
+    
+    // Load existing order for this table if any
+    if (selectedBranch?.id) {
+      await loadOrderForEditing(tableNumber, selectedBranch.id);
+    }
+    
     navigate('/menu');
   };
 
