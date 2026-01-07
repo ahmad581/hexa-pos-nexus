@@ -15,7 +15,7 @@ export interface Order {
   id: string;
   branchId: string;
   branchName: string;
-  tableNumber?: number;
+  tableNumber?: string;
   customerInfo?: {
     name: string;
     phone: string;
@@ -32,14 +32,14 @@ export interface Order {
 interface OrderContextType {
   orders: Order[];
   currentOrder: OrderItem[];
-  selectedTable: number | null;
+  selectedTable: string | null;
   orderType: Order['orderType'];
   customerInfo: Order['customerInfo'];
   orderNotes: string;
   addItemToOrder: (item: Omit<OrderItem, 'id' | 'quantity'>) => void;
   removeItemFromOrder: (itemId: string) => void;
   updateItemQuantity: (itemId: string, quantity: number) => void;
-  setSelectedTable: (tableNumber: number | null) => void;
+  setSelectedTable: (tableNumber: string | null) => void;
   setOrderType: (type: Order['orderType']) => void;
   setCustomerInfo: (info: Order['customerInfo']) => void;
   setOrderNotes: (notes: string) => void;
@@ -63,7 +63,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
   const { selectedBranch } = useBranch();
   const [orders, setOrders] = useState<Order[]>([]);
   const [currentOrder, setCurrentOrder] = useState<OrderItem[]>([]);
-  const [selectedTable, setSelectedTable] = useState<number | null>(null);
+  const [selectedTable, setSelectedTable] = useState<string | null>(null);
   const [orderType, setOrderType] = useState<Order['orderType']>('dine-in');
   const [customerInfo, setCustomerInfo] = useState<Order['customerInfo']>();
   const [orderNotes, setOrderNotes] = useState<string>('');
@@ -113,7 +113,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
         .from('tables')
         .select('id')
         .eq('branch_id', selectedBranch.id)
-        .eq('table_number', selectedTable.toString())
+        .eq('table_number', selectedTable)
         .single();
       tableId = tableData?.id || null;
     }
