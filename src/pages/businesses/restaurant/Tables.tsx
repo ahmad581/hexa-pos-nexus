@@ -53,8 +53,8 @@ export const Tables = () => {
     refetchInterval: 10000,
   });
 
-  const getTableOrder = (tableId: string) => {
-    return activeOrders.find((order) => order.table_id === tableId);
+  const getTableOrders = (tableId: string) => {
+    return activeOrders.filter((order) => order.table_id === tableId);
   };
 
   const handleTakeOrder = (tableNumber: string) => {
@@ -116,23 +116,25 @@ export const Tables = () => {
               )}
 
               {(() => {
-                const order = getTableOrder(table.id);
-                if (order) {
-                  const itemCount = order.order_items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+                const tableOrders = getTableOrders(table.id);
+                if (tableOrders.length > 0) {
+                  const totalItems = tableOrders.reduce((sum, order) => 
+                    sum + (order.order_items?.reduce((itemSum, item) => itemSum + item.quantity, 0) || 0), 0);
+                  const totalAmount = tableOrders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
                   return (
                     <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 space-y-2">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center text-primary">
                           <ShoppingCart size={14} className="mr-1.5" />
-                          <span className="text-sm font-medium">{itemCount} items</span>
+                          <span className="text-sm font-medium">{totalItems} items</span>
                         </div>
                         <Badge variant="outline" className="text-xs capitalize">
-                          {order.status}
+                          {tableOrders.length} order{tableOrders.length > 1 ? 's' : ''}
                         </Badge>
                       </div>
                       <div className="flex items-center text-green-400">
                         <DollarSign size={14} className="mr-1" />
-                        <span className="text-sm font-semibold">{order.total_amount?.toFixed(2)}</span>
+                        <span className="text-sm font-semibold">{totalAmount.toFixed(2)}</span>
                       </div>
                     </div>
                   );
@@ -146,7 +148,7 @@ export const Tables = () => {
                 variant="default"
               >
                 <UtensilsCrossed size={16} className="mr-2" />
-                {getTableOrder(table.id) ? (t('tables.editOrder') || 'Edit Order') : (t('tables.takeOrder') || 'Take Order')}
+                {getTableOrders(table.id).length > 0 ? (t('tables.addOrder') || 'Add Order') : (t('tables.takeOrder') || 'Take Order')}
               </Button>
             </div>
           </Card>
