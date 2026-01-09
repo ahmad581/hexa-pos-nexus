@@ -22,8 +22,8 @@ import { useTranslation } from "@/contexts/TranslationContext";
 interface InventoryRequestsProps {
   requests: InventoryRequest[];
   loading: boolean;
-  onApproveRequest: (id: string, approvedQuantity: number) => Promise<void>;
-  onFulfillRequest: (id: string) => Promise<void>;
+  onApproveRequest?: (id: string, approvedQuantity: number) => Promise<void>;
+  onFulfillRequest?: (id: string) => Promise<void>;
 }
 
 export const InventoryRequests = ({ requests, loading, onApproveRequest, onFulfillRequest }: InventoryRequestsProps) => {
@@ -65,6 +65,7 @@ export const InventoryRequests = ({ requests, loading, onApproveRequest, onFulfi
   });
 
   const handleApprove = async (requestId: string, quantity: number) => {
+    if (!onApproveRequest) return;
     try {
       await onApproveRequest(requestId, quantity);
       setSelectedRequest(null);
@@ -75,12 +76,15 @@ export const InventoryRequests = ({ requests, loading, onApproveRequest, onFulfi
   };
 
   const handleFulfill = async (requestId: string) => {
+    if (!onFulfillRequest) return;
     try {
       await onFulfillRequest(requestId);
     } catch (error) {
       console.error('Error fulfilling request:', error);
     }
   };
+
+  const canManage = !!onApproveRequest && !!onFulfillRequest;
 
   if (loading) {
     return <div className="flex items-center justify-center h-64">{t('common.loading')}</div>;
@@ -168,7 +172,7 @@ export const InventoryRequests = ({ requests, loading, onApproveRequest, onFulfi
             </div>
 
             <div className="mt-4 flex gap-2">
-              {request.status === 'Pending' && (
+              {request.status === 'Pending' && canManage && (
                 <>
                   <Dialog>
                     <DialogTrigger asChild>
@@ -233,7 +237,7 @@ export const InventoryRequests = ({ requests, loading, onApproveRequest, onFulfi
                 </>
               )}
               
-              {request.status === 'Approved' && (
+              {request.status === 'Approved' && canManage && (
                 <Button 
                   size="sm" 
                   className="bg-blue-600 hover:bg-blue-700"

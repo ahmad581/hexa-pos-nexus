@@ -330,6 +330,35 @@ export const useInventory = (branchId?: string) => {
     }
   };
 
+  const addWarehouse = async (warehouse: { name: string; address: string; phone?: string; manager_name?: string }) => {
+    try {
+      if (!userProfile?.business_id) {
+        toast.error('No business associated with user');
+        throw new Error('No business_id');
+      }
+
+      const { data, error } = await supabase
+        .from('warehouses')
+        .insert([{
+          ...warehouse,
+          business_id: userProfile.business_id,
+          is_active: true
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      await fetchData();
+      toast.success('Warehouse created successfully');
+      return data;
+    } catch (error) {
+      console.error('Error creating warehouse:', error);
+      toast.error('Failed to create warehouse');
+      throw error;
+    }
+  };
+
   return {
     items,
     warehouses,
@@ -342,6 +371,7 @@ export const useInventory = (branchId?: string) => {
     requestStock,
     approveRequest,
     fulfillRequest,
+    addWarehouse,
     refetch: fetchData
   };
 };
