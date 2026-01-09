@@ -15,6 +15,7 @@ interface InventoryItemDialogProps {
   onClose: () => void;
   item?: InventoryItem | null;
   warehouses: Warehouse[];
+  categories: string[];
   onSave: (data: any) => Promise<void>;
   onDelete?: (id: string) => Promise<void>;
 }
@@ -24,6 +25,7 @@ export const InventoryItemDialog = ({
   onClose,
   item,
   warehouses,
+  categories,
   onSave,
   onDelete
 }: InventoryItemDialogProps) => {
@@ -176,13 +178,22 @@ export const InventoryItemDialog = ({
 
             <div className="space-y-2">
               <Label htmlFor="category">{t('inventory.itemDialog.category')}</Label>
-              <Input
-                id="category"
+              <Select
                 value={formData.category}
-                onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                className="bg-gray-700 border-gray-600 text-white"
+                onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
                 required
-              />
+              >
+                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                  <SelectValue placeholder={t('inventory.selectCategory')} />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border">
+                  {categories.map(category => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
