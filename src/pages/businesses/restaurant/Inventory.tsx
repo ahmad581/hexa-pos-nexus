@@ -352,6 +352,7 @@ export default function RestaurantInventory() {
           }}
           item={selectedItem}
           warehouses={warehouses}
+          categories={categories}
           onSave={async (data: any) => {
             if (selectedItem) {
               await updateItem(selectedItem.id, data);
