@@ -12,20 +12,40 @@ import {
   Package,
   Truck,
   FileText,
-  Edit
+  Edit,
+  Warehouse,
+  FolderPlus
 } from "lucide-react";
 import { useInventory } from "@/hooks/useInventory";
+import { useInventoryPermissions } from "@/hooks/useInventoryPermissions";
 import { InventoryItemDialog } from "@/components/inventory/InventoryItemDialog";
 import { StockUpdateDialog } from "@/components/inventory/StockUpdateDialog";
 import { RequestStockDialog } from "@/components/inventory/RequestStockDialog";
 import { InventoryRequests } from "@/components/inventory/InventoryRequests";
 import { InventoryReports } from "@/components/inventory/InventoryReports";
+import { CreateWarehouseDialog } from "@/components/inventory/CreateWarehouseDialog";
+import { CreateCategoryDialog } from "@/components/inventory/CreateCategoryDialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useBranch } from "@/contexts/BranchContext";
 
 export default function RestaurantInventory() {
   const { selectedBranch } = useBranch();
+  const {
+    hasInventoryFeature,
+    hasFullAccess,
+    canManageItems,
+    canManageWarehouses,
+    canUpdateStock,
+    canRequestStock,
+    canManageRequests,
+    isCashier,
+    getCashierBranchId
+  } = useInventoryPermissions();
+
+  // For cashiers, filter to their branch only
+  const branchIdFilter = isCashier() ? getCashierBranchId() : selectedBranch?.id;
+
   const {
     items,
     warehouses,
@@ -37,13 +57,16 @@ export default function RestaurantInventory() {
     deleteItem,
     requestStock,
     approveRequest,
-    fulfillRequest
-  } = useInventory(selectedBranch?.id || undefined);
+    fulfillRequest,
+    addWarehouse
+  } = useInventory(branchIdFilter || undefined);
 
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [isItemDialogOpen, setIsItemDialogOpen] = useState(false);
   const [isStockDialogOpen, setIsStockDialogOpen] = useState(false);
   const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
+  const [isWarehouseDialogOpen, setIsWarehouseDialogOpen] = useState(false);
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedWarehouse, setSelectedWarehouse] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -104,6 +127,25 @@ export default function RestaurantInventory() {
     setIsRequestDialogOpen(true);
   };
 
+  const handleCategoryCreate = (categoryName: string) => {
+    // Categories are created when adding items with that category
+    // This just closes the dialog - user should now add an item with this category
+    setIsCategoryDialogOpen(false);
+  };
+
+  // Check if user has access to inventory feature
+  if (!hasInventoryFeature()) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-white mb-2">Inventory Feature Not Available</h2>
+          <p className="text-gray-400">This business doesn't have the inventory feature enabled.</p>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return <div className="flex items-center justify-center h-64">Loading...</div>;
   }
@@ -113,11 +155,42 @@ export default function RestaurantInventory() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-white">Restaurant Inventory</h1>
-          <p className="text-gray-400">Manage your restaurant's ingredient stock levels</p>
+          <p className="text-gray-400">
+            {isCashier() 
+              ? "View inventory and request items for your branch" 
+              : "Manage your restaurant's ingredient stock levels"
+            }
+          </p>
         </div>
-        <Button onClick={() => setIsItemDialogOpen(true)} className="bg-green-600 hover:bg-green-700">
-          <Plus className="h-4 w-4 mr-2" /> Add Item
-        </Button>
+        
+        {/* Action Buttons - Only show for users with full access */}
+        {hasFullAccess() && (
+          <div className="flex gap-2">
+            {canManageWarehouses() && (
+              <Button 
+                onClick={() => setIsWarehouseDialogOpen(true)} 
+                variant="outline"
+                className="border-gray-600 text-white hover:bg-gray-700"
+              >
+                <Warehouse className="h-4 w-4 mr-2" /> New Warehouse
+              </Button>
+            )}
+            {canManageItems() && (
+              <>
+                <Button 
+                  onClick={() => setIsCategoryDialogOpen(true)} 
+                  variant="outline"
+                  className="border-gray-600 text-white hover:bg-gray-700"
+                >
+                  <FolderPlus className="h-4 w-4 mr-2" /> New Category
+                </Button>
+                <Button onClick={() => setIsItemDialogOpen(true)} className="bg-green-600 hover:bg-green-700">
+                  <Plus className="h-4 w-4 mr-2" /> Add Item
+                </Button>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       <Tabs defaultValue="inventory" className="space-y-6">
@@ -128,9 +201,11 @@ export default function RestaurantInventory() {
           <TabsTrigger value="requests" className="flex items-center gap-2">
             <Truck className="h-4 w-4" /> Requests
           </TabsTrigger>
-          <TabsTrigger value="reports" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" /> Reports
-          </TabsTrigger>
+          {hasFullAccess() && (
+            <TabsTrigger value="reports" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" /> Reports
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="inventory" className="space-y-6">
@@ -211,79 +286,124 @@ export default function RestaurantInventory() {
                 </div>
 
                 <div className="mt-4 flex gap-2">
-                  <Button size="sm" variant="outline" className="flex-1" onClick={() => handleUpdateStock(item)}>
-                    Update Stock
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => handleEditItem(item)}>
-                    <Edit className="h-4 w-4" />
-                  </Button>
+                  {canUpdateStock() && (
+                    <Button size="sm" variant="outline" className="flex-1" onClick={() => handleUpdateStock(item)}>
+                      Update Stock
+                    </Button>
+                  )}
+                  {canManageItems() && (
+                    <Button size="sm" variant="ghost" onClick={() => handleEditItem(item)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="w-full mt-2"
-                  onClick={() => handleRequestStock(item)}
-                >
-                  <Truck className="h-4 w-4 mr-2" /> Request from Branch
-                </Button>
+                
+                {canRequestStock() && (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="w-full mt-2"
+                    onClick={() => handleRequestStock(item)}
+                  >
+                    <Truck className="h-4 w-4 mr-2" /> Request Stock
+                  </Button>
+                )}
               </Card>
             ))}
           </div>
+
+          {filteredItems.length === 0 && (
+            <div className="text-center py-12">
+              <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-white mb-2">No inventory items found</h3>
+              <p className="text-gray-400">
+                {hasFullAccess() 
+                  ? "Get started by adding your first inventory item."
+                  : "No inventory items are available for your branch."
+                }
+              </p>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="requests">
           <InventoryRequests
             requests={requests}
             loading={loading}
-            onApproveRequest={approveRequest}
-            onFulfillRequest={fulfillRequest}
+            onApproveRequest={canManageRequests() ? approveRequest : undefined}
+            onFulfillRequest={canManageRequests() ? fulfillRequest : undefined}
           />
         </TabsContent>
 
-        <TabsContent value="reports">
-          <InventoryReports />
-        </TabsContent>
+        {hasFullAccess() && (
+          <TabsContent value="reports">
+            <InventoryReports />
+          </TabsContent>
+        )}
       </Tabs>
 
       {/* Dialogs */}
-      <InventoryItemDialog
-        isOpen={isItemDialogOpen}
-        onClose={() => {
-          setIsItemDialogOpen(false);
-          setSelectedItem(null);
-        }}
-        item={selectedItem}
-        warehouses={warehouses}
-        onSave={async (data: any) => {
-          if (selectedItem) {
-            await updateItem(selectedItem.id, data);
-          } else {
-            await addItem(data);
-          }
-        }}
-        onDelete={selectedItem ? deleteItem : undefined}
-      />
+      {canManageItems() && (
+        <InventoryItemDialog
+          isOpen={isItemDialogOpen}
+          onClose={() => {
+            setIsItemDialogOpen(false);
+            setSelectedItem(null);
+          }}
+          item={selectedItem}
+          warehouses={warehouses}
+          onSave={async (data: any) => {
+            if (selectedItem) {
+              await updateItem(selectedItem.id, data);
+            } else {
+              await addItem(data);
+            }
+          }}
+          onDelete={selectedItem ? deleteItem : undefined}
+        />
+      )}
 
-      <StockUpdateDialog
-        isOpen={isStockDialogOpen}
-        onClose={() => {
-          setIsStockDialogOpen(false);
-          setSelectedItem(null);
-        }}
-        item={selectedItem}
-        onUpdate={updateStock}
-      />
+      {canUpdateStock() && (
+        <StockUpdateDialog
+          isOpen={isStockDialogOpen}
+          onClose={() => {
+            setIsStockDialogOpen(false);
+            setSelectedItem(null);
+          }}
+          item={selectedItem}
+          onUpdate={updateStock}
+        />
+      )}
 
-      <RequestStockDialog
-        isOpen={isRequestDialogOpen}
-        onClose={() => {
-          setIsRequestDialogOpen(false);
-          setSelectedItem(null);
-        }}
-        item={selectedItem}
-        warehouses={warehouses}
-        onRequestStock={requestStock}
-      />
+      {canRequestStock() && (
+        <RequestStockDialog
+          isOpen={isRequestDialogOpen}
+          onClose={() => {
+            setIsRequestDialogOpen(false);
+            setSelectedItem(null);
+          }}
+          item={selectedItem}
+          warehouses={warehouses}
+          onRequestStock={requestStock}
+        />
+      )}
+
+      {canManageWarehouses() && (
+        <CreateWarehouseDialog
+          isOpen={isWarehouseDialogOpen}
+          onClose={() => setIsWarehouseDialogOpen(false)}
+          onSave={addWarehouse}
+        />
+      )}
+
+      {canManageItems() && (
+        <CreateCategoryDialog
+          isOpen={isCategoryDialogOpen}
+          onClose={() => setIsCategoryDialogOpen(false)}
+          onSave={handleCategoryCreate}
+          existingCategories={categories}
+        />
+      )}
     </div>
   );
 }
