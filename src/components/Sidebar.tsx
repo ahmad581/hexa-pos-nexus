@@ -155,7 +155,12 @@ export const Sidebar = () => {
     );
   }
 
-  const filteredNavigationItems = [
+  // Check if user is a Cashier - they have restricted access
+  const { isCashier } = useRole();
+  const isCashierRole = isCashier();
+
+  // Cashiers only get access to Menu, Tables, and Inventory (view only)
+  const filteredNavigationItems = isCashierRole ? [] : [
     { to: "/", icon: LayoutDashboard, label: t('nav.dashboard') },
     ...(isSystemMaster() ? [{ to: "/system-master", icon: Crown, label: "SystemMaster Dashboard" }] : []),
     ...(canAccessEmployees() && hasRouteAccess('/employees') ? [{ to: "/employees", icon: UserPlus, label: t('nav.employees') }] : []),
@@ -166,8 +171,8 @@ export const Sidebar = () => {
   const filteredRestaurantItems = [
     ...(canAccessMenu() && hasRouteAccess('/menu') ? [{ to: "/menu", icon: FileText, label: t('nav.menu') }] : []),
     ...(canAccessTables() && hasRouteAccess('/tables') ? [{ to: "/tables", icon: Users, label: t('nav.tables') }] : []),
-    ...(canHandleOrders() && hasRouteAccess('/orders') ? [{ to: "/orders", icon: ShoppingBag, label: t('nav.orders') }] : []),
-    ...(canManageInventory() && hasRouteAccess('/inventory') ? [{ to: "/inventory", icon: Package, label: t('nav.inventory') }] : [])
+    ...(!isCashierRole && canHandleOrders() && hasRouteAccess('/orders') ? [{ to: "/orders", icon: ShoppingBag, label: t('nav.orders') }] : []),
+    ...(hasRouteAccess('/inventory') ? [{ to: "/inventory", icon: Package, label: t('nav.inventory') }] : [])
   ];
 
   const hotelItems = [
