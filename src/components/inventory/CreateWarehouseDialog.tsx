@@ -123,14 +123,12 @@ export const CreateWarehouseDialog = ({
               type="button"
               variant="outline"
               onClick={handleClose}
-              className="border-gray-600 text-white hover:bg-gray-700"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={loading || !formData.name.trim() || !formData.address.trim()}
-              className="bg-green-600 hover:bg-green-700"
             >
               {loading ? "Creating..." : "Create Warehouse"}
             </Button>

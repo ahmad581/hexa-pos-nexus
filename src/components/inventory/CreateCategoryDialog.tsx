@@ -93,14 +93,12 @@ export const CreateCategoryDialog = ({
               type="button"
               variant="outline"
               onClick={handleClose}
-              className="border-gray-600 text-white hover:bg-gray-700"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={!categoryName.trim()}
-              className="bg-green-600 hover:bg-green-700"
             >
               Create Category
             </Button>
