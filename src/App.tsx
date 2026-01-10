@@ -93,10 +93,26 @@ const App = () => (
                           <Layout />
                         </ProtectedRoute>
                       }>
-                        <Route index element={<Dashboard />} />
-                        <Route path="employees" element={<Employees />} />
-                        <Route path="call-center" element={<CallCenter />} />
-                        <Route path="settings" element={<Settings />} />
+                        <Route index element={
+                          <RoleBasedRoute allowedRoles={['SystemMaster', 'SuperManager', 'Manager', 'HallManager', 'HrManager', 'CallCenterEmp', 'Employee']} fallbackPath="/menu">
+                            <Dashboard />
+                          </RoleBasedRoute>
+                        } />
+                        <Route path="employees" element={
+                          <RoleBasedRoute allowedRoles={['SystemMaster', 'SuperManager', 'Manager', 'HrManager']}>
+                            <Employees />
+                          </RoleBasedRoute>
+                        } />
+                        <Route path="call-center" element={
+                          <RoleBasedRoute allowedRoles={['SystemMaster', 'SuperManager', 'Manager', 'CallCenterEmp']}>
+                            <CallCenter />
+                          </RoleBasedRoute>
+                        } />
+                        <Route path="settings" element={
+                          <RoleBasedRoute allowedRoles={['SystemMaster', 'SuperManager', 'Manager', 'HallManager', 'HrManager', 'CallCenterEmp', 'Employee']} fallbackPath="/menu">
+                            <Settings />
+                          </RoleBasedRoute>
+                        } />
                         
                         {/* Restaurant routes */}
                         <Route path="menu" element={
