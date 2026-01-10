@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,10 +29,13 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTranslation } from "@/contexts/TranslationContext";
 import { useBranch } from "@/contexts/BranchContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 export const Inventory = () => {
   const { selectedBranch } = useBranch();
   const { t } = useTranslation();
+  const { userProfile } = useAuth();
   const {
     hasInventoryFeature,
     hasFullAccess,
@@ -72,6 +75,26 @@ export const Inventory = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedWarehouse, setSelectedWarehouse] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [customCategories, setCustomCategories] = useState<string[]>([]);
+
+  // Load custom categories from localStorage on mount
+  useEffect(() => {
+    if (userProfile?.business_id) {
+      const storageKey = `inventory_categories_${userProfile.business_id}`;
+      const stored = localStorage.getItem(storageKey);
+      if (stored) {
+        try {
+          setCustomCategories(JSON.parse(stored));
+        } catch (e) {
+          console.error('Failed to parse stored categories', e);
+        }
+      }
+    }
+  }, [userProfile?.business_id]);
+
+  // Combine item categories with custom categories
+  const itemCategories = [...new Set(items.map((i) => i.category))];
+  const categories = [...new Set([...itemCategories, ...customCategories])].sort();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -106,8 +129,6 @@ export const Inventory = () => {
     return matchesSearch && matchesWarehouse && matchesCategory;
   });
 
-  const categories = [...new Set(items.map(item => item.category))];
-
   const handleEditItem = (item: any) => {
     setSelectedItem(item);
     setIsItemDialogOpen(true);
@@ -124,7 +145,19 @@ export const Inventory = () => {
   };
 
   const handleCategoryCreate = (categoryName: string) => {
-    // Categories are created when adding items with that category
+    if (!userProfile?.business_id) {
+      toast.error("Unable to create category - no business found");
+      return;
+    }
+    
+    // Add to custom categories and save to localStorage
+    const updatedCategories = [...new Set([...customCategories, categoryName])];
+    setCustomCategories(updatedCategories);
+    
+    const storageKey = `inventory_categories_${userProfile.business_id}`;
+    localStorage.setItem(storageKey, JSON.stringify(updatedCategories));
+    
+    toast.success(`Category "${categoryName}" created successfully`);
     setIsCategoryDialogOpen(false);
   };
 
@@ -165,7 +198,6 @@ export const Inventory = () => {
               <Button 
                 onClick={() => setIsWarehouseDialogOpen(true)} 
                 variant="outline"
-                className="border-gray-600 text-white hover:bg-gray-700"
               >
                 <Warehouse className="h-4 w-4 mr-2" /> New Warehouse
               </Button>
@@ -175,13 +207,12 @@ export const Inventory = () => {
                 <Button 
                   onClick={() => setIsCategoryDialogOpen(true)} 
                   variant="outline"
-                  className="border-gray-600 text-white hover:bg-gray-700"
                 >
                   <FolderPlus className="h-4 w-4 mr-2" /> New Category
                 </Button>
                 <Button 
                   onClick={() => setIsItemDialogOpen(true)}
-                  className="bg-green-600 hover:bg-green-700"
+                  className="bg-primary hover:bg-primary/90"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   {t('inventory.addItem')}

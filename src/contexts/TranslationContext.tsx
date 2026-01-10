@@ -83,7 +83,9 @@ const translations: Translations = {
   'tables.tableNumber': { en: 'Table', ar: 'طاولة' },
   'tables.capacity': { en: 'Capacity', ar: 'السعة' },
   'tables.guests': { en: 'guests', ar: 'ضيف' },
+  'tables.seats': { en: 'Seats:', ar: 'المقاعد:' },
   'tables.takeOrder': { en: 'Take Order', ar: 'أخذ الطلب' },
+  'tables.addOrder': { en: 'Add to Order', ar: 'إضافة للطلب' },
   'tables.viewOrder': { en: 'View Order', ar: 'عرض الطلب' },
   'tables.clearTable': { en: 'Clear Table', ar: 'تفريغ الطاولة' },
   'tables.reserveTable': { en: 'Reserve Table', ar: 'حجز الطاولة' },
@@ -490,7 +492,6 @@ const translations: Translations = {
 
   // Tables extras
   'tables.cleaning': { en: 'Cleaning', ar: 'تنظيف' },
-  'tables.seats': { en: 'Seats', ar: 'مقاعد' },
   'tables.since': { en: 'Since', ar: 'منذ' },
 
   // Employees - Card labels
