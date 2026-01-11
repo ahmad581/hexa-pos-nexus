@@ -43,7 +43,13 @@ export const useRole = () => {
   const canManageInventory = (branchId?: string): boolean => {
     return hasPermission('manage_inventory') || 
            isSystemMaster() || 
-           checkMultipleRoles(['SuperManager', 'Manager', 'HallManager'], branchId);
+           checkMultipleRoles(['SuperManager', 'Manager', 'HallManager', 'Cashier'], branchId);
+  };
+  
+  const canViewInventory = (branchId?: string): boolean => {
+    return hasPermission('view_inventory') || 
+           canManageInventory(branchId) ||
+           checkRole('Cashier', branchId);
   };
 
   const canAccessMenu = (branchId?: string): boolean => {
@@ -110,6 +116,7 @@ export const useRole = () => {
     canManageUsers,
     canViewAnalytics,
     canManageInventory,
+    canViewInventory,
     canAccessMenu,
     canHandleOrders,
     canAccessTables,

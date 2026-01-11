@@ -113,6 +113,11 @@ const App = () => (
                             <Settings />
                           </RoleBasedRoute>
                         } />
+                        <Route path="orders" element={
+                          <RoleBasedRoute allowedRoles={['SystemMaster', 'SuperManager', 'Manager', 'HallManager', 'Cashier', 'CallCenterEmp']}>
+                            <Orders />
+                          </RoleBasedRoute>
+                        } />
                         
                         {/* Restaurant routes */}
                         <Route path="menu" element={
@@ -125,11 +130,7 @@ const App = () => (
                             <Tables />
                           </BusinessRoute>
                         } />
-                        <Route path="orders" element={
-                          <BusinessRoute allowedBusinessTypes={['restaurant']}>
-                            <Orders />
-                          </BusinessRoute>
-                        } />
+                        
                         
                         {/* Hotel routes */}
                         <Route path="rooms" element={
