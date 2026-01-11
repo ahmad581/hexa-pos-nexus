@@ -40,18 +40,39 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const getBusinessTypeFromEmail = (email: string): string => {
-  if (email.startsWith('restaurant@') || email.includes('restaurant')) return 'restaurant';
-  if (email.startsWith('hotel@') || email.includes('hotel')) return 'hotel';
-  if (email.startsWith('salon@') || email.includes('salon')) return 'hair-salon';
-  if (email.startsWith('clinic@') || email.includes('clinic')) return 'medical-clinic';
-  if (email.startsWith('retail@') || email.includes('retail')) return 'retail-store';
-  if (email.startsWith('pharmacy@') || email.includes('pharmacy')) return 'pharmacy';
-  if (email.startsWith('grocery@') || email.includes('grocery')) return 'grocery';
-  if (email.startsWith('gym@') || email.includes('gym')) return 'gym';
-  if (email.startsWith('autorepair@') || email.includes('autorepair')) return 'auto-repair';
-  if (email.startsWith('petcare@') || email.includes('petcare')) return 'pet-care';
-  return 'restaurant'; // default
+// Helper to fetch business type from database
+const fetchBusinessType = async (businessId: string): Promise<string | null> => {
+  try {
+    const { data: business } = await supabase
+      .from('custom_businesses')
+      .select('business_type')
+      .eq('id', businessId)
+      .single();
+    
+    return business?.business_type || null;
+  } catch (error) {
+    console.error('Error fetching business type:', error);
+    return null;
+  }
+};
+
+// Helper to fetch business type by user email (for demo login)
+const fetchBusinessTypeByEmail = async (email: string): Promise<string | null> => {
+  try {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('business_id')
+      .eq('email', email)
+      .single();
+    
+    if (profile?.business_id) {
+      return fetchBusinessType(profile.business_id);
+    }
+    return null;
+  } catch (error) {
+    console.error('Error fetching business type by email:', error);
+    return null;
+  }
 };
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -81,14 +102,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         // Fetch the actual business type from custom_businesses
         if (profile.business_id) {
-          const { data: business } = await supabase
-            .from('custom_businesses')
-            .select('business_type')
-            .eq('id', profile.business_id)
-            .single();
-          
-          if (business?.business_type) {
-            setBusinessType(business.business_type);
+          const bType = await fetchBusinessType(profile.business_id);
+          if (bType) {
+            setBusinessType(bType);
+            localStorage.setItem("businessType", bType);
           }
         }
       }
@@ -134,21 +151,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(session.user);
         setIsAuthenticated(true);
         setUserEmail(session.user.email || null);
-        if (session.user.email) {
-          setBusinessType(getBusinessTypeFromEmail(session.user.email));
-        }
+        // Business type will be fetched in fetchUserData
         fetchUserData(session.user.id);
       } else {
         console.log('AuthProvider: No initial session found');
         // Fallback to localStorage for existing sessions
         const authenticated = localStorage.getItem("isAuthenticated") === "true";
         const email = localStorage.getItem("userEmail");
+        const storedBusinessType = localStorage.getItem("businessType");
         
         if (authenticated && email) {
           console.log('AuthProvider: Using localStorage fallback', email);
           setIsAuthenticated(authenticated);
           setUserEmail(email);
-          setBusinessType(getBusinessTypeFromEmail(email));
+          
+          // Use stored business type or fetch from DB
+          if (storedBusinessType) {
+            setBusinessType(storedBusinessType);
+          } else {
+            // Fetch from database
+            fetchBusinessTypeByEmail(email).then(bType => {
+              if (bType) {
+                setBusinessType(bType);
+                localStorage.setItem("businessType", bType);
+              }
+            });
+          }
           
           // Also restore branch ID from localStorage
           const storedBranchId = localStorage.getItem("userBranchId");
@@ -168,9 +196,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(session.user);
         setIsAuthenticated(true);
         setUserEmail(session.user.email || null);
-        if (session.user.email) {
-          setBusinessType(getBusinessTypeFromEmail(session.user.email));
-        }
+        // Business type will be fetched in fetchUserData
         fetchUserData(session.user.id);
         // Clear localStorage fallback
         localStorage.removeItem("isAuthenticated");
@@ -236,22 +262,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         // Fetch the actual business type from custom_businesses
         if (profile.business_id) {
-          const { data: business } = await supabase
-            .from('custom_businesses')
-            .select('business_type')
-            .eq('id', profile.business_id)
-            .single();
-          
-          if (business?.business_type) {
-            setBusinessType(business.business_type);
-            localStorage.setItem("businessType", business.business_type);
-          } else {
-            setBusinessType(getBusinessTypeFromEmail(email));
-            localStorage.setItem("businessType", getBusinessTypeFromEmail(email));
+          const bType = await fetchBusinessType(profile.business_id);
+          if (bType) {
+            setBusinessType(bType);
+            localStorage.setItem("businessType", bType);
           }
-        } else {
-          setBusinessType(getBusinessTypeFromEmail(email));
-          localStorage.setItem("businessType", getBusinessTypeFromEmail(email));
         }
         
         // Fetch user roles
@@ -265,36 +280,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           console.log('AuthProvider: Found roles for user', roles);
           setUserRoles(roles);
         }
-      } else {
-        // Fallback to demo profile for non-existing users
-        console.log('AuthProvider: Creating demo profile for', email);
-        const defaultBranchId = 'demo-branch-1';
-        setUserBranchId(defaultBranchId);
-        setBusinessType(getBusinessTypeFromEmail(email));
         
-        const mockProfile: UserProfile = {
-          id: 'demo-user-id',
-          email: email,
-          first_name: 'Demo',
-          last_name: 'User',
-          branch_id: defaultBranchId,
-          business_id: null,
-          primary_role: 'Manager',
-          is_active: true
-        };
-        setUserProfile(mockProfile);
-        setPrimaryRole('Manager');
-        localStorage.setItem("businessType", getBusinessTypeFromEmail(email));
+        // Store in localStorage as fallback
+        localStorage.setItem("isAuthenticated", "true");
+        localStorage.setItem("userEmail", email);
+        localStorage.setItem("userBranchId", profile.branch_id || '');
+      } else {
+        // User not found in database - this is an error for demo login
+        console.error('AuthProvider: User not found in database', email);
+        throw new Error('User not found. Please check your email address.');
       }
       
       // Set authentication state
       setIsAuthenticated(true);
       setUserEmail(email);
-      
-      // Store in localStorage as fallback
-      localStorage.setItem("isAuthenticated", "true");
-      localStorage.setItem("userEmail", email);
-      localStorage.setItem("userBranchId", profile?.branch_id || 'demo-branch-1');
       
       console.log('AuthProvider: Demo login successful for', email);
     } catch (error) {
@@ -311,6 +310,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUserProfile(null);
     setUserBranchId(null);
     setUser(null);
+    setUserRoles([]);
+    setPrimaryRole(null);
     localStorage.removeItem("isAuthenticated");
     localStorage.removeItem("userEmail");
     localStorage.removeItem("businessType");
