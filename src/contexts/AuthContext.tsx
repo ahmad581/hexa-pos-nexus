@@ -78,6 +78,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUserProfile(profile);
         setUserBranchId(profile.branch_id);
         setPrimaryRole(profile.primary_role);
+        
+        // Fetch the actual business type from custom_businesses
+        if (profile.business_id) {
+          const { data: business } = await supabase
+            .from('custom_businesses')
+            .select('business_type')
+            .eq('id', profile.business_id)
+            .single();
+          
+          if (business?.business_type) {
+            setBusinessType(business.business_type);
+          }
+        }
       }
 
       // Fetch user roles
@@ -221,6 +234,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUserBranchId(profile.branch_id);
         setPrimaryRole(profile.primary_role);
         
+        // Fetch the actual business type from custom_businesses
+        if (profile.business_id) {
+          const { data: business } = await supabase
+            .from('custom_businesses')
+            .select('business_type')
+            .eq('id', profile.business_id)
+            .single();
+          
+          if (business?.business_type) {
+            setBusinessType(business.business_type);
+            localStorage.setItem("businessType", business.business_type);
+          } else {
+            setBusinessType(getBusinessTypeFromEmail(email));
+            localStorage.setItem("businessType", getBusinessTypeFromEmail(email));
+          }
+        } else {
+          setBusinessType(getBusinessTypeFromEmail(email));
+          localStorage.setItem("businessType", getBusinessTypeFromEmail(email));
+        }
+        
         // Fetch user roles
         const { data: roles } = await supabase
           .from('user_roles')
@@ -229,6 +262,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           .eq('is_active', true);
 
         if (roles) {
+          console.log('AuthProvider: Found roles for user', roles);
           setUserRoles(roles);
         }
       } else {
@@ -236,6 +270,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log('AuthProvider: Creating demo profile for', email);
         const defaultBranchId = 'demo-branch-1';
         setUserBranchId(defaultBranchId);
+        setBusinessType(getBusinessTypeFromEmail(email));
         
         const mockProfile: UserProfile = {
           id: 'demo-user-id',
@@ -249,17 +284,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         };
         setUserProfile(mockProfile);
         setPrimaryRole('Manager');
+        localStorage.setItem("businessType", getBusinessTypeFromEmail(email));
       }
       
       // Set authentication state
       setIsAuthenticated(true);
       setUserEmail(email);
-      setBusinessType(getBusinessTypeFromEmail(email));
       
       // Store in localStorage as fallback
       localStorage.setItem("isAuthenticated", "true");
       localStorage.setItem("userEmail", email);
-      localStorage.setItem("businessType", getBusinessTypeFromEmail(email));
       localStorage.setItem("userBranchId", profile?.branch_id || 'demo-branch-1');
       
       console.log('AuthProvider: Demo login successful for', email);

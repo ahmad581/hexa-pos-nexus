@@ -171,8 +171,9 @@ export const Sidebar = () => {
   ];
 
   const filteredRestaurantItems = [
-    ...(canAccessMenu() && hasRouteAccess('/menu') ? [{ to: "/menu", icon: FileText, label: t('nav.menu') }] : []),
-    ...(canAccessTables() && hasRouteAccess('/tables') ? [{ to: "/tables", icon: Users, label: t('nav.tables') }] : []),
+    // Cashiers explicitly get Menu, Tables, Inventory
+    ...((isCashierRole || canAccessMenu()) && hasRouteAccess('/menu') ? [{ to: "/menu", icon: FileText, label: t('nav.menu') }] : []),
+    ...((isCashierRole || canAccessTables()) && hasRouteAccess('/tables') ? [{ to: "/tables", icon: Users, label: t('nav.tables') }] : []),
     ...((isManagerRole || (!isCashierRole && canHandleOrders())) && hasRouteAccess('/orders') ? [{ to: "/orders", icon: ShoppingBag, label: t('nav.orders') }] : []),
     ...((isCashierRole || canManageInventory()) && hasRouteAccess('/inventory') ? [{ to: "/inventory", icon: Package, label: t('nav.inventory') }] : [])
   ];
