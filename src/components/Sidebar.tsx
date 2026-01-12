@@ -37,12 +37,18 @@ export const Sidebar = () => {
     canHandleOrders,
     canManageInventory,
     canOnlyCheckInOut,
-    isSystemMaster
+    isSystemMaster,
+    isCashier,
+    isManager
   } = useRole();
   const { hasRouteAccess } = useBusinessFeatures();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
+  
+  // Move these to the top - React hooks must be called before any conditional returns
+  const isCashierRole = isCashier();
+  const isManagerRole = isManager();
 
   // For employees who can only check in/out, show minimal menu
   if (canOnlyCheckInOut()) {
@@ -154,11 +160,6 @@ export const Sidebar = () => {
       </>
     );
   }
-
-  // Check if user is a Cashier - they have restricted access
-  const { isCashier, isManager } = useRole();
-  const isCashierRole = isCashier();
-  const isManagerRole = isManager();
 
   // Cashiers only get access to Menu, Tables, and Inventory (view only)
   // Managers get full branch-level access
