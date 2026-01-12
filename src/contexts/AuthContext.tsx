@@ -43,37 +43,71 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // Helper to fetch business type from database
 const fetchBusinessType = async (businessId: string): Promise<string | null> => {
   try {
-    const { data: business } = await supabase
-      .from('custom_businesses')
-      .select('business_type')
-      .eq('id', businessId)
+    const { data: business, error } = await supabase
+      .from("custom_businesses")
+      .select("business_type")
+      .eq("id", businessId)
       .single();
-    
+
+    if (error) {
+      // Common when RLS prevents access or the row doesn't exist.
+      return null;
+    }
+
     return business?.business_type || null;
   } catch (error) {
-    console.error('Error fetching business type:', error);
+    console.error("Error fetching business type:", error);
     return null;
   }
 };
 
-// Helper to fetch business type by user email (for demo login)
-const fetchBusinessTypeByEmail = async (email: string): Promise<string | null> => {
+// Fallback: infer business type from branch (branches.business_type)
+const fetchBusinessTypeFromBranch = async (branchId: string): Promise<string | null> => {
   try {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('business_id')
-      .eq('email', email)
+    const { data: branch, error } = await supabase
+      .from("branches")
+      .select("business_type")
+      .eq("id", branchId)
       .single();
-    
-    if (profile?.business_id) {
-      return fetchBusinessType(profile.business_id);
+
+    if (error) {
+      return null;
     }
-    return null;
+
+    return branch?.business_type || null;
   } catch (error) {
-    console.error('Error fetching business type by email:', error);
+    console.error("Error fetching business type from branch:", error);
     return null;
   }
 };
+
+// Helper to fetch business type by user email (for demo/local fallback)
+const fetchBusinessTypeByEmail = async (email: string): Promise<string | null> => {
+  try {
+    const { data: profile, error } = await supabase
+      .from("profiles")
+      .select("business_id, branch_id")
+      .eq("email", email)
+      .single();
+
+    if (error || !profile) return null;
+
+    if (profile.business_id) {
+      const fromBusiness = await fetchBusinessType(profile.business_id);
+      if (fromBusiness) return fromBusiness;
+    }
+
+    if (profile.branch_id) {
+      return fetchBusinessTypeFromBranch(profile.branch_id);
+    }
+
+    return null;
+  } catch (error) {
+    console.error("Error fetching business type by email:", error);
+    return null;
+  }
+};
+
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -100,14 +134,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUserBranchId(profile.branch_id);
         setPrimaryRole(profile.primary_role);
         
-        // Fetch the actual business type from custom_businesses
+        // Fetch the actual business type.
+        // Note: Cashier/test users may not have SELECT access to custom_businesses due to RLS,
+        // so we fall back to branches.business_type.
         if (profile.business_id) {
-          const bType = await fetchBusinessType(profile.business_id);
+          let bType = await fetchBusinessType(profile.business_id);
+          if (!bType && profile.branch_id) {
+            bType = await fetchBusinessTypeFromBranch(profile.branch_id);
+          }
+          if (bType) {
+            setBusinessType(bType);
+            localStorage.setItem("businessType", bType);
+          }
+        } else if (profile.branch_id) {
+          const bType = await fetchBusinessTypeFromBranch(profile.branch_id);
           if (bType) {
             setBusinessType(bType);
             localStorage.setItem("businessType", bType);
           }
         }
+
       }
 
       // Fetch user roles
@@ -196,9 +242,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(session.user);
         setIsAuthenticated(true);
         setUserEmail(session.user.email || null);
-        // Business type will be fetched in fetchUserData
-        fetchUserData(session.user.id);
+        // Defer Supabase calls to avoid auth deadlocks.
+        setTimeout(() => {
+          fetchUserData(session.user.id);
+        }, 0);
+
         // Clear localStorage fallback
+
         localStorage.removeItem("isAuthenticated");
         localStorage.removeItem("userEmail");
         localStorage.removeItem("businessType");
@@ -260,14 +310,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUserBranchId(profile.branch_id);
         setPrimaryRole(profile.primary_role);
         
-        // Fetch the actual business type from custom_businesses
+        // Fetch the actual business type (with branch fallback for RLS)
         if (profile.business_id) {
-          const bType = await fetchBusinessType(profile.business_id);
+          let bType = await fetchBusinessType(profile.business_id);
+          if (!bType && profile.branch_id) {
+            bType = await fetchBusinessTypeFromBranch(profile.branch_id);
+          }
+          if (bType) {
+            setBusinessType(bType);
+            localStorage.setItem("businessType", bType);
+          }
+        } else if (profile.branch_id) {
+          const bType = await fetchBusinessTypeFromBranch(profile.branch_id);
           if (bType) {
             setBusinessType(bType);
             localStorage.setItem("businessType", bType);
           }
         }
+
         
         // Fetch user roles
         const { data: roles } = await supabase
