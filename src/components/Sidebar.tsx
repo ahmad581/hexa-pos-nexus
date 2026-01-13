@@ -50,6 +50,11 @@ export const Sidebar = () => {
   const isCashierRole = isCashier();
   const isManagerRole = isManager();
 
+  // Define helper function before any conditional returns to avoid reference errors
+  const isActiveRoute = (path: string) => {
+    return location.pathname === path;
+  };
+
   // For employees who can only check in/out, show minimal menu
   if (canOnlyCheckInOut()) {
     const employeeNavigationItems: NavItem[] = [
@@ -249,10 +254,6 @@ export const Sidebar = () => {
       default:
         return [];
     }
-  };
-
-  const isActiveRoute = (path: string) => {
-    return location.pathname === path;
   };
 
   return (
