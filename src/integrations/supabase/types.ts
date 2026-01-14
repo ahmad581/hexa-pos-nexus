@@ -92,6 +92,33 @@ export type Database = {
         }
         Relationships: []
       }
+      branch_settings: {
+        Row: {
+          branch_id: string
+          created_at: string
+          id: string
+          language: string
+          menu_design: string
+          updated_at: string
+        }
+        Insert: {
+          branch_id: string
+          created_at?: string
+          id?: string
+          language?: string
+          menu_design?: string
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string
+          created_at?: string
+          id?: string
+          language?: string
+          menu_design?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       branches: {
         Row: {
           address: string
