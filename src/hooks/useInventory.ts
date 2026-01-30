@@ -157,14 +157,23 @@ export const useInventory = (branchId?: string) => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === '23505' && error.message.includes('sku')) {
+          toast.error('An item with this SKU already exists. Please use a unique SKU.');
+        } else {
+          toast.error('Failed to add item');
+        }
+        throw error;
+      }
 
       await fetchData();
       toast.success('Item added successfully');
       return data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding item:', error);
-      toast.error('Failed to add item');
+      if (!error?.code) {
+        toast.error('Failed to add item');
+      }
       throw error;
     }
   };
