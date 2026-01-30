@@ -13,7 +13,6 @@ interface SystemSettingsTabProps {
     timezone: string;
     tax_rate: number;
     auto_backup: boolean;
-    analytics_tracking: boolean;
     receipt_footer: string;
   };
   onChange: (field: string, value: string | number | boolean) => void;
@@ -47,6 +46,7 @@ export const SystemSettingsTab = ({ settings, onChange, canEdit }: SystemSetting
                 <SelectItem value="GBP">GBP (£)</SelectItem>
                 <SelectItem value="SAR">SAR (﷼)</SelectItem>
                 <SelectItem value="AED">AED (د.إ)</SelectItem>
+                <SelectItem value="JOD">JOD (د.أ)</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -84,30 +84,6 @@ export const SystemSettingsTab = ({ settings, onChange, canEdit }: SystemSetting
           </div>
         </div>
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label htmlFor="autoBackup">{t('settingsCard.autoBackup')}</Label>
-              <p className="text-sm text-muted-foreground">{t('settingsCard.autoBackupDesc')}</p>
-            </div>
-            <Switch 
-              id="autoBackup" 
-              checked={settings.auto_backup ?? true}
-              onCheckedChange={(checked) => onChange('auto_backup', checked)}
-              disabled={!canEdit} 
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <Label htmlFor="analyticsTracking">{t('settingsCard.analyticsTracking')}</Label>
-              <p className="text-sm text-muted-foreground">{t('settingsCard.analyticsTrackingDesc')}</p>
-            </div>
-            <Switch 
-              id="analyticsTracking" 
-              checked={settings.analytics_tracking ?? true}
-              onCheckedChange={(checked) => onChange('analytics_tracking', checked)}
-              disabled={!canEdit} 
-            />
-          </div>
           <div>
             <Label htmlFor="receiptFooter">{t('settingsCard.receiptFooter')}</Label>
             <Textarea

@@ -111,7 +111,6 @@ export const Settings = () => {
               timezone: settings.timezone,
               tax_rate: settings.tax_rate,
               auto_backup: settings.auto_backup,
-              analytics_tracking: settings.analytics_tracking,
               receipt_footer: settings.receipt_footer,
             }}
             onChange={(field, value) => updateSetting(field as keyof typeof settings, value as any)}
