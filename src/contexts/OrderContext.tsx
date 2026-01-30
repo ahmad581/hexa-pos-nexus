@@ -26,6 +26,7 @@ export interface Order {
   total: number;
   status: 'pending' | 'preparing' | 'ready' | 'served';
   timestamp: string;
+  createdAt?: string;
   notes?: string;
 }
 
@@ -136,6 +137,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
         total: order.total_amount,
         status: order.status as Order['status'],
         timestamp: new Date(order.created_at).toLocaleTimeString(),
+        createdAt: order.created_at,
         notes: order.notes || undefined,
       }));
 

@@ -1,13 +1,17 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Clock, MapPin, Phone, Edit, Trash2, Filter } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Clock, MapPin, Phone, Edit, Trash2, Filter, CalendarIcon, X } from "lucide-react";
 import { useOrder } from "@/contexts/OrderContext";
+import { cn } from "@/lib/utils";
 
 interface DisplayOrder {
   id: string;
@@ -17,6 +21,7 @@ interface DisplayOrder {
   total: number;
   status: "Pending" | "Preparing" | "Ready" | "Delivered";
   orderTime: string;
+  orderDate: Date;
   type: "Dine-in" | "Takeout" | "Delivery";
   tableNumber?: string;
   address?: string;
@@ -30,60 +35,99 @@ export const Orders = () => {
   const [orders, setOrders] = useState<DisplayOrder[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<DisplayOrder[]>([]);
   const [filter, setFilter] = useState<string>("all");
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
+  const [timeFilter, setTimeFilter] = useState<string>("all");
   const { orders: contextOrders, updateOrderStatus, deleteOrder: deleteContextOrder } = useOrder();
 
   // Map context orders to display format
   useEffect(() => {
     const mappedOrders: DisplayOrder[] = contextOrders
       .filter(order => order.orderType !== 'phone')
-      .map(order => ({
-        id: order.id,
-        customerName: order.customerInfo?.name || (order.tableNumber ? `Table ${order.tableNumber}` : 'Walk-in'),
-        customerPhone: order.customerInfo?.phone || '-',
-        items: order.items.map(item => ({
-          name: item.name,
-          quantity: item.quantity,
-          price: item.price
-        })),
-        total: order.total,
-        status: order.status === 'pending' ? 'Pending' as const : 
-                order.status === 'preparing' ? 'Preparing' as const :
-                order.status === 'ready' ? 'Ready' as const : 'Delivered' as const,
-        orderTime: order.timestamp,
-        type: order.orderType === 'dine-in' ? 'Dine-in' as const :
-              order.orderType === 'takeout' ? 'Takeout' as const : 'Delivery' as const,
-        tableNumber: order.tableNumber,
-        address: order.customerInfo?.address,
-        notes: order.notes
-      }));
+      .map(order => {
+        const orderDate = order.createdAt ? new Date(order.createdAt) : new Date();
+        return {
+          id: order.id,
+          customerName: order.customerInfo?.name || (order.tableNumber ? `Table ${order.tableNumber}` : 'Walk-in'),
+          customerPhone: order.customerInfo?.phone || '-',
+          items: order.items.map(item => ({
+            name: item.name,
+            quantity: item.quantity,
+            price: item.price
+          })),
+          total: order.total,
+          status: order.status === 'pending' ? 'Pending' as const : 
+                  order.status === 'preparing' ? 'Preparing' as const :
+                  order.status === 'ready' ? 'Ready' as const : 'Delivered' as const,
+          orderTime: order.timestamp,
+          orderDate,
+          type: order.orderType === 'dine-in' ? 'Dine-in' as const :
+                order.orderType === 'takeout' ? 'Takeout' as const : 'Delivery' as const,
+          tableNumber: order.tableNumber,
+          address: order.customerInfo?.address,
+          notes: order.notes
+        };
+      });
     setOrders(mappedOrders);
   }, [contextOrders]);
 
   useEffect(() => {
     let filtered = orders;
     
+    // Apply type filter
     switch (filter) {
       case "deleted":
-        filtered = orders.filter(order => order.isDeleted);
+        filtered = filtered.filter(order => order.isDeleted);
         break;
       case "updated":
-        filtered = orders.filter(order => order.isUpdated);
+        filtered = filtered.filter(order => order.isUpdated);
         break;
       case "delivery":
-        filtered = orders.filter(order => order.type === "Delivery" && !order.isDeleted);
+        filtered = filtered.filter(order => order.type === "Delivery" && !order.isDeleted);
         break;
       case "dine-in":
-        filtered = orders.filter(order => order.type === "Dine-in" && !order.isDeleted);
+        filtered = filtered.filter(order => order.type === "Dine-in" && !order.isDeleted);
         break;
       case "takeout":
-        filtered = orders.filter(order => order.type === "Takeout" && !order.isDeleted);
+        filtered = filtered.filter(order => order.type === "Takeout" && !order.isDeleted);
         break;
       default:
-        filtered = orders.filter(order => !order.isDeleted);
+        filtered = filtered.filter(order => !order.isDeleted);
+    }
+
+    // Apply date range filter
+    if (dateFrom) {
+      const fromStart = new Date(dateFrom);
+      fromStart.setHours(0, 0, 0, 0);
+      filtered = filtered.filter(order => order.orderDate >= fromStart);
+    }
+    if (dateTo) {
+      const toEnd = new Date(dateTo);
+      toEnd.setHours(23, 59, 59, 999);
+      filtered = filtered.filter(order => order.orderDate <= toEnd);
+    }
+
+    // Apply time filter
+    if (timeFilter !== "all") {
+      filtered = filtered.filter(order => {
+        const hour = order.orderDate.getHours();
+        switch (timeFilter) {
+          case "morning": return hour >= 6 && hour < 12;
+          case "afternoon": return hour >= 12 && hour < 17;
+          case "evening": return hour >= 17 && hour < 21;
+          case "night": return hour >= 21 || hour < 6;
+          default: return true;
+        }
+      });
     }
     
     setFilteredOrders(filtered);
-  }, [orders, filter]);
+  }, [orders, filter, dateFrom, dateTo, timeFilter]);
+
+  const clearDateFilters = () => {
+    setDateFrom(undefined);
+    setDateTo(undefined);
+  };
 
   const getStatusColor = (status: DisplayOrder["status"]) => {
     switch (status) {
@@ -168,11 +212,89 @@ export const Orders = () => {
           <p className="text-gray-400">Manage restaurant orders</p>
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Date From */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-[140px] justify-start text-left font-normal bg-gray-800 border-gray-700",
+                  !dateFrom && "text-gray-400"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {dateFrom ? format(dateFrom, "MMM dd") : "From"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0 bg-gray-800 border-gray-700" align="start">
+              <Calendar
+                mode="single"
+                selected={dateFrom}
+                onSelect={setDateFrom}
+                initialFocus
+                className="p-3 pointer-events-auto"
+              />
+            </PopoverContent>
+          </Popover>
+
+          {/* Date To */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-[140px] justify-start text-left font-normal bg-gray-800 border-gray-700",
+                  !dateTo && "text-gray-400"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {dateTo ? format(dateTo, "MMM dd") : "To"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0 bg-gray-800 border-gray-700" align="start">
+              <Calendar
+                mode="single"
+                selected={dateTo}
+                onSelect={setDateTo}
+                initialFocus
+                className="p-3 pointer-events-auto"
+              />
+            </PopoverContent>
+          </Popover>
+
+          {/* Clear date filters */}
+          {(dateFrom || dateTo) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearDateFilters}
+              className="h-9 px-2 text-gray-400 hover:text-white"
+            >
+              <X size={16} />
+            </Button>
+          )}
+
+          {/* Time Filter */}
+          <Select value={timeFilter} onValueChange={setTimeFilter}>
+            <SelectTrigger className="w-[130px] bg-gray-800 border-gray-700 text-white">
+              <Clock size={14} className="mr-2" />
+              <SelectValue placeholder="Time" />
+            </SelectTrigger>
+            <SelectContent className="bg-gray-800 border-gray-700">
+              <SelectItem value="all">All Times</SelectItem>
+              <SelectItem value="morning">Morning (6-12)</SelectItem>
+              <SelectItem value="afternoon">Afternoon (12-5)</SelectItem>
+              <SelectItem value="evening">Evening (5-9)</SelectItem>
+              <SelectItem value="night">Night (9-6)</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Type Filter */}
           <div className="flex items-center gap-2">
             <Filter size={16} className="text-gray-400" />
             <Select value={filter} onValueChange={setFilter}>
-              <SelectTrigger className="w-48 bg-gray-800 border-gray-700 text-white">
+              <SelectTrigger className="w-[130px] bg-gray-800 border-gray-700 text-white">
                 <SelectValue placeholder="Filter orders" />
               </SelectTrigger>
               <SelectContent className="bg-gray-800 border-gray-700">
