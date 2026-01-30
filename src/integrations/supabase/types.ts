@@ -92,6 +92,39 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_history: {
+        Row: {
+          backup_type: string
+          branch_id: string
+          created_at: string
+          created_by: string | null
+          file_path: string
+          file_size: number | null
+          id: string
+          status: string
+        }
+        Insert: {
+          backup_type?: string
+          branch_id: string
+          created_at?: string
+          created_by?: string | null
+          file_path: string
+          file_size?: number | null
+          id?: string
+          status?: string
+        }
+        Update: {
+          backup_type?: string
+          branch_id?: string
+          created_at?: string
+          created_by?: string | null
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          status?: string
+        }
+        Relationships: []
+      }
       branch_settings: {
         Row: {
           address: string | null
