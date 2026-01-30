@@ -1528,6 +1528,42 @@ export type Database = {
           },
         ]
       }
+      order_audit_log: {
+        Row: {
+          action_type: string
+          branch_id: string
+          business_id: string | null
+          id: string
+          new_data: Json | null
+          old_data: Json | null
+          order_id: string
+          performed_at: string
+          performed_by: string | null
+        }
+        Insert: {
+          action_type: string
+          branch_id: string
+          business_id?: string | null
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          order_id: string
+          performed_at?: string
+          performed_by?: string | null
+        }
+        Update: {
+          action_type?: string
+          branch_id?: string
+          business_id?: string | null
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          order_id?: string
+          performed_at?: string
+          performed_by?: string | null
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string
