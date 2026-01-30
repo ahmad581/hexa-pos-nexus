@@ -1446,6 +1446,88 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_recipients: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          notification_id: string
+          read_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          notification_id: string
+          read_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          notification_id?: string
+          read_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_recipients_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          branch_id: string | null
+          business_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          message: string
+          metadata: Json | null
+          severity: string
+          title: string
+          type: string
+        }
+        Insert: {
+          branch_id?: string | null
+          business_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message: string
+          metadata?: Json | null
+          severity?: string
+          title: string
+          type: string
+        }
+        Update: {
+          branch_id?: string | null
+          business_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message?: string
+          metadata?: Json | null
+          severity?: string
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "custom_businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_items: {
         Row: {
           created_at: string
@@ -2042,9 +2124,26 @@ export type Database = {
         Args: { break_minutes?: number; check_in: string; check_out: string }
         Returns: number
       }
+      create_notification: {
+        Args: {
+          _branch_id: string
+          _business_id: string
+          _created_by?: string
+          _message: string
+          _metadata?: Json
+          _severity?: string
+          _title: string
+          _type: string
+        }
+        Returns: string
+      }
       current_user_has_primary_role: {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
         Returns: boolean
+      }
+      get_business_managers: {
+        Args: { _business_id: string }
+        Returns: string[]
       }
       get_role_by_name: {
         Args: { _role_name: string }
@@ -2076,6 +2175,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_manager_for_business: {
+        Args: { _business_id: string; _user_id: string }
         Returns: boolean
       }
       is_super_admin: { Args: { user_id: string }; Returns: boolean }
