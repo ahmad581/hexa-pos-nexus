@@ -4,13 +4,12 @@ import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Clock, MapPin, Phone, Edit, Trash2, Filter } from "lucide-react";
 import { useOrder } from "@/contexts/OrderContext";
 
-interface Order {
+interface DisplayOrder {
   id: string;
   customerName: string;
   customerPhone: string;
@@ -26,70 +25,38 @@ interface Order {
   isUpdated?: boolean;
 }
 
-const initialOrders: Order[] = [
-  {
-    id: "1",
-    customerName: "John Doe",
-    customerPhone: "(555) 123-4567",
-    items: [
-      { name: "Classic Burger", quantity: 2, price: 12.99 },
-      { name: "Fries", quantity: 2, price: 4.99 }
-    ],
-    total: 35.96,
-    status: "Preparing",
-    orderTime: "12:30 PM",
-    type: "Dine-in",
-    tableNumber: "5"
-  },
-  {
-    id: "2",
-    customerName: "Jane Smith",
-    customerPhone: "(555) 987-6543",
-    items: [
-      { name: "Margherita Pizza", quantity: 1, price: 16.99 },
-      { name: "Caesar Salad", quantity: 1, price: 9.99 }
-    ],
-    total: 26.98,
-    status: "Ready",
-    orderTime: "1:15 PM",
-    type: "Takeout"
-  }
-];
-
 export const Orders = () => {
   const navigate = useNavigate();
-  const [orders, setOrders] = useState<Order[]>(initialOrders);
-  const [filteredOrders, setFilteredOrders] = useState<Order[]>(initialOrders);
+  const [orders, setOrders] = useState<DisplayOrder[]>([]);
+  const [filteredOrders, setFilteredOrders] = useState<DisplayOrder[]>([]);
   const [filter, setFilter] = useState<string>("all");
   const { orders: contextOrders, updateOrderStatus, deleteOrder: deleteContextOrder } = useOrder();
 
+  // Map context orders to display format
   useEffect(() => {
-    const mergedOrders = [
-      ...initialOrders,
-      ...contextOrders
-        .filter(order => order.orderType !== 'phone') // Remove phone orders
-        .map(order => ({
-          id: order.id,
-          customerName: order.customerInfo?.name || 'Unknown Customer',
-          customerPhone: order.customerInfo?.phone || 'No phone',
-          items: order.items.map(item => ({
-            name: item.name,
-            quantity: item.quantity,
-            price: item.price
-          })),
-          total: order.total,
-          status: order.status === 'pending' ? 'Pending' as const : 
-                  order.status === 'preparing' ? 'Preparing' as const :
-                  order.status === 'ready' ? 'Ready' as const : 'Delivered' as const,
-          orderTime: order.timestamp,
-          type: order.orderType === 'dine-in' ? 'Dine-in' as const :
-                order.orderType === 'takeout' ? 'Takeout' as const : 'Delivery' as const,
-          tableNumber: order.tableNumber,
-          address: order.customerInfo?.address,
-          notes: order.notes
-        }))
-    ];
-    setOrders(mergedOrders);
+    const mappedOrders: DisplayOrder[] = contextOrders
+      .filter(order => order.orderType !== 'phone')
+      .map(order => ({
+        id: order.id,
+        customerName: order.customerInfo?.name || (order.tableNumber ? `Table ${order.tableNumber}` : 'Walk-in'),
+        customerPhone: order.customerInfo?.phone || '-',
+        items: order.items.map(item => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price
+        })),
+        total: order.total,
+        status: order.status === 'pending' ? 'Pending' as const : 
+                order.status === 'preparing' ? 'Preparing' as const :
+                order.status === 'ready' ? 'Ready' as const : 'Delivered' as const,
+        orderTime: order.timestamp,
+        type: order.orderType === 'dine-in' ? 'Dine-in' as const :
+              order.orderType === 'takeout' ? 'Takeout' as const : 'Delivery' as const,
+        tableNumber: order.tableNumber,
+        address: order.customerInfo?.address,
+        notes: order.notes
+      }));
+    setOrders(mappedOrders);
   }, [contextOrders]);
 
   useEffect(() => {
@@ -118,7 +85,7 @@ export const Orders = () => {
     setFilteredOrders(filtered);
   }, [orders, filter]);
 
-  const getStatusColor = (status: Order["status"]) => {
+  const getStatusColor = (status: DisplayOrder["status"]) => {
     switch (status) {
       case "Pending": return "bg-yellow-500/20 text-yellow-400";
       case "Preparing": return "bg-blue-500/20 text-blue-400";
@@ -127,7 +94,7 @@ export const Orders = () => {
     }
   };
 
-  const getTypeColor = (type: Order["type"]) => {
+  const getTypeColor = (type: DisplayOrder["type"]) => {
     switch (type) {
       case "Dine-in": return "bg-purple-500/20 text-purple-400";
       case "Takeout": return "bg-orange-500/20 text-orange-400";
@@ -135,7 +102,7 @@ export const Orders = () => {
     }
   };
 
-  const handleStatusUpdate = (orderId: string, newStatus: Order["status"]) => {
+  const handleStatusUpdate = (orderId: string, newStatus: DisplayOrder["status"]) => {
     setOrders(prev => prev.map(order => 
       order.id === orderId ? { ...order, status: newStatus, isUpdated: true } : order
     ));
@@ -167,7 +134,7 @@ export const Orders = () => {
     ));
   };
 
-  const handleEditOrder = (order: Order) => {
+  const handleEditOrder = (order: DisplayOrder) => {
     // Navigate to menu page with order data in state
     navigate('/menu', { 
       state: { 
