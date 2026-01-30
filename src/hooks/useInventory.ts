@@ -105,9 +105,10 @@ export const useInventory = (branchId?: string) => {
         .eq('is_active', true)
         .order('name');
 
-      // Filter by branch if branchId is provided
+      // Filter requests by branch if branchId is provided
+      // Note: We don't filter inventory items by branch - all users should see
+      // all business inventory so they can request items from any warehouse
       if (branchId) {
-        itemsQuery = itemsQuery.eq('branch_id', branchId);
         requestsQuery = requestsQuery.eq('requesting_branch_id', branchId);
       }
 
