@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Printer, Plus, Trash2, Settings2 } from "lucide-react";
 import { useTranslation } from "@/contexts/TranslationContext";
+import { useBusinessFeatures } from "@/hooks/useBusinessFeatures";
 import {
   Dialog,
   DialogContent,
@@ -25,6 +26,7 @@ export interface PrinterConfig {
   use_for_receipts: boolean;
   use_for_kitchen: boolean;
   use_for_reports: boolean;
+  use_for_call_center: boolean;
   is_default: boolean;
 }
 
@@ -36,6 +38,8 @@ interface PrintersSettingsTabProps {
 
 export const PrintersSettingsTab = ({ printers = [], onChange, canEdit }: PrintersSettingsTabProps) => {
   const { t } = useTranslation();
+  const { hasFeatureAccess } = useBusinessFeatures();
+  const hasCallCenterFeature = hasFeatureAccess('call-center');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingPrinter, setEditingPrinter] = useState<PrinterConfig | null>(null);
   const [formData, setFormData] = useState<Partial<PrinterConfig>>({
@@ -47,6 +51,7 @@ export const PrintersSettingsTab = ({ printers = [], onChange, canEdit }: Printe
     use_for_receipts: true,
     use_for_kitchen: false,
     use_for_reports: false,
+    use_for_call_center: false,
     is_default: false,
   });
 
@@ -61,6 +66,7 @@ export const PrintersSettingsTab = ({ printers = [], onChange, canEdit }: Printe
       use_for_receipts: formData.use_for_receipts ?? true,
       use_for_kitchen: formData.use_for_kitchen ?? false,
       use_for_reports: formData.use_for_reports ?? false,
+      use_for_call_center: formData.use_for_call_center ?? false,
       is_default: printers.length === 0 ? true : (formData.is_default ?? false),
     };
 
@@ -120,6 +126,7 @@ export const PrintersSettingsTab = ({ printers = [], onChange, canEdit }: Printe
       use_for_receipts: true,
       use_for_kitchen: false,
       use_for_reports: false,
+      use_for_call_center: false,
       is_default: false,
     });
     setEditingPrinter(null);
@@ -259,6 +266,15 @@ export const PrintersSettingsTab = ({ printers = [], onChange, canEdit }: Printe
                       onCheckedChange={(checked) => setFormData({ ...formData, use_for_reports: checked })}
                     />
                   </div>
+                  {hasCallCenterFeature && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Use for Call Center Orders</span>
+                      <Switch 
+                        checked={formData.use_for_call_center}
+                        onCheckedChange={(checked) => setFormData({ ...formData, use_for_call_center: checked })}
+                      />
+                    </div>
+                  )}
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Set as Default Printer</span>
                     <Switch 
@@ -307,7 +323,7 @@ export const PrintersSettingsTab = ({ printers = [], onChange, canEdit }: Printe
                     {getPrinterTypeLabel(printer.type)} • {getConnectionTypeLabel(printer.connection_type)}
                     {printer.connection_type === 'network' && printer.ip_address && ` • ${printer.ip_address}:${printer.port}`}
                   </p>
-                  <div className="flex gap-2 mt-1">
+                  <div className="flex gap-2 mt-1 flex-wrap">
                     {printer.use_for_receipts && (
                       <span className="px-2 py-0.5 text-xs bg-green-500/20 text-green-400 rounded">Receipts</span>
                     )}
@@ -316,6 +332,9 @@ export const PrintersSettingsTab = ({ printers = [], onChange, canEdit }: Printe
                     )}
                     {printer.use_for_reports && (
                       <span className="px-2 py-0.5 text-xs bg-blue-500/20 text-blue-400 rounded">Reports</span>
+                    )}
+                    {printer.use_for_call_center && (
+                      <span className="px-2 py-0.5 text-xs bg-purple-500/20 text-purple-400 rounded">Call Center</span>
                     )}
                   </div>
                 </div>
