@@ -1,5 +1,6 @@
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LayoutGrid, Users, Clock, CheckCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,15 +8,19 @@ import { useBranch } from "@/contexts/BranchContext";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 
 export const TablesAnalytics = () => {
-  const { selectedBranch } = useBranch();
+  const { branches, selectedBranch: contextBranch } = useBranch();
+  const [selectedBranch, setSelectedBranch] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  const branchFilter = selectedBranch !== "all" ? selectedBranch : contextBranch?.id;
 
   const { data: tables = [], isLoading } = useQuery({
-    queryKey: ['tables-analytics', selectedBranch?.id],
+    queryKey: ['tables-analytics', branchFilter],
     queryFn: async () => {
       let query = supabase.from('rooms').select('id, room_number, status, capacity, floor_number');
       
-      if (selectedBranch?.id) {
-        query = query.eq('branch_id', selectedBranch.id);
+      if (branchFilter) {
+        query = query.eq('branch_id', branchFilter);
       }
       
       const { data, error } = await query;
@@ -24,15 +29,20 @@ export const TablesAnalytics = () => {
     }
   });
 
+  const filteredTables = useMemo(() => {
+    if (statusFilter === "all") return tables;
+    return tables.filter(t => t.status === statusFilter);
+  }, [tables, statusFilter]);
+
   const stats = useMemo(() => {
     const total = tables.length;
     const available = tables.filter(t => t.status === 'available').length;
     const occupied = tables.filter(t => t.status === 'occupied').length;
     const reserved = tables.filter(t => t.status === 'reserved').length;
-    const totalCapacity = tables.reduce((sum, t) => sum + (t.capacity || 0), 0);
+    const totalCapacity = filteredTables.reduce((sum, t) => sum + (t.capacity || 0), 0);
     
-    return { total, available, occupied, reserved, totalCapacity };
-  }, [tables]);
+    return { total, available, occupied, reserved, totalCapacity, filtered: filteredTables.length };
+  }, [tables, filteredTables]);
 
   const chartData = [
     { name: 'Available', value: stats.available, color: 'hsl(152 69% 45%)' },
@@ -46,11 +56,37 @@ export const TablesAnalytics = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <div className="p-2 rounded-lg bg-indigo-500/20">
-          <LayoutGrid className="w-5 h-5 text-indigo-500" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="p-2 rounded-lg bg-indigo-500/20">
+            <LayoutGrid className="w-5 h-5 text-indigo-500" />
+          </div>
+          <h3 className="text-lg font-semibold text-foreground">Tables Analytics</h3>
         </div>
-        <h3 className="text-lg font-semibold text-foreground">Tables Analytics</h3>
+        <div className="flex gap-2">
+          <Select value={selectedBranch} onValueChange={setSelectedBranch}>
+            <SelectTrigger className="w-[150px] h-9">
+              <SelectValue placeholder="Branch" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Branches</SelectItem>
+              {branches.map(branch => (
+                <SelectItem key={branch.id} value={branch.id}>{branch.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[120px] h-9">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="available">Available</SelectItem>
+              <SelectItem value="occupied">Occupied</SelectItem>
+              <SelectItem value="reserved">Reserved</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

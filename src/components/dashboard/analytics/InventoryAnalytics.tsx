@@ -1,16 +1,22 @@
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Package, AlertTriangle, TrendingDown, CheckCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useBranch } from "@/contexts/BranchContext";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 
 export const InventoryAnalytics = () => {
   const { userProfile } = useAuth();
+  const { branches } = useBranch();
+  const [selectedBranch, setSelectedBranch] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
 
   const { data: inventoryData = [], isLoading } = useQuery({
-    queryKey: ['inventory-analytics', userProfile?.business_id],
+    queryKey: ['inventory-analytics', userProfile?.business_id, selectedBranch],
     queryFn: async () => {
       let query = supabase
         .from('inventory_items')
@@ -20,12 +26,31 @@ export const InventoryAnalytics = () => {
         query = query.eq('business_id', userProfile.business_id);
       }
       
+      if (selectedBranch !== "all") {
+        query = query.eq('branch_id', selectedBranch);
+      }
+      
       const { data, error } = await query;
       if (error) throw error;
       return data || [];
     },
     enabled: !!userProfile?.business_id
   });
+
+  const categories = useMemo(() => {
+    return [...new Set(inventoryData.map(i => i.category))];
+  }, [inventoryData]);
+
+  const filteredInventory = useMemo(() => {
+    let result = inventoryData;
+    if (statusFilter !== "all") {
+      result = result.filter(i => i.status === statusFilter);
+    }
+    if (categoryFilter !== "all") {
+      result = result.filter(i => i.category === categoryFilter);
+    }
+    return result;
+  }, [inventoryData, statusFilter, categoryFilter]);
 
   const stats = useMemo(() => {
     const total = inventoryData.length;
@@ -34,8 +59,8 @@ export const InventoryAnalytics = () => {
     const normal = inventoryData.filter(i => i.status === 'Normal').length;
     const overstock = inventoryData.filter(i => i.status === 'Overstock').length;
     
-    return { total, lowStock, outOfStock, normal, overstock };
-  }, [inventoryData]);
+    return { total, lowStock, outOfStock, normal, overstock, filtered: filteredInventory.length };
+  }, [inventoryData, filteredInventory]);
 
   const chartData = [
     { name: 'Normal', value: stats.normal, color: 'hsl(152 69% 45%)' },
@@ -44,17 +69,55 @@ export const InventoryAnalytics = () => {
     { name: 'Overstock', value: stats.overstock, color: 'hsl(217 91% 60%)' },
   ].filter(d => d.value > 0);
 
-  const lowStockItems = inventoryData
+  const lowStockItems = filteredInventory
     .filter(i => i.status === 'Low Stock' || i.status === 'Out of Stock')
     .slice(0, 5);
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <div className="p-2 rounded-lg bg-orange-500/20">
-          <Package className="w-5 h-5 text-orange-500" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="p-2 rounded-lg bg-orange-500/20">
+            <Package className="w-5 h-5 text-orange-500" />
+          </div>
+          <h3 className="text-lg font-semibold text-foreground">Inventory Analytics</h3>
         </div>
-        <h3 className="text-lg font-semibold text-foreground">Inventory Analytics</h3>
+        <div className="flex gap-2 flex-wrap justify-end">
+          <Select value={selectedBranch} onValueChange={setSelectedBranch}>
+            <SelectTrigger className="w-[150px] h-9">
+              <SelectValue placeholder="Branch" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Branches</SelectItem>
+              {branches.map(branch => (
+                <SelectItem key={branch.id} value={branch.id}>{branch.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-[130px] h-9">
+              <SelectValue placeholder="Category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {categories.map(cat => (
+                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[120px] h-9">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="Normal">Normal</SelectItem>
+              <SelectItem value="Low Stock">Low Stock</SelectItem>
+              <SelectItem value="Out of Stock">Out of Stock</SelectItem>
+              <SelectItem value="Overstock">Overstock</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

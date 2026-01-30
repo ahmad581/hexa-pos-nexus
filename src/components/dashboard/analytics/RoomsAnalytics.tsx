@@ -1,5 +1,6 @@
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Hotel, BedDouble, DollarSign, Users } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,15 +8,20 @@ import { useBranch } from "@/contexts/BranchContext";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 
 export const RoomsAnalytics = () => {
-  const { selectedBranch } = useBranch();
+  const { branches, selectedBranch: contextBranch } = useBranch();
+  const [selectedBranch, setSelectedBranch] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [roomTypeFilter, setRoomTypeFilter] = useState("all");
+
+  const branchFilter = selectedBranch !== "all" ? selectedBranch : contextBranch?.id;
 
   const { data: rooms = [], isLoading } = useQuery({
-    queryKey: ['rooms-analytics', selectedBranch?.id],
+    queryKey: ['rooms-analytics', branchFilter],
     queryFn: async () => {
       let query = supabase.from('rooms').select('id, room_number, room_type, status, price_per_night, capacity, floor_number');
       
-      if (selectedBranch?.id) {
-        query = query.eq('branch_id', selectedBranch.id);
+      if (branchFilter) {
+        query = query.eq('branch_id', branchFilter);
       }
       
       const { data, error } = await query;
@@ -24,25 +30,40 @@ export const RoomsAnalytics = () => {
     }
   });
 
+  const roomTypes = useMemo(() => {
+    return [...new Set(rooms.map(r => r.room_type || 'Standard'))];
+  }, [rooms]);
+
+  const filteredRooms = useMemo(() => {
+    let result = rooms;
+    if (statusFilter !== "all") {
+      result = result.filter(r => r.status === statusFilter);
+    }
+    if (roomTypeFilter !== "all") {
+      result = result.filter(r => (r.room_type || 'Standard') === roomTypeFilter);
+    }
+    return result;
+  }, [rooms, statusFilter, roomTypeFilter]);
+
   const stats = useMemo(() => {
     const total = rooms.length;
     const available = rooms.filter(r => r.status === 'available').length;
     const occupied = rooms.filter(r => r.status === 'occupied').length;
     const maintenance = rooms.filter(r => r.status === 'maintenance').length;
-    const totalCapacity = rooms.reduce((sum, r) => sum + (r.capacity || 0), 0);
-    const avgPrice = total > 0 ? rooms.reduce((sum, r) => sum + (r.price_per_night || 0), 0) / total : 0;
+    const totalCapacity = filteredRooms.reduce((sum, r) => sum + (r.capacity || 0), 0);
+    const avgPrice = filteredRooms.length > 0 ? filteredRooms.reduce((sum, r) => sum + (r.price_per_night || 0), 0) / filteredRooms.length : 0;
     
-    return { total, available, occupied, maintenance, totalCapacity, avgPrice };
-  }, [rooms]);
+    return { total, available, occupied, maintenance, totalCapacity, avgPrice, filtered: filteredRooms.length };
+  }, [rooms, filteredRooms]);
 
   const roomTypeData = useMemo(() => {
     const types: Record<string, number> = {};
-    rooms.forEach(r => {
+    filteredRooms.forEach(r => {
       const type = r.room_type || 'Standard';
       types[type] = (types[type] || 0) + 1;
     });
     return Object.entries(types).map(([name, count]) => ({ name, count }));
-  }, [rooms]);
+  }, [filteredRooms]);
 
   const statusPieData = [
     { name: 'Available', value: stats.available, color: 'hsl(152 69% 45%)' },
@@ -56,11 +77,48 @@ export const RoomsAnalytics = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <div className="p-2 rounded-lg bg-amber-500/20">
-          <Hotel className="w-5 h-5 text-amber-500" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="p-2 rounded-lg bg-amber-500/20">
+            <Hotel className="w-5 h-5 text-amber-500" />
+          </div>
+          <h3 className="text-lg font-semibold text-foreground">Rooms Analytics</h3>
         </div>
-        <h3 className="text-lg font-semibold text-foreground">Rooms Analytics</h3>
+        <div className="flex gap-2 flex-wrap justify-end">
+          <Select value={selectedBranch} onValueChange={setSelectedBranch}>
+            <SelectTrigger className="w-[150px] h-9">
+              <SelectValue placeholder="Branch" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Branches</SelectItem>
+              {branches.map(branch => (
+                <SelectItem key={branch.id} value={branch.id}>{branch.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={roomTypeFilter} onValueChange={setRoomTypeFilter}>
+            <SelectTrigger className="w-[120px] h-9">
+              <SelectValue placeholder="Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              {roomTypes.map(type => (
+                <SelectItem key={type} value={type}>{type}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[120px] h-9">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="available">Available</SelectItem>
+              <SelectItem value="occupied">Occupied</SelectItem>
+              <SelectItem value="maintenance">Maintenance</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

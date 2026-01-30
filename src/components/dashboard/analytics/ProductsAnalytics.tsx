@@ -1,5 +1,6 @@
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tag, TrendingUp, AlertTriangle, DollarSign } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,15 +8,20 @@ import { useBranch } from "@/contexts/BranchContext";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, PieChart, Pie, Cell, Legend } from "recharts";
 
 export const ProductsAnalytics = () => {
-  const { selectedBranch } = useBranch();
+  const { branches, selectedBranch: contextBranch } = useBranch();
+  const [selectedBranch, setSelectedBranch] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [stockStatusFilter, setStockStatusFilter] = useState("all");
+
+  const branchFilter = selectedBranch !== "all" ? selectedBranch : contextBranch?.id;
 
   const { data: products = [], isLoading } = useQuery({
-    queryKey: ['products-analytics', selectedBranch?.id],
+    queryKey: ['products-analytics', branchFilter],
     queryFn: async () => {
       let query = supabase.from('products').select('id, name, price, cost, category, stock_quantity, min_stock_level, is_active');
       
-      if (selectedBranch?.id) {
-        query = query.eq('branch_id', selectedBranch.id);
+      if (branchFilter) {
+        query = query.eq('branch_id', branchFilter);
       }
       
       const { data, error } = await query;
@@ -24,41 +30,97 @@ export const ProductsAnalytics = () => {
     }
   });
 
+  const categories = useMemo(() => {
+    return [...new Set(products.map(p => p.category))];
+  }, [products]);
+
+  const filteredProducts = useMemo(() => {
+    let result = products;
+    
+    if (categoryFilter !== "all") {
+      result = result.filter(p => p.category === categoryFilter);
+    }
+    
+    if (stockStatusFilter !== "all") {
+      if (stockStatusFilter === "in_stock") {
+        result = result.filter(p => p.stock_quantity > p.min_stock_level);
+      } else if (stockStatusFilter === "low_stock") {
+        result = result.filter(p => p.stock_quantity <= p.min_stock_level && p.stock_quantity > 0);
+      } else if (stockStatusFilter === "out_of_stock") {
+        result = result.filter(p => p.stock_quantity === 0);
+      }
+    }
+    
+    return result;
+  }, [products, categoryFilter, stockStatusFilter]);
+
   const stats = useMemo(() => {
     const total = products.length;
     const active = products.filter(p => p.is_active).length;
     const lowStock = products.filter(p => p.stock_quantity <= p.min_stock_level).length;
-    const totalValue = products.reduce((sum, p) => sum + (p.price * p.stock_quantity), 0);
-    const categories = [...new Set(products.map(p => p.category))].length;
+    const totalValue = filteredProducts.reduce((sum, p) => sum + (p.price * p.stock_quantity), 0);
     
-    return { total, active, lowStock, totalValue, categories };
-  }, [products]);
+    return { total, active, lowStock, totalValue, filtered: filteredProducts.length };
+  }, [products, filteredProducts]);
 
   const categoryData = useMemo(() => {
-    const categories: Record<string, number> = {};
-    products.forEach(p => {
-      categories[p.category] = (categories[p.category] || 0) + 1;
+    const cats: Record<string, number> = {};
+    filteredProducts.forEach(p => {
+      cats[p.category] = (cats[p.category] || 0) + 1;
     });
-    return Object.entries(categories).map(([name, count]) => ({ name, count }));
-  }, [products]);
+    return Object.entries(cats).map(([name, count]) => ({ name, count }));
+  }, [filteredProducts]);
 
   const stockStatusData = [
     { name: 'In Stock', value: products.filter(p => p.stock_quantity > p.min_stock_level).length, color: 'hsl(152 69% 45%)' },
-    { name: 'Low Stock', value: stats.lowStock, color: 'hsl(38 92% 50%)' },
+    { name: 'Low Stock', value: products.filter(p => p.stock_quantity <= p.min_stock_level && p.stock_quantity > 0).length, color: 'hsl(38 92% 50%)' },
     { name: 'Out of Stock', value: products.filter(p => p.stock_quantity === 0).length, color: 'hsl(0 84% 60%)' },
   ].filter(d => d.value > 0);
 
-  const lowStockProducts = products
-    .filter(p => p.stock_quantity <= p.min_stock_level)
-    .slice(0, 5);
-
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <div className="p-2 rounded-lg bg-pink-500/20">
-          <Tag className="w-5 h-5 text-pink-500" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="p-2 rounded-lg bg-pink-500/20">
+            <Tag className="w-5 h-5 text-pink-500" />
+          </div>
+          <h3 className="text-lg font-semibold text-foreground">Products Analytics</h3>
         </div>
-        <h3 className="text-lg font-semibold text-foreground">Products Analytics</h3>
+        <div className="flex gap-2 flex-wrap justify-end">
+          <Select value={selectedBranch} onValueChange={setSelectedBranch}>
+            <SelectTrigger className="w-[150px] h-9">
+              <SelectValue placeholder="Branch" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Branches</SelectItem>
+              {branches.map(branch => (
+                <SelectItem key={branch.id} value={branch.id}>{branch.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-[130px] h-9">
+              <SelectValue placeholder="Category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {categories.map(cat => (
+                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={stockStatusFilter} onValueChange={setStockStatusFilter}>
+            <SelectTrigger className="w-[120px] h-9">
+              <SelectValue placeholder="Stock" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Stock</SelectItem>
+              <SelectItem value="in_stock">In Stock</SelectItem>
+              <SelectItem value="low_stock">Low Stock</SelectItem>
+              <SelectItem value="out_of_stock">Out of Stock</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
