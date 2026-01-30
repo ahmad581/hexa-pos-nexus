@@ -94,27 +94,60 @@ export type Database = {
       }
       branch_settings: {
         Row: {
+          address: string | null
+          analytics_tracking: boolean | null
+          auto_backup: boolean | null
           branch_id: string
+          business_name: string | null
           created_at: string
+          currency: string | null
+          email: string | null
           id: string
           language: string
           menu_design: string
+          phone: string | null
+          printers: Json | null
+          receipt_footer: string | null
+          tax_rate: number | null
+          timezone: string | null
           updated_at: string
         }
         Insert: {
+          address?: string | null
+          analytics_tracking?: boolean | null
+          auto_backup?: boolean | null
           branch_id: string
+          business_name?: string | null
           created_at?: string
+          currency?: string | null
+          email?: string | null
           id?: string
           language?: string
           menu_design?: string
+          phone?: string | null
+          printers?: Json | null
+          receipt_footer?: string | null
+          tax_rate?: number | null
+          timezone?: string | null
           updated_at?: string
         }
         Update: {
+          address?: string | null
+          analytics_tracking?: boolean | null
+          auto_backup?: boolean | null
           branch_id?: string
+          business_name?: string | null
           created_at?: string
+          currency?: string | null
+          email?: string | null
           id?: string
           language?: string
           menu_design?: string
+          phone?: string | null
+          printers?: Json | null
+          receipt_footer?: string | null
+          tax_rate?: number | null
+          timezone?: string | null
           updated_at?: string
         }
         Relationships: []
