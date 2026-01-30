@@ -893,6 +893,74 @@ call_history (
 )
 ```
 
+#### call_center_login_sessions
+Tracks automatic check-in/check-out for remote call center employees.
+
+```sql
+call_center_login_sessions (
+  id: UUID (Primary Key)
+  profile_id: UUID (References profiles)
+  business_id: UUID (References custom_businesses)
+  login_time: TIMESTAMP (Check-in time)
+  logout_time: TIMESTAMP (Check-out time, null if active)
+  session_duration_seconds: INTEGER (Calculated on logout)
+  ip_address: TEXT
+  user_agent: TEXT
+  created_at: TIMESTAMP
+  updated_at: TIMESTAMP
+)
+```
+
+### Remote Employee Time Tracking
+
+Since call center employees work from home without physical time clocks or biometric devices, the system automatically tracks their work hours based on login/logout activity.
+
+**How It Works**:
+1. **Auto Check-In**: When a call center employee accesses the Call Center page, the system automatically creates a new login session
+2. **Live Duration**: The current session duration is displayed in real-time with a running timer
+3. **Manual Check-Out**: Employees click "Check Out" when ending their shift
+4. **Auto Close**: Previous unclosed sessions are automatically closed when a new session starts
+5. **Session History**: All sessions are logged with login time, logout time, and calculated duration
+
+**Features**:
+- Real-time session duration counter
+- Today's total hours worked
+- Session count for the day
+- Active/Inactive status badge
+- Session history table
+
+**React Hook**: `useCallCenterSession`
+
+```typescript
+const {
+  // Session data
+  todaySessions,        // Sessions for current day
+  allSessions,          // All sessions (for managers)
+  currentOpenSession,   // Currently active session
+  
+  // Stats
+  todayTotalHours,
+  todayTotalMinutes,
+  
+  // Loading states
+  isCheckingIn,
+  isCheckingOut,
+  
+  // Actions
+  checkIn,              // Auto check-in (called on page load)
+  checkOut,             // Manual check-out
+  manualCheckIn,        // Manual check-in button
+  
+  // Status
+  isCheckedIn,          // Whether currently checked in
+  isCallCenterEmployee, // Role check
+} = useCallCenterSession();
+```
+
+**UI Components**:
+- `CallCenterSessionCard`: Displays current session timer, today's stats, and check in/out button
+- `CallCenterSessionHistory`: Table showing session history with duration and status
+
 ### Twilio Edge Function
 
 The `twilio-webhook` edge function handles all Twilio interactions:

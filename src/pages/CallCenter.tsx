@@ -1,19 +1,23 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Phone, User, Search, AlertCircle } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Phone, User, Search, AlertCircle, Clock } from "lucide-react";
 import { useBranch } from "@/contexts/BranchContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { useTranslation } from "@/contexts/TranslationContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCallCenter } from "@/hooks/useCallCenter";
+import { useCallCenterSession } from "@/hooks/useCallCenterSession";
 import { CallCenterStats } from "@/components/call-center/CallCenterStats";
 import { CallQueueCard } from "@/components/call-center/CallQueueCard";
 import { CallHistoryTable } from "@/components/call-center/CallHistoryTable";
 import { TransferDialog } from "@/components/call-center/TransferDialog";
+import { CallCenterSessionCard } from "@/components/call-center/CallCenterSessionCard";
+import { CallCenterSessionHistory } from "@/components/call-center/CallCenterSessionHistory";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export const CallCenter = () => {
@@ -41,6 +45,26 @@ export const CallCenter = () => {
     isHolding,
     isEnding,
   } = useCallCenter();
+
+  const {
+    todaySessions,
+    allSessions,
+    currentOpenSession,
+    todayTotalHours,
+    todayTotalMinutes,
+    isCheckedIn,
+    isCheckingIn,
+    isCheckingOut,
+    checkIn,
+    checkOut,
+    manualCheckIn,
+    isCallCenterEmployee,
+  } = useCallCenterSession();
+
+  // Auto check-in when the page loads for call center employees
+  useEffect(() => {
+    checkIn();
+  }, [checkIn]);
 
   // Find current user's extension
   const myExtension = employeeExtensions.find(
@@ -109,6 +133,21 @@ export const CallCenter = () => {
             No call center number configured for your business. Contact your SystemMaster to set up a phone number.
           </AlertDescription>
         </Alert>
+      )}
+
+      {/* Session Tracking for Call Center Employees */}
+      {isCallCenterEmployee && (
+        <CallCenterSessionCard
+          isCheckedIn={isCheckedIn}
+          loginTime={currentOpenSession?.login_time}
+          todayTotalHours={todayTotalHours}
+          todayTotalMinutes={todayTotalMinutes}
+          sessionCount={todaySessions.length}
+          onCheckIn={manualCheckIn}
+          onCheckOut={checkOut}
+          isCheckingIn={isCheckingIn}
+          isCheckingOut={isCheckingOut}
+        />
       )}
 
       {/* Stats */}
@@ -185,22 +224,63 @@ export const CallCenter = () => {
         </div>
       </Card>
 
-      {/* Call History */}
-      <Card className="bg-gray-800 border-gray-700 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-white">{t('callCenter.recentCalls')}</h3>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-            <Input
-              placeholder={t('callCenter.searchCalls')}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-64 pl-10 bg-gray-700 border-gray-600"
+      {/* Call History and Sessions */}
+      <Tabs defaultValue="calls" className="w-full">
+        <TabsList className="bg-gray-800 border-gray-700">
+          <TabsTrigger value="calls" className="data-[state=active]:bg-gray-700">
+            Call History
+          </TabsTrigger>
+          {isCallCenterEmployee && (
+            <TabsTrigger value="sessions" className="data-[state=active]:bg-gray-700">
+              <Clock className="h-4 w-4 mr-2" />
+              My Sessions
+            </TabsTrigger>
+          )}
+          {!isCallCenterEmployee && (
+            <TabsTrigger value="all-sessions" className="data-[state=active]:bg-gray-700">
+              <Clock className="h-4 w-4 mr-2" />
+              Agent Sessions
+            </TabsTrigger>
+          )}
+        </TabsList>
+
+        <TabsContent value="calls" className="mt-4">
+          <Card className="bg-gray-800 border-gray-700 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-white">{t('callCenter.recentCalls')}</h3>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                <Input
+                  placeholder={t('callCenter.searchCalls')}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-64 pl-10 bg-gray-700 border-gray-600"
+                />
+              </div>
+            </div>
+            <CallHistoryTable calls={callHistory} searchTerm={searchTerm} />
+          </Card>
+        </TabsContent>
+
+        {isCallCenterEmployee && (
+          <TabsContent value="sessions" className="mt-4">
+            <CallCenterSessionHistory 
+              sessions={todaySessions} 
+              title="Today's Work Sessions"
             />
-          </div>
-        </div>
-        <CallHistoryTable calls={callHistory} searchTerm={searchTerm} />
-      </Card>
+          </TabsContent>
+        )}
+
+        {!isCallCenterEmployee && (
+          <TabsContent value="all-sessions" className="mt-4">
+            <CallCenterSessionHistory 
+              sessions={allSessions} 
+              showEmployee 
+              title="Agent Login Sessions"
+            />
+          </TabsContent>
+        )}
+      </Tabs>
 
       {/* Transfer Dialog */}
       <TransferDialog

@@ -382,6 +382,60 @@ export type Database = {
         }
         Relationships: []
       }
+      call_center_login_sessions: {
+        Row: {
+          business_id: string
+          created_at: string | null
+          id: string
+          ip_address: string | null
+          login_time: string
+          logout_time: string | null
+          profile_id: string
+          session_duration_seconds: number | null
+          updated_at: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          login_time?: string
+          logout_time?: string | null
+          profile_id: string
+          session_duration_seconds?: number | null
+          updated_at?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          login_time?: string
+          logout_time?: string | null
+          profile_id?: string
+          session_duration_seconds?: number | null
+          updated_at?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_center_login_sessions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "custom_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_center_login_sessions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       call_center_numbers: {
         Row: {
           business_id: string
