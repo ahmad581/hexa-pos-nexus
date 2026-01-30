@@ -11,6 +11,39 @@ interface BackupRequest {
   save_to_storage?: boolean;
 }
 
+// Define which tables are relevant for each business type
+const businessTypeDataMap: Record<string, string[]> = {
+  'restaurant': ['menu_items', 'orders', 'order_items', 'tables'],
+  'cafe': ['menu_items', 'orders', 'order_items', 'tables'],
+  'hotel': ['rooms', 'services'],
+  'salon': ['stylists', 'appointments', 'services'],
+  'barbershop': ['stylists', 'appointments', 'services'],
+  'spa': ['stylists', 'appointments', 'services'],
+  'gym': ['members', 'services'],
+  'fitness': ['members', 'services'],
+  'pharmacy': ['prescriptions', 'products'],
+  'retail': ['products'],
+  'grocery': ['products'],
+  'pet-care': ['appointments', 'services'],
+  'auto-repair': ['appointments', 'services'],
+  'clinic': ['appointments', 'prescriptions', 'services'],
+  'healthcare': ['appointments', 'prescriptions', 'services'],
+};
+
+// Universal tables that apply to all business types
+const universalTables = [
+  'branch_settings',
+  'employees',
+  'inventory_items',
+  'inventory_transactions',
+  'employee_loans',
+  'loan_payments',
+  'loan_settings',
+  'employee_work_sessions',
+  'employee_daily_summaries',
+  'employee_documents',
+];
+
 function convertToCSV(data: any[], tableName: string): string {
   if (!data || data.length === 0) {
     return `# ${tableName}\n# No data\n\n`;
@@ -35,6 +68,80 @@ function convertToCSV(data: any[], tableName: string): string {
   ];
   
   return csvRows.join('\n');
+}
+
+function getTableDisplayName(tableName: string): string {
+  const displayNames: Record<string, string> = {
+    'branch_settings': 'Branch Settings',
+    'employees': 'Employees',
+    'menu_items': 'Menu Items',
+    'orders': 'Orders',
+    'order_items': 'Order Items',
+    'tables': 'Tables',
+    'inventory_items': 'Inventory Items',
+    'inventory_transactions': 'Inventory Transactions',
+    'appointments': 'Appointments',
+    'members': 'Members',
+    'products': 'Products',
+    'prescriptions': 'Prescriptions',
+    'rooms': 'Rooms',
+    'services': 'Services',
+    'stylists': 'Stylists',
+    'employee_loans': 'Employee Loans',
+    'loan_payments': 'Loan Payments',
+    'loan_settings': 'Loan Settings',
+    'employee_work_sessions': 'Work Sessions',
+    'employee_daily_summaries': 'Daily Summaries',
+    'employee_documents': 'Employee Documents',
+  };
+  return displayNames[tableName] || tableName;
+}
+
+async function fetchTableData(supabase: any, tableName: string, branchId: string): Promise<any[]> {
+  let query;
+  
+  switch (tableName) {
+    case 'order_items':
+      // Join with orders to filter by branch
+      const { data: orderIds } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('branch_id', branchId);
+      
+      if (!orderIds || orderIds.length === 0) return [];
+      
+      const { data: orderItems } = await supabase
+        .from('order_items')
+        .select('*')
+        .in('order_id', orderIds.map((o: any) => o.id));
+      
+      return orderItems || [];
+      
+    case 'inventory_transactions':
+      // Join with inventory_items to filter by branch
+      const { data: itemIds } = await supabase
+        .from('inventory_items')
+        .select('id')
+        .eq('branch_id', branchId);
+      
+      if (!itemIds || itemIds.length === 0) return [];
+      
+      const { data: transactions } = await supabase
+        .from('inventory_transactions')
+        .select('*')
+        .in('inventory_item_id', itemIds.map((i: any) => i.id));
+      
+      return transactions || [];
+      
+    default:
+      // Standard branch_id filter
+      const { data } = await supabase
+        .from(tableName)
+        .select('*')
+        .eq('branch_id', branchId);
+      
+      return data || [];
+  }
 }
 
 Deno.serve(async (req) => {
@@ -79,83 +186,57 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Starting backup for branch: ${branch_id}, type: ${backup_type}`);
+    // Get the branch to determine business type
+    const { data: branch, error: branchError } = await supabase
+      .from('branches')
+      .select('business_type, name')
+      .eq('id', branch_id)
+      .single();
 
-    // Fetch all branch data
-    const [
-      settingsResult,
-      employeesResult,
-      menuItemsResult,
-      ordersResult,
-      orderItemsResult,
-      tablesResult,
-      inventoryItemsResult,
-      inventoryTransactionsResult,
-      appointmentsResult,
-      membersResult,
-      productsResult,
-      prescriptionsResult,
-      roomsResult,
-      servicesResult,
-      stylistsResult,
-      loansResult,
-      loanPaymentsResult,
-      loanSettingsResult,
-      workSessionsResult,
-      dailySummariesResult,
-      documentsResult
-    ] = await Promise.all([
-      supabase.from('branch_settings').select('*').eq('branch_id', branch_id),
-      supabase.from('employees').select('*').eq('branch_id', branch_id),
-      supabase.from('menu_items').select('*').eq('branch_id', branch_id),
-      supabase.from('orders').select('*').eq('branch_id', branch_id),
-      supabase.from('order_items').select('*, orders!inner(branch_id)').eq('orders.branch_id', branch_id),
-      supabase.from('tables').select('*').eq('branch_id', branch_id),
-      supabase.from('inventory_items').select('*').eq('branch_id', branch_id),
-      supabase.from('inventory_transactions').select('*, inventory_items!inner(branch_id)').eq('inventory_items.branch_id', branch_id),
-      supabase.from('appointments').select('*').eq('branch_id', branch_id),
-      supabase.from('members').select('*').eq('branch_id', branch_id),
-      supabase.from('products').select('*').eq('branch_id', branch_id),
-      supabase.from('prescriptions').select('*').eq('branch_id', branch_id),
-      supabase.from('rooms').select('*').eq('branch_id', branch_id),
-      supabase.from('services').select('*').eq('branch_id', branch_id),
-      supabase.from('stylists').select('*').eq('branch_id', branch_id),
-      supabase.from('employee_loans').select('*').eq('branch_id', branch_id),
-      supabase.from('loan_payments').select('*').eq('branch_id', branch_id),
-      supabase.from('loan_settings').select('*').eq('branch_id', branch_id),
-      supabase.from('employee_work_sessions').select('*').eq('branch_id', branch_id),
-      supabase.from('employee_daily_summaries').select('*').eq('branch_id', branch_id),
-      supabase.from('employee_documents').select('*').eq('branch_id', branch_id),
-    ]);
+    if (branchError || !branch) {
+      return new Response(
+        JSON.stringify({ error: 'Branch not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const businessType = branch.business_type?.toLowerCase() || 'restaurant';
+    console.log(`Starting backup for branch: ${branch_id}, business type: ${businessType}, backup type: ${backup_type}`);
+
+    // Get tables to backup based on business type
+    const businessSpecificTables = businessTypeDataMap[businessType] || [];
+    const tablesToBackup = [...universalTables, ...businessSpecificTables];
+    
+    // Remove duplicates
+    const uniqueTables = [...new Set(tablesToBackup)];
+
+    console.log(`Tables to backup: ${uniqueTables.join(', ')}`);
+
+    // Fetch data for each table
+    const tableDataPromises = uniqueTables.map(async (tableName) => {
+      try {
+        const data = await fetchTableData(supabase, tableName, branch_id);
+        return { tableName, data };
+      } catch (error) {
+        console.error(`Error fetching ${tableName}:`, error);
+        return { tableName, data: [] };
+      }
+    });
+
+    const tableResults = await Promise.all(tableDataPromises);
 
     // Generate CSV content
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const csvSections = [
-      `# Branch Backup - ${branch_id}`,
+      `# Branch Backup - ${branch.name || branch_id}`,
+      `# Business Type: ${businessType}`,
       `# Generated: ${new Date().toISOString()}`,
       `# Type: ${backup_type}`,
+      `# Tables included: ${uniqueTables.length}`,
       '',
-      convertToCSV(settingsResult.data || [], 'Branch Settings'),
-      convertToCSV(employeesResult.data || [], 'Employees'),
-      convertToCSV(menuItemsResult.data || [], 'Menu Items'),
-      convertToCSV(ordersResult.data || [], 'Orders'),
-      convertToCSV(orderItemsResult.data || [], 'Order Items'),
-      convertToCSV(tablesResult.data || [], 'Tables'),
-      convertToCSV(inventoryItemsResult.data || [], 'Inventory Items'),
-      convertToCSV(inventoryTransactionsResult.data || [], 'Inventory Transactions'),
-      convertToCSV(appointmentsResult.data || [], 'Appointments'),
-      convertToCSV(membersResult.data || [], 'Members'),
-      convertToCSV(productsResult.data || [], 'Products'),
-      convertToCSV(prescriptionsResult.data || [], 'Prescriptions'),
-      convertToCSV(roomsResult.data || [], 'Rooms'),
-      convertToCSV(servicesResult.data || [], 'Services'),
-      convertToCSV(stylistsResult.data || [], 'Stylists'),
-      convertToCSV(loansResult.data || [], 'Employee Loans'),
-      convertToCSV(loanPaymentsResult.data || [], 'Loan Payments'),
-      convertToCSV(loanSettingsResult.data || [], 'Loan Settings'),
-      convertToCSV(workSessionsResult.data || [], 'Work Sessions'),
-      convertToCSV(dailySummariesResult.data || [], 'Daily Summaries'),
-      convertToCSV(documentsResult.data || [], 'Employee Documents'),
+      ...tableResults.map(({ tableName, data }) => 
+        convertToCSV(data, getTableDisplayName(tableName))
+      ),
     ];
 
     const csvContent = csvSections.join('\n');
@@ -190,7 +271,9 @@ Deno.serve(async (req) => {
         JSON.stringify({ 
           success: true, 
           message: 'Backup saved to storage',
-          file_path: filePath 
+          file_path: filePath,
+          tables_included: uniqueTables.length,
+          business_type: businessType
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
