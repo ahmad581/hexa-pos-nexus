@@ -48,6 +48,9 @@ export default function RestaurantInventory() {
 
   // For cashiers, filter to their branch only
   const branchIdFilter = isCashier() ? getCashierBranchId() : selectedBranch?.id;
+  
+  // Managers should see all requests, cashiers only their branch's requests
+  const shouldFilterRequestsByBranch = isCashier();
 
   const {
     items,
@@ -62,7 +65,7 @@ export default function RestaurantInventory() {
     approveRequest,
     fulfillRequest,
     addWarehouse
-  } = useInventory(branchIdFilter || undefined);
+  } = useInventory(branchIdFilter || undefined, shouldFilterRequestsByBranch);
 
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [isItemDialogOpen, setIsItemDialogOpen] = useState(false);

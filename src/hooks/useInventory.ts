@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
+import { useInventoryPermissions } from '@/hooks/useInventoryPermissions';
 
 export interface InventoryItem {
   id: string;
@@ -59,7 +60,7 @@ export interface InventoryRequest {
   };
 }
 
-export const useInventory = (branchId?: string) => {
+export const useInventory = (branchId?: string, filterRequestsByBranch: boolean = true) => {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [requests, setRequests] = useState<InventoryRequest[]>([]);
@@ -69,7 +70,7 @@ export const useInventory = (branchId?: string) => {
   useEffect(() => {
     setLoading(true);
     fetchData();
-  }, [branchId]);
+  }, [branchId, filterRequestsByBranch]);
 
   const fetchData = async () => {
     try {
@@ -105,10 +106,9 @@ export const useInventory = (branchId?: string) => {
         .eq('is_active', true)
         .order('name');
 
-      // Filter requests by branch if branchId is provided
-      // Note: We don't filter inventory items by branch - all users should see
-      // all business inventory so they can request items from any warehouse
-      if (branchId) {
+      // Filter requests by branch only if filterRequestsByBranch is true AND branchId is provided
+      // Managers should see all requests for the business, cashiers only their branch's requests
+      if (filterRequestsByBranch && branchId) {
         requestsQuery = requestsQuery.eq('requesting_branch_id', branchId);
       }
 
