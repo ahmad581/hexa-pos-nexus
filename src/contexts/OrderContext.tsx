@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useBranch } from './BranchContext';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -70,6 +70,82 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
   const [orderType, setOrderType] = useState<Order['orderType']>('dine-in');
   const [customerInfo, setCustomerInfo] = useState<Order['customerInfo']>();
   const [orderNotes, setOrderNotes] = useState<string>('');
+
+  // Fetch orders from database on mount and when branch changes
+  const fetchOrders = async () => {
+    if (!selectedBranch) return;
+
+    const { data: ordersData, error } = await supabase
+      .from('orders')
+      .select(`
+        id,
+        order_number,
+        table_id,
+        customer_name,
+        customer_phone,
+        notes,
+        total_amount,
+        status,
+        created_at,
+        order_items (id, product_name, unit_price, quantity)
+      `)
+      .eq('branch_id', selectedBranch.id)
+      .in('status', ['pending', 'preparing', 'ready'])
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching orders:', error);
+      return;
+    }
+
+    if (ordersData) {
+      // Get table numbers for orders with table_id
+      const tableIds = ordersData.filter(o => o.table_id).map(o => o.table_id);
+      let tableMap: Record<string, string> = {};
+      
+      if (tableIds.length > 0) {
+        const { data: tablesData } = await supabase
+          .from('tables')
+          .select('id, table_number')
+          .in('id', tableIds);
+        
+        if (tablesData) {
+          tableMap = tablesData.reduce((acc, t) => {
+            acc[t.id] = t.table_number;
+            return acc;
+          }, {} as Record<string, string>);
+        }
+      }
+
+      const mappedOrders: Order[] = ordersData.map((order: any) => ({
+        id: order.id,
+        branchId: selectedBranch.id,
+        branchName: selectedBranch.name,
+        tableNumber: order.table_id ? tableMap[order.table_id] : undefined,
+        customerInfo: order.customer_name ? {
+          name: order.customer_name,
+          phone: order.customer_phone || '',
+        } : undefined,
+        orderType: order.table_id ? 'dine-in' as const : 'takeout' as const,
+        items: (order.order_items || []).map((item: any) => ({
+          id: item.id,
+          name: item.product_name,
+          price: item.unit_price,
+          quantity: item.quantity,
+        })),
+        total: order.total_amount,
+        status: order.status as Order['status'],
+        timestamp: new Date(order.created_at).toLocaleTimeString(),
+        notes: order.notes || undefined,
+      }));
+
+      setOrders(mappedOrders);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrders();
+  }, [selectedBranch?.id]);
 
   const addItemToOrder = (item: Omit<OrderItem, 'id' | 'quantity'>) => {
     const existingItem = currentOrder.find(orderItem => orderItem.name === item.name);
