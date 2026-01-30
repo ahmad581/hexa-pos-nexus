@@ -1,21 +1,44 @@
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UtensilsCrossed, TrendingUp, Star, DollarSign } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useBranch } from "@/contexts/BranchContext";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from "recharts";
+import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
+
+type PeriodType = "today" | "week" | "month";
 
 export const MenuAnalytics = () => {
-  const { selectedBranch } = useBranch();
+  const { branches, selectedBranch: contextBranch } = useBranch();
+  const [selectedBranch, setSelectedBranch] = useState("all");
+  const [periodType, setPeriodType] = useState<PeriodType>("week");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+
+  const getDateRange = () => {
+    const now = new Date();
+    switch (periodType) {
+      case "today":
+        return { start: startOfDay(now), end: endOfDay(now) };
+      case "week":
+        return { start: startOfWeek(now), end: endOfWeek(now) };
+      case "month":
+        return { start: startOfMonth(now), end: endOfMonth(now) };
+      default:
+        return { start: startOfWeek(now), end: endOfWeek(now) };
+    }
+  };
+
+  const branchFilter = selectedBranch !== "all" ? selectedBranch : contextBranch?.id;
 
   const { data: menuItems = [], isLoading: loadingMenu } = useQuery({
-    queryKey: ['menu-analytics', selectedBranch?.id],
+    queryKey: ['menu-analytics', branchFilter],
     queryFn: async () => {
       let query = supabase.from('menu_items').select('id, name, price, category, is_available');
       
-      if (selectedBranch?.id) {
-        query = query.eq('branch_id', selectedBranch.id);
+      if (branchFilter) {
+        query = query.eq('branch_id', branchFilter);
       }
       
       const { data, error } = await query;
@@ -25,26 +48,39 @@ export const MenuAnalytics = () => {
   });
 
   const { data: orderItems = [], isLoading: loadingOrders } = useQuery({
-    queryKey: ['menu-order-items', selectedBranch?.id],
+    queryKey: ['menu-order-items', branchFilter, periodType],
     queryFn: async () => {
+      const { start, end } = getDateRange();
+      
       const { data, error } = await supabase
         .from('order_items')
-        .select('menu_item_id, product_name, quantity, total_price');
+        .select('menu_item_id, product_name, quantity, total_price, created_at')
+        .gte('created_at', start.toISOString())
+        .lte('created_at', end.toISOString());
       
       if (error) throw error;
       return data || [];
     }
   });
 
-  const stats = useMemo(() => {
-    const total = menuItems.length;
-    const available = menuItems.filter(m => m.is_available).length;
-    const unavailable = total - available;
-    const categories = [...new Set(menuItems.map(m => m.category))].length;
-    const avgPrice = total > 0 ? menuItems.reduce((sum, m) => sum + (m.price || 0), 0) / total : 0;
-    
-    return { total, available, unavailable, categories, avgPrice };
+  const categories = useMemo(() => {
+    return [...new Set(menuItems.map(m => m.category))];
   }, [menuItems]);
+
+  const filteredMenuItems = useMemo(() => {
+    if (categoryFilter === "all") return menuItems;
+    return menuItems.filter(m => m.category === categoryFilter);
+  }, [menuItems, categoryFilter]);
+
+  const stats = useMemo(() => {
+    const total = filteredMenuItems.length;
+    const available = filteredMenuItems.filter(m => m.is_available).length;
+    const unavailable = total - available;
+    const categoriesCount = [...new Set(filteredMenuItems.map(m => m.category))].length;
+    const avgPrice = total > 0 ? filteredMenuItems.reduce((sum, m) => sum + (m.price || 0), 0) / total : 0;
+    
+    return { total, available, unavailable, categories: categoriesCount, avgPrice };
+  }, [filteredMenuItems]);
 
   const topSellingItems = useMemo(() => {
     const itemSales: Record<string, { name: string; quantity: number; revenue: number }> = {};
@@ -64,22 +100,58 @@ export const MenuAnalytics = () => {
   }, [orderItems]);
 
   const categoryData = useMemo(() => {
-    const categories: Record<string, number> = {};
-    menuItems.forEach(item => {
-      categories[item.category] = (categories[item.category] || 0) + 1;
+    const cats: Record<string, number> = {};
+    filteredMenuItems.forEach(item => {
+      cats[item.category] = (cats[item.category] || 0) + 1;
     });
-    return Object.entries(categories).map(([name, count]) => ({ name, count }));
-  }, [menuItems]);
+    return Object.entries(cats).map(([name, count]) => ({ name, count }));
+  }, [filteredMenuItems]);
 
   const isLoading = loadingMenu || loadingOrders;
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <div className="p-2 rounded-lg bg-rose-500/20">
-          <UtensilsCrossed className="w-5 h-5 text-rose-500" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="p-2 rounded-lg bg-rose-500/20">
+            <UtensilsCrossed className="w-5 h-5 text-rose-500" />
+          </div>
+          <h3 className="text-lg font-semibold text-foreground">Menu Analytics</h3>
         </div>
-        <h3 className="text-lg font-semibold text-foreground">Menu Analytics</h3>
+        <div className="flex gap-2">
+          <Select value={selectedBranch} onValueChange={setSelectedBranch}>
+            <SelectTrigger className="w-[150px] h-9">
+              <SelectValue placeholder="Branch" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Branches</SelectItem>
+              {branches.map(branch => (
+                <SelectItem key={branch.id} value={branch.id}>{branch.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-[130px] h-9">
+              <SelectValue placeholder="Category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {categories.map(cat => (
+                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={periodType} onValueChange={(v) => setPeriodType(v as PeriodType)}>
+            <SelectTrigger className="w-[120px] h-9">
+              <SelectValue placeholder="Period" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="today">Today</SelectItem>
+              <SelectItem value="week">This Week</SelectItem>
+              <SelectItem value="month">This Month</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -138,7 +210,7 @@ export const MenuAnalytics = () => {
           </h4>
           {topSellingItems.length === 0 ? (
             <div className="h-[180px] flex items-center justify-center text-muted-foreground">
-              No sales data yet
+              No sales data for this period
             </div>
           ) : (
             <div className="space-y-2 max-h-[180px] overflow-y-auto">
