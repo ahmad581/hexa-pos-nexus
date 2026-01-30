@@ -382,6 +382,218 @@ export type Database = {
         }
         Relationships: []
       }
+      call_center_numbers: {
+        Row: {
+          business_id: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          phone_number: string
+          twilio_sid: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          phone_number: string
+          twilio_sid?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          phone_number?: string
+          twilio_sid?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_center_numbers_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "custom_businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      call_history: {
+        Row: {
+          business_id: string
+          call_queue_id: string | null
+          call_type: string
+          callee_phone: string | null
+          caller_name: string | null
+          caller_phone: string
+          created_at: string | null
+          direction: string
+          duration_seconds: number | null
+          handled_by: string | null
+          id: string
+          notes: string | null
+          outcome: string | null
+          recording_duration_seconds: number | null
+          recording_url: string | null
+          status: string
+        }
+        Insert: {
+          business_id: string
+          call_queue_id?: string | null
+          call_type: string
+          callee_phone?: string | null
+          caller_name?: string | null
+          caller_phone: string
+          created_at?: string | null
+          direction?: string
+          duration_seconds?: number | null
+          handled_by?: string | null
+          id?: string
+          notes?: string | null
+          outcome?: string | null
+          recording_duration_seconds?: number | null
+          recording_url?: string | null
+          status: string
+        }
+        Update: {
+          business_id?: string
+          call_queue_id?: string | null
+          call_type?: string
+          callee_phone?: string | null
+          caller_name?: string | null
+          caller_phone?: string
+          created_at?: string | null
+          direction?: string
+          duration_seconds?: number | null
+          handled_by?: string | null
+          id?: string
+          notes?: string | null
+          outcome?: string | null
+          recording_duration_seconds?: number | null
+          recording_url?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_history_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "custom_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_history_call_queue_id_fkey"
+            columns: ["call_queue_id"]
+            isOneToOne: false
+            referencedRelation: "call_queue"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_history_handled_by_fkey"
+            columns: ["handled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      call_queue: {
+        Row: {
+          answered_at: string | null
+          answered_by: string | null
+          business_id: string
+          call_center_number_id: string | null
+          call_type: string | null
+          caller_address: string | null
+          caller_name: string | null
+          caller_phone: string
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          priority: string | null
+          queue_position: number | null
+          status: string
+          transferred_at: string | null
+          transferred_to: string | null
+          twilio_call_sid: string | null
+          updated_at: string | null
+          wait_time_seconds: number | null
+        }
+        Insert: {
+          answered_at?: string | null
+          answered_by?: string | null
+          business_id: string
+          call_center_number_id?: string | null
+          call_type?: string | null
+          caller_address?: string | null
+          caller_name?: string | null
+          caller_phone: string
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          priority?: string | null
+          queue_position?: number | null
+          status?: string
+          transferred_at?: string | null
+          transferred_to?: string | null
+          twilio_call_sid?: string | null
+          updated_at?: string | null
+          wait_time_seconds?: number | null
+        }
+        Update: {
+          answered_at?: string | null
+          answered_by?: string | null
+          business_id?: string
+          call_center_number_id?: string | null
+          call_type?: string | null
+          caller_address?: string | null
+          caller_name?: string | null
+          caller_phone?: string
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          priority?: string | null
+          queue_position?: number | null
+          status?: string
+          transferred_at?: string | null
+          transferred_to?: string | null
+          twilio_call_sid?: string | null
+          updated_at?: string | null
+          wait_time_seconds?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_queue_answered_by_fkey"
+            columns: ["answered_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_queue_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "custom_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_queue_call_center_number_id_fkey"
+            columns: ["call_center_number_id"]
+            isOneToOne: false
+            referencedRelation: "call_center_numbers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_queue_transferred_to_fkey"
+            columns: ["transferred_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       custom_businesses: {
         Row: {
           business_type: string
@@ -526,6 +738,54 @@ export type Database = {
             columns: ["employee_id"]
             isOneToOne: false
             referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employee_extensions: {
+        Row: {
+          business_id: string
+          created_at: string | null
+          extension_number: string
+          id: string
+          is_available: boolean | null
+          profile_id: string
+          twilio_sid: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string | null
+          extension_number: string
+          id?: string
+          is_available?: boolean | null
+          profile_id: string
+          twilio_sid?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string | null
+          extension_number?: string
+          id?: string
+          is_available?: boolean | null
+          profile_id?: string
+          twilio_sid?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_extensions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "custom_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_extensions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
