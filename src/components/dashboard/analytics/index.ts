@@ -1,0 +1,11 @@
+export { OrdersAnalytics } from './OrdersAnalytics';
+export { InventoryAnalytics } from './InventoryAnalytics';
+export { EmployeeAnalytics } from './EmployeeAnalytics';
+export { CallCenterAnalytics } from './CallCenterAnalytics';
+export { MenuAnalytics } from './MenuAnalytics';
+export { TablesAnalytics } from './TablesAnalytics';
+export { AppointmentsAnalytics } from './AppointmentsAnalytics';
+export { MembersAnalytics } from './MembersAnalytics';
+export { ProductsAnalytics } from './ProductsAnalytics';
+export { RoomsAnalytics } from './RoomsAnalytics';
+export { PrescriptionsAnalytics } from './PrescriptionsAnalytics';
