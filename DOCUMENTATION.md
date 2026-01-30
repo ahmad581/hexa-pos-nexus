@@ -13,8 +13,10 @@
 9. [Branch Management](#branch-management)
 10. [Employee Management](#employee-management)
 11. [Employee Loans System](#employee-loans-system)
-12. [Database Schema](#database-schema)
-13. [Security](#security)
+12. [Call Center System](#call-center-system)
+13. [Data Backup & Recovery](#data-backup--recovery)
+14. [Database Schema](#database-schema)
+15. [Security](#security)
 
 ---
 
@@ -756,6 +758,419 @@ const { rejectLoan } = useRejectLoan();
 
 ---
 
+## Call Center System
+
+### Overview
+
+The Call Center system provides a centralized phone management solution integrated with Twilio. It supports business-level phone numbers, individual employee extensions, real-time call notifications, and comprehensive call history management.
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    INCOMING CALL                            │
+│                         │                                   │
+│                         ▼                                   │
+│              ┌──────────────────┐                          │
+│              │  Twilio Number   │                          │
+│              │ (Business Line)  │                          │
+│              └────────┬─────────┘                          │
+│                       │                                     │
+│                       ▼                                     │
+│         ┌─────────────────────────┐                        │
+│         │   twilio-webhook Edge   │                        │
+│         │       Function          │                        │
+│         └───────────┬─────────────┘                        │
+│                     │                                       │
+│          ┌──────────┼──────────┐                           │
+│          ▼          ▼          ▼                           │
+│     ┌─────────┐ ┌────────┐ ┌────────┐                     │
+│     │ call_   │ │ call_  │ │ Realtime│                    │
+│     │ queue   │ │history │ │ Events │                     │
+│     └─────────┘ └────────┘ └────────┘                     │
+│                                │                           │
+│                                ▼                           │
+│                    ┌──────────────────┐                   │
+│                    │  Agent UI/Toast  │                   │
+│                    │   Notification   │                   │
+│                    └──────────────────┘                   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Database Tables
+
+#### call_center_numbers
+Stores business-level phone numbers assigned by SystemMaster.
+
+```sql
+call_center_numbers (
+  id: UUID (Primary Key)
+  business_id: UUID (References custom_businesses)
+  phone_number: TEXT (The Twilio phone number)
+  twilio_sid: TEXT (Twilio SID for the number)
+  is_active: BOOLEAN (Default: true)
+  created_at: TIMESTAMP
+  updated_at: TIMESTAMP
+)
+```
+
+#### employee_extensions
+Stores individual employee extensions for internal calling and call routing.
+
+```sql
+employee_extensions (
+  id: UUID (Primary Key)
+  profile_id: UUID (References profiles)
+  business_id: UUID (References custom_businesses)
+  extension_number: TEXT (e.g., '101', '102')
+  twilio_sid: TEXT (Optional)
+  is_available: BOOLEAN (Agent availability status)
+  created_at: TIMESTAMP
+  updated_at: TIMESTAMP
+)
+```
+
+#### call_queue
+Manages the lifecycle of incoming calls in real-time.
+
+```sql
+call_queue (
+  id: UUID (Primary Key)
+  business_id: UUID (References custom_businesses)
+  call_center_number_id: UUID (References call_center_numbers)
+  caller_phone: TEXT
+  caller_name: TEXT
+  caller_address: TEXT
+  twilio_call_sid: TEXT
+  status: TEXT (See statuses below)
+  priority: TEXT ('low', 'medium', 'high', 'urgent')
+  call_type: TEXT ('sales', 'support', 'appointment', 'complaint', 'general', 'internal')
+  answered_by: UUID (References profiles)
+  answered_at: TIMESTAMP
+  transferred_to: UUID (References profiles)
+  transferred_at: TIMESTAMP
+  completed_at: TIMESTAMP
+  queue_position: INTEGER
+  wait_time_seconds: INTEGER
+  created_at: TIMESTAMP
+  updated_at: TIMESTAMP
+)
+```
+
+**Call Statuses**:
+| Status | Description |
+|--------|-------------|
+| ringing | Call is incoming, not yet answered |
+| queued | Call is in queue waiting for an agent |
+| answered | Call is currently being handled by an agent |
+| on_hold | Call is on hold |
+| transferred | Call has been transferred to another agent |
+| completed | Call has ended successfully |
+| missed | Call was not answered |
+| abandoned | Caller hung up before being answered |
+
+#### call_history
+Comprehensive logging of all call data.
+
+```sql
+call_history (
+  id: UUID (Primary Key)
+  business_id: UUID (References custom_businesses)
+  call_queue_id: UUID (References call_queue)
+  caller_phone: TEXT
+  caller_name: TEXT
+  callee_phone: TEXT
+  call_type: TEXT
+  direction: TEXT ('inbound', 'outbound', 'internal')
+  status: TEXT
+  duration_seconds: INTEGER
+  recording_url: TEXT
+  recording_duration_seconds: INTEGER
+  handled_by: UUID (References profiles)
+  notes: TEXT
+  outcome: TEXT
+  created_at: TIMESTAMP
+)
+```
+
+### Twilio Edge Function
+
+The `twilio-webhook` edge function handles all Twilio interactions:
+
+**Endpoints**:
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/incoming` | POST | Handles incoming call webhooks from Twilio |
+| `/wait` | POST | Provides wait music/message while in queue |
+| `/status` | POST | Handles call status updates (ringing, answered, completed) |
+| `/recording` | POST | Handles recording callbacks |
+| `/answer` | POST | Agent answers a call |
+| `/hold` | POST | Agent puts call on hold |
+| `/transfer` | POST | Agent transfers call to another agent |
+| `/end` | POST | Agent ends a call |
+
+**Configuration** (supabase/config.toml):
+```toml
+[functions.twilio-webhook]
+verify_jwt = false
+```
+
+**Required Secrets**:
+- `TWILIO_ACCOUNT_SID`: Twilio account SID
+- `TWILIO_AUTH_TOKEN`: Twilio auth token
+- `TWILIO_API_KEY`: Twilio API key
+- `TWILIO_API_SECRET`: Twilio API secret
+
+### Real-time Notifications
+
+The system uses Supabase Realtime to push call updates to all agents:
+
+```sql
+-- Enable realtime for call_queue
+ALTER PUBLICATION supabase_realtime ADD TABLE call_queue;
+```
+
+**Features**:
+- Instant notification when new calls arrive
+- Live status updates as calls progress
+- Toast notifications with audio alerts
+- Real-time connection status indicator
+
+### React Hook: useCallCenter
+
+```typescript
+const {
+  // Data
+  callQueue,           // Active calls in queue
+  callHistory,         // Recent call history
+  employeeExtensions,  // Available agents with extensions
+  callCenterNumber,    // Business phone number
+  stats,               // Call statistics
+  
+  // Loading states
+  isLoading,
+  realtimeEnabled,     // Real-time connection status
+  
+  // Actions
+  answerCall,          // Answer a ringing call
+  holdCall,            // Put call on hold
+  transferCall,        // Transfer to another agent
+  endCall,             // End current call
+  updateAvailability,  // Toggle agent availability
+  
+  // Mutation states
+  isAnswering,
+  isHolding,
+  isTransferring,
+  isEnding,
+} = useCallCenter();
+```
+
+### UI Components
+
+#### CallCenterStats
+Dashboard overview of call metrics:
+- Active calls
+- Ringing/queued calls
+- Calls on hold
+- Total calls today
+- Real-time connection indicator
+
+#### CallQueueCard
+Displays individual calls with actions:
+- Caller information
+- Call duration timer
+- Answer/Hold/Transfer/End buttons
+- Priority and status badges
+
+#### CallHistoryTable
+Shows recent call logs:
+- Call details and duration
+- Recording playback
+- Download recordings
+- Search and filter
+
+#### TransferDialog
+Modal for transferring calls:
+- List of available agents
+- Extension numbers
+- Availability status
+
+### Setup Guide
+
+1. **Twilio Configuration**:
+   - Purchase a Twilio phone number
+   - Configure webhook URLs in Twilio Console:
+     - Voice URL: `https://<project>.supabase.co/functions/v1/twilio-webhook/incoming`
+     - Status Callback: `https://<project>.supabase.co/functions/v1/twilio-webhook/status`
+
+2. **SystemMaster assigns number to business**:
+   - Add phone number to `call_center_numbers` table
+   - Link to appropriate business
+
+3. **Configure employee extensions**:
+   - Create entries in `employee_extensions` for call center staff
+   - Assign unique extension numbers
+
+4. **Agent setup**:
+   - Agents access the Call Center page
+   - Toggle availability using the switch
+   - Start answering calls from the queue
+
+---
+
+## Data Backup & Recovery
+
+### Overview
+
+The Data Backup system provides comprehensive backup and recovery capabilities that are context-aware based on business type. It supports both manual downloads and cloud saves to Supabase Storage.
+
+### Features
+
+- **Business-type aware backups**: Only exports relevant tables for each business type
+- **Multiple export formats**: CSV/Excel compatible format
+- **Cloud storage**: Save backups to Supabase Storage for later retrieval
+- **Backup history**: Track all backups with timestamps and file sizes
+- **Secure downloads**: Signed URLs for secure file access
+
+### Database Tables
+
+#### backup_history
+Tracks all backups created for a branch.
+
+```sql
+backup_history (
+  id: UUID (Primary Key)
+  branch_id: TEXT
+  file_path: TEXT (Path in storage bucket)
+  file_size: INTEGER (Size in bytes)
+  backup_type: TEXT ('manual', 'automatic')
+  status: TEXT ('completed', 'failed', 'in_progress')
+  created_by: UUID (References profiles)
+  created_at: TIMESTAMP
+)
+```
+
+### Edge Function: generate-backup
+
+The `generate-backup` edge function handles backup generation:
+
+**Endpoint**: `POST /functions/v1/generate-backup`
+
+**Request Body**:
+```json
+{
+  "branch_id": "branch-uuid",
+  "backup_type": "manual",
+  "save_to_storage": false
+}
+```
+
+**Response** (when `save_to_storage` is false):
+- Returns CSV file as downloadable blob
+
+**Response** (when `save_to_storage` is true):
+```json
+{
+  "success": true,
+  "file_path": "branch-id/backup-2024-12-01.csv",
+  "file_size": 12345
+}
+```
+
+**Configuration** (supabase/config.toml):
+```toml
+[functions.generate-backup]
+verify_jwt = false
+```
+
+### Business-Type Aware Exports
+
+The backup system intelligently filters data based on business type:
+
+| Business Type | Excluded Tables |
+|---------------|-----------------|
+| Restaurant | prescriptions, members, services (auto-repair) |
+| Retail | prescriptions, members, appointments |
+| Pharmacy | menu_items, tables, rooms |
+| Gym | prescriptions, menu_items |
+| Salon | prescriptions, members, products |
+| Hotel | prescriptions, products |
+
+### React Hook: useBackup
+
+```typescript
+const {
+  // State
+  isLoading,
+  backupHistory,
+  
+  // Actions
+  downloadBackup,         // Create and download backup
+  fetchBackupHistory,     // Load backup history
+  downloadFromStorage,    // Download existing backup from storage
+} = useBackup();
+
+// Usage examples
+await downloadBackup({ 
+  branchId: 'xxx', 
+  saveToStorage: false,    // Direct download
+  backupType: 'manual' 
+});
+
+await downloadBackup({ 
+  branchId: 'xxx', 
+  saveToStorage: true,     // Save to cloud
+  backupType: 'automatic' 
+});
+```
+
+### Storage Bucket
+
+Backups are stored in the `branch-backups` Supabase Storage bucket:
+
+```
+branch-backups/
+├── branch-id-1/
+│   ├── backup-2024-12-01-manual.csv
+│   ├── backup-2024-12-02-automatic.csv
+│   └── ...
+├── branch-id-2/
+│   └── ...
+```
+
+### Backup File Format
+
+The backup file is a multi-section CSV with the following structure:
+
+```
+=== BACKUP METADATA ===
+Generated: 2024-12-01T10:30:00Z
+Branch: Main Branch
+Business Type: Restaurant
+
+=== EMPLOYEES ===
+id,first_name,last_name,email,position,...
+...
+
+=== ORDERS ===
+id,order_number,total_amount,status,...
+...
+
+=== MENU_ITEMS ===
+id,name,category,price,...
+...
+```
+
+### Security
+
+- **RLS Protection**: Backup data respects RLS policies
+- **Authentication Required**: All backup operations require valid JWT
+- **Business Isolation**: Users can only backup their own business data
+- **Signed URLs**: Storage downloads use time-limited signed URLs
+
+---
+
 ## Database Schema
 
 ### Core Tables
@@ -1011,7 +1426,9 @@ Creates a new client with user account and business.
 | 1.1 | December 2024 | Added employee email field, document uploads, and salary calculator |
 | 1.2 | December 2024 | Added Roles Management System with roles table, role_permissions, and business_type_roles |
 | 1.3 | December 2024 | Added Employee Loans System with loan_settings, employee_loans, and loan_payments tables |
+| 1.4 | January 2025 | Added Call Center System with Twilio integration, real-time notifications, call queue management, and recording playback |
+| 1.5 | January 2025 | Added Data Backup & Recovery with business-type aware exports and cloud storage |
 
 ---
 
-*Last updated: December 2024*
+*Last updated: January 2025*
