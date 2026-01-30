@@ -2,3 +2,6 @@ project_id = "fcdfephraaiusolzfdvf"
 
 [functions.generate-backup]
 verify_jwt = false
+
+[functions.twilio-webhook]
+verify_jwt = false
