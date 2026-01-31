@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface WorkSession {
   checkInTime: string;
@@ -38,6 +39,7 @@ export const SalaryCalculator = ({ employees }: SalaryCalculatorProps) => {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>("");
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
+  const { formatCurrency } = useCurrency();
 
   const selectedEmployee = useMemo(() => {
     return employees.find(emp => emp.id.toString() === selectedEmployeeId);
@@ -230,7 +232,7 @@ export const SalaryCalculator = ({ employees }: SalaryCalculatorProps) => {
                     <div key={index} className="p-3 bg-background/50 rounded-lg">
                       <div className="flex justify-between items-center mb-2">
                         <span className="font-medium text-foreground">{new Date(day.date).toLocaleDateString()}</span>
-                        <span className="text-sm text-muted-foreground">{day.totalHours.toFixed(2)} hrs - ${day.totalEarnings.toFixed(2)}</span>
+                        <span className="text-sm text-muted-foreground">{day.totalHours.toFixed(2)} hrs - {formatCurrency(day.totalEarnings)}</span>
                       </div>
                       <div className="space-y-1">
                         {day.sessions.map((session, sIndex) => (

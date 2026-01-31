@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useBranch } from "@/contexts/BranchContext";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from "recharts";
 import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
+import { useCurrency } from "@/hooks/useCurrency";
 
 type PeriodType = "today" | "week" | "month";
 
@@ -15,6 +16,7 @@ export const MenuAnalytics = () => {
   const [selectedBranch, setSelectedBranch] = useState("all");
   const [periodType, setPeriodType] = useState<PeriodType>("week");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const { formatCurrency } = useCurrency();
 
   const getDateRange = () => {
     const now = new Date();
@@ -169,7 +171,7 @@ export const MenuAnalytics = () => {
         </Card>
         <Card className="p-4 bg-gradient-to-br from-purple-500/10 to-transparent border-0">
           <p className="text-xs text-muted-foreground">Avg Price</p>
-          <p className="text-2xl font-bold text-foreground">${stats.avgPrice.toFixed(2)}</p>
+          <p className="text-2xl font-bold text-foreground">{formatCurrency(stats.avgPrice)}</p>
         </Card>
       </div>
 
@@ -222,7 +224,7 @@ export const MenuAnalytics = () => {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-medium text-foreground">{item.quantity} sold</p>
-                    <p className="text-xs text-muted-foreground">${item.revenue.toFixed(2)}</p>
+                    <p className="text-xs text-muted-foreground">{formatCurrency(item.revenue)}</p>
                   </div>
                 </div>
               ))}

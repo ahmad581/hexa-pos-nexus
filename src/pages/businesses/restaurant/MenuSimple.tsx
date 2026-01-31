@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useOrder } from "@/contexts/OrderContext";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/contexts/TranslationContext";
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface MenuItem {
   id: string;
@@ -39,6 +40,7 @@ export const MenuSimple = ({ menuItems, categories, toggleSoldOut, isEditingOrde
   const { addItemToOrder } = useOrder();
   const { toast } = useToast();
   const { t } = useTranslation();
+  const { formatCurrency } = useCurrency();
 
   const filteredItems = menuItems.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -72,7 +74,7 @@ export const MenuSimple = ({ menuItems, categories, toggleSoldOut, isEditingOrde
                     <p className="text-gray-400 text-xs mb-3 line-clamp-2">{item.description}</p>
                     
                     <div className="flex justify-between items-center mb-3">
-                      <span className="text-lg font-bold text-green-400">${item.price}</span>
+                      <span className="text-lg font-bold text-green-400">{formatCurrency(item.price)}</span>
                     </div>
 
                     <div className="flex gap-2">

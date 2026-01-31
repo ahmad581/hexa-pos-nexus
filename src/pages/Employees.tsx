@@ -26,6 +26,7 @@ import { useEmployees, DatabaseEmployee } from "@/hooks/useEmployees";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { useQueryClient } from '@tanstack/react-query';
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface EmployeeFormData {
   name: string;
@@ -63,6 +64,7 @@ export const Employees = () => {
   const { userProfile } = useAuth();
   const { data: allRoles = [] } = useRoles();
   const queryClient = useQueryClient();
+  const { formatCurrency } = useCurrency();
   
   // Use the new hook to fetch employees from Supabase
   const {
@@ -504,8 +506,8 @@ export const Employees = () => {
                         </div>
                       </div>
                       <div>
-                        <p><strong>Monthly Salary:</strong> ${(employee.salary || 0).toLocaleString()}</p>
-                        <p><strong>Hourly Rate:</strong> ${hourlyRate.toFixed(2)}</p>
+                        <p><strong>Monthly Salary:</strong> {formatCurrency(employee.salary || 0)}</p>
+                        <p><strong>Hourly Rate:</strong> {formatCurrency(hourlyRate)}</p>
                         <p><strong>Employee #:</strong> {employee.employee_number}</p>
                         <p><strong>Department:</strong> {employee.department || 'N/A'}</p>
                       </div>
@@ -536,7 +538,7 @@ export const Employees = () => {
                         </div>
                         <div>
                           <p className="text-gray-400">{t('employees.todaysEarnings')}</p>
-                          <p className="text-green-400 font-semibold">${(todaySummary?.total_earnings || 0).toFixed(2)}</p>
+                          <p className="text-green-400 font-semibold">{formatCurrency(todaySummary?.total_earnings || 0)}</p>
                         </div>
                       </div>
                       
@@ -619,7 +621,7 @@ export const Employees = () => {
                                       </TableCell>
                                       <TableCell className="text-white">{(summary.total_hours || 0).toFixed(2)}h</TableCell>
                                       <TableCell className="text-green-400 font-semibold">
-                                        ${(summary.total_earnings || 0).toFixed(2)}
+                                        {formatCurrency(summary.total_earnings || 0)}
                                       </TableCell>
                                     </TableRow>
                                   ))}

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useOrder } from "@/contexts/OrderContext";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/contexts/TranslationContext";
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface MenuItem {
   id: string;
@@ -39,6 +40,7 @@ export const MenuModern = ({ menuItems, categories, toggleSoldOut, isEditingOrde
   const { addItemToOrder } = useOrder();
   const { toast } = useToast();
   const { t } = useTranslation();
+  const { formatCurrency } = useCurrency();
 
   const handleCategorySelect = (categoryValue: string) => {
     setSelectedCategory(categoryValue);
@@ -158,7 +160,7 @@ export const MenuModern = ({ menuItems, categories, toggleSoldOut, isEditingOrde
               <p className="text-gray-400 text-sm mb-4">{item.description}</p>
               
               <div className="flex justify-between items-center mb-4">
-                <span className="text-2xl font-bold text-green-400">${item.price}</span>
+                <span className="text-2xl font-bold text-green-400">{formatCurrency(item.price)}</span>
               </div>
 
               <div className="flex gap-2">

@@ -11,6 +11,7 @@ import { useBranch } from "@/contexts/BranchContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { format, parseISO, isWithinInterval, startOfDay, endOfDay, setHours, setMinutes } from "date-fns";
+import { useCurrency } from "@/hooks/useCurrency";
 
 type CalculationType = 'all-today' | 'item-today' | 'items-timerange';
 
@@ -23,6 +24,7 @@ interface SalesResult {
 export const SalesCalculator = () => {
   const { t } = useTranslation();
   const { selectedBranch } = useBranch();
+  const { formatCurrency } = useCurrency();
   
   const [calculationType, setCalculationType] = useState<CalculationType>('all-today');
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -266,7 +268,7 @@ export const SalesCalculator = () => {
                   <DollarSign className="h-5 w-5 text-primary" />
                   <span className="text-sm text-muted-foreground">{t('calculator.totalSales') || 'Total Sales'}</span>
                 </div>
-                <p className="text-2xl font-bold text-foreground">${result.totalSales.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-foreground">{formatCurrency(result.totalSales)}</p>
               </div>
               <div className="bg-secondary/10 p-4 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
@@ -293,7 +295,7 @@ export const SalesCalculator = () => {
                           {t('calculator.quantity') || 'Qty'}: {item.quantity}
                         </p>
                       </div>
-                      <p className="font-semibold text-primary">${item.total.toFixed(2)}</p>
+                      <p className="font-semibold text-primary">{formatCurrency(item.total)}</p>
                     </div>
                   ))}
                 </div>
