@@ -1412,6 +1412,7 @@ export type Database = {
           name: string
           preparation_time: number | null
           price: number
+          printer_ids: string[] | null
           updated_at: string
         }
         Insert: {
@@ -1427,6 +1428,7 @@ export type Database = {
           name: string
           preparation_time?: number | null
           price: number
+          printer_ids?: string[] | null
           updated_at?: string
         }
         Update: {
@@ -1442,6 +1444,7 @@ export type Database = {
           name?: string
           preparation_time?: number | null
           price?: number
+          printer_ids?: string[] | null
           updated_at?: string
         }
         Relationships: []

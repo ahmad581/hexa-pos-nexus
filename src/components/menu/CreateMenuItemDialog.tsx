@@ -11,8 +11,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Plus, Printer } from "lucide-react";
 import { useTranslation } from "@/contexts/TranslationContext";
+import { useSettings } from "@/contexts/SettingsContext";
 
 interface Category {
   value: string;
@@ -26,6 +28,7 @@ interface CreateMenuItemDialogProps {
     description: string;
     price: number;
     category: string;
+    printer_ids: string[];
   }) => void;
 }
 
@@ -35,7 +38,13 @@ export const CreateMenuItemDialog = ({ categories, onItemCreate }: CreateMenuIte
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState("");
+  const [selectedPrinters, setSelectedPrinters] = useState<string[]>([]);
   const { t } = useTranslation();
+  const { settings } = useSettings();
+
+  // Get printers from settings, excluding the default printer (it always prints all items)
+  const availablePrinters = settings.printers.filter(p => !p.is_default);
+  const defaultPrinter = settings.printers.find(p => p.is_default);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,13 +54,23 @@ export const CreateMenuItemDialog = ({ categories, onItemCreate }: CreateMenuIte
         description: description.trim(),
         price: parseFloat(price),
         category,
+        printer_ids: selectedPrinters,
       });
       setName("");
       setDescription("");
       setPrice("");
       setCategory("");
+      setSelectedPrinters([]);
       setOpen(false);
     }
+  };
+
+  const togglePrinter = (printerId: string) => {
+    setSelectedPrinters(prev => 
+      prev.includes(printerId)
+        ? prev.filter(id => id !== printerId)
+        : [...prev, printerId]
+    );
   };
 
   return (
@@ -62,7 +81,7 @@ export const CreateMenuItemDialog = ({ categories, onItemCreate }: CreateMenuIte
           Add Menu Item
         </Button>
       </DialogTrigger>
-      <DialogContent className="bg-gray-800 border-gray-700 text-white">
+      <DialogContent className="bg-card border-border text-foreground max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add Menu Item</DialogTitle>
         </DialogHeader>
@@ -74,7 +93,7 @@ export const CreateMenuItemDialog = ({ categories, onItemCreate }: CreateMenuIte
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Cheeseburger"
-              className="bg-gray-700 border-gray-600"
+              className="bg-muted border-border"
               required
             />
           </div>
@@ -85,7 +104,7 @@ export const CreateMenuItemDialog = ({ categories, onItemCreate }: CreateMenuIte
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="e.g., Juicy beef patty with cheese"
-              className="bg-gray-700 border-gray-600"
+              className="bg-muted border-border"
               rows={3}
             />
           </div>
@@ -99,17 +118,17 @@ export const CreateMenuItemDialog = ({ categories, onItemCreate }: CreateMenuIte
               value={price}
               onChange={(e) => setPrice(e.target.value)}
               placeholder="9.99"
-              className="bg-gray-700 border-gray-600"
+              className="bg-muted border-border"
               required
             />
           </div>
           <div>
             <Label htmlFor="category">Category</Label>
             <Select value={category} onValueChange={setCategory} required>
-              <SelectTrigger className="bg-gray-700 border-gray-600">
+              <SelectTrigger className="bg-muted border-border">
                 <SelectValue placeholder="Select a category" />
               </SelectTrigger>
-              <SelectContent className="bg-gray-800 border-gray-700">
+              <SelectContent className="bg-popover border-border">
                 {categories.filter(cat => cat.value !== 'all').map((cat) => (
                   <SelectItem key={cat.value} value={cat.value}>
                     {cat.label}
@@ -118,6 +137,49 @@ export const CreateMenuItemDialog = ({ categories, onItemCreate }: CreateMenuIte
               </SelectContent>
             </Select>
           </div>
+          
+          {/* Printer Routing Section */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Printer size={16} className="text-muted-foreground" />
+              <Label>Print to Additional Printers</Label>
+            </div>
+            
+            {defaultPrinter && (
+              <p className="text-xs text-muted-foreground">
+                <span className="font-medium">{defaultPrinter.name}</span> (default) will always print this item.
+              </p>
+            )}
+            
+            {availablePrinters.length === 0 ? (
+              <p className="text-sm text-muted-foreground italic">
+                No additional printers configured. Add printers in Settings to enable routing.
+              </p>
+            ) : (
+              <div className="space-y-2 p-3 bg-muted/50 rounded-lg border border-border">
+                {availablePrinters.map((printer) => (
+                  <div key={printer.id} className="flex items-center space-x-3">
+                    <Checkbox
+                      id={`printer-${printer.id}`}
+                      checked={selectedPrinters.includes(printer.id)}
+                      onCheckedChange={() => togglePrinter(printer.id)}
+                    />
+                    <label
+                      htmlFor={`printer-${printer.id}`}
+                      className="text-sm font-medium leading-none cursor-pointer flex items-center gap-2"
+                    >
+                      {printer.name}
+                      <span className="text-xs text-muted-foreground">
+                        {printer.use_for_kitchen && "(Kitchen)"}
+                        {printer.use_for_receipts && "(Receipts)"}
+                      </span>
+                    </label>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <Button type="submit" className="w-full">
             Add Item
           </Button>

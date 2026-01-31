@@ -131,6 +131,7 @@ export const Menu = () => {
     description: string;
     price: number;
     category: string;
+    printer_ids: string[];
   }) => {
     if (!selectedBranch?.id) {
       toast({ title: "No branch selected", variant: "destructive" });
@@ -145,7 +146,8 @@ export const Menu = () => {
         price: item.price,
         category: item.category,
         branch_id: selectedBranch.id,
-        is_available: true
+        is_available: true,
+        printer_ids: item.printer_ids
       })
       .select()
       .single();
