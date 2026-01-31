@@ -7,6 +7,7 @@ import { Clock, Users, DollarSign } from "lucide-react";
 import { useOrder } from "@/contexts/OrderContext";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "@/contexts/TranslationContext";
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface Table {
   id: string;
@@ -37,6 +38,7 @@ export const Tables = () => {
   const { orders, setSelectedTable, updateOrderStatus, setOrderType } = useOrder();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { formatCurrency } = useCurrency();
 
   const getStatusColor = (status: Table["status"]) => {
     switch (status) {
@@ -149,7 +151,7 @@ export const Tables = () => {
                       </div>
                       <div className="flex items-center text-green-400 mb-2">
                         <DollarSign size={16} className="mr-1" />
-                        <span className="font-semibold">${activeOrder.total.toFixed(2)}</span>
+                        <span className="font-semibold">{formatCurrency(activeOrder.total)}</span>
                       </div>
                       <Badge className={`text-xs ${
                         activeOrder.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :

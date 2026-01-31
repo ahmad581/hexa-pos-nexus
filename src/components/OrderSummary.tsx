@@ -13,6 +13,7 @@ import { useOrder } from "@/contexts/OrderContext";
 import { useBranch } from "@/contexts/BranchContext";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/contexts/TranslationContext";
+import { useCurrency } from "@/hooks/useCurrency";
 
 export const OrderSummary = () => {
   const navigate = useNavigate();
@@ -33,6 +34,7 @@ export const OrderSummary = () => {
   const { selectedBranch } = useBranch();
   const { toast } = useToast();
   const { t } = useTranslation();
+  const { formatCurrency } = useCurrency();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const total = currentOrder.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -147,7 +149,7 @@ export const OrderSummary = () => {
           <div key={item.id} className="flex items-center justify-between bg-gray-700 p-3 rounded-lg">
             <div className="flex-1">
               <h4 className="text-white font-medium">{item.name}</h4>
-              <p className="text-gray-300 text-sm">${item.price.toFixed(2)} {t('orderSummary.each')}</p>
+              <p className="text-gray-300 text-sm">{formatCurrency(item.price)} {t('orderSummary.each')}</p>
             </div>
             <div className="flex items-center space-x-2">
               <Button
@@ -194,7 +196,7 @@ export const OrderSummary = () => {
       <div className="border-t border-gray-600 pt-4">
         <div className="flex items-center justify-between mb-4">
           <span className="text-lg font-semibold text-white">{t('common.total')}:</span>
-          <span className="text-lg font-bold text-green-400">${total.toFixed(2)}</span>
+          <span className="text-lg font-bold text-green-400">{formatCurrency(total)}</span>
         </div>
         <div className="flex space-x-2">
           <Button

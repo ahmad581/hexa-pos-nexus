@@ -16,6 +16,7 @@ import {
 import { useInventory } from "@/hooks/useInventory";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "@/contexts/TranslationContext";
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface MonthlyReport {
   month: string;
@@ -34,6 +35,7 @@ interface TransactionSummary {
 
 export const InventoryReports = () => {
   const { t } = useTranslation();
+  const { formatCurrency } = useCurrency();
   const { items, warehouses } = useInventory();
   const [selectedWarehouse, setSelectedWarehouse] = useState("all");
   const [selectedMonth, setSelectedMonth] = useState(() => {
@@ -132,7 +134,7 @@ export const InventoryReports = () => {
       [''],
       ['Summary'],
       ['Total Items', monthlyReport.totalItems.toString()],
-      ['Total Value', `$${monthlyReport.totalValue.toFixed(2)}`],
+      ['Total Value', formatCurrency(monthlyReport.totalValue)],
       ['Low Stock Items', monthlyReport.lowStockItems.toString()],
       ['Out of Stock Items', monthlyReport.outOfStockItems.toString()],
       ['Total Transactions', monthlyReport.transactions.toString()],
@@ -253,7 +255,7 @@ export const InventoryReports = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-400">{t('inventoryReports.totalValue')}</p>
-                  <p className="text-2xl font-bold text-white">${monthlyReport.totalValue.toFixed(2)}</p>
+                  <p className="text-2xl font-bold text-white">{formatCurrency(monthlyReport.totalValue)}</p>
                 </div>
                 <DollarSign className="h-8 w-8 text-green-400" />
               </div>
@@ -314,7 +316,7 @@ export const InventoryReports = () => {
                     <p className="text-sm text-gray-400">{category.count} {t('inventoryReports.items')}</p>
                   </div>
                   <div className="text-right">
-                    <div className="text-white font-bold">${category.value.toFixed(2)}</div>
+                    <div className="text-white font-bold">{formatCurrency(category.value)}</div>
                     <div className="text-sm text-gray-400">{category.stock} {t('inventoryReports.units')}</div>
                   </div>
                 </div>

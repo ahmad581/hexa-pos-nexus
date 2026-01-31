@@ -10,11 +10,13 @@ import { Search, Edit, Trash2, Eye, Download, Filter, Undo } from "lucide-react"
 import { useOrder, Order } from "@/contexts/OrderContext";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/contexts/TranslationContext";
+import { useCurrency } from "@/hooks/useCurrency";
 
 export const Orders = () => {
   const { orders, updateOrderStatus, deleteOrder } = useOrder();
   const { toast } = useToast();
   const { t } = useTranslation();
+  const { formatCurrency } = useCurrency();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [showDeletedOrders, setShowDeletedOrders] = useState(false);
@@ -206,7 +208,7 @@ export const Orders = () => {
                     </Badge>
                   </td>
                   <td className="py-3 text-gray-300">{order.items.length} {t('ordersPage.itemsCount')}</td>
-                  <td className="py-3 text-green-400 font-semibold">${order.total.toFixed(2)}</td>
+                  <td className="py-3 text-green-400 font-semibold">{formatCurrency(order.total)}</td>
                   <td className="py-3">
                     <Badge className={getStatusColor(order.status)}>
                       {statusLabel(order.status)}
@@ -321,7 +323,7 @@ export const Orders = () => {
                         <p className="text-gray-400 text-sm">{t('common.quantity')}: {item.quantity}</p>
                       </div>
                       <p className="text-green-400 font-semibold">
-                        ${(item.price * item.quantity).toFixed(2)}
+                        {formatCurrency(item.price * item.quantity)}
                       </p>
                     </div>
                   ))}
@@ -331,7 +333,7 @@ export const Orders = () => {
               <div className="flex justify-between items-center pt-4 border-t border-gray-700">
                 <span className="text-xl font-bold text-white">{t('common.total')}:</span>
                 <span className="text-xl font-bold text-green-400">
-                  ${selectedOrder.total.toFixed(2)}
+                  {formatCurrency(selectedOrder.total)}
                 </span>
               </div>
             </div>

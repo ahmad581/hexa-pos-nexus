@@ -6,12 +6,14 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useBranch } from "@/contexts/BranchContext";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
+import { useCurrency } from "@/hooks/useCurrency";
 
 export const RoomsAnalytics = () => {
   const { branches, selectedBranch: contextBranch } = useBranch();
   const [selectedBranch, setSelectedBranch] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [roomTypeFilter, setRoomTypeFilter] = useState("all");
+  const { formatCurrency } = useCurrency();
 
   const branchFilter = selectedBranch !== "all" ? selectedBranch : contextBranch?.id;
 
@@ -136,7 +138,7 @@ export const RoomsAnalytics = () => {
         </Card>
         <Card className="p-4 bg-gradient-to-br from-purple-500/10 to-transparent border-0">
           <p className="text-xs text-muted-foreground">Avg Price/Night</p>
-          <p className="text-2xl font-bold text-foreground">${stats.avgPrice.toFixed(0)}</p>
+          <p className="text-2xl font-bold text-foreground">{formatCurrency(stats.avgPrice)}</p>
         </Card>
       </div>
 

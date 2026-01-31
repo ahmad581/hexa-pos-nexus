@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Car, Clock, Wrench } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface RepairService {
   id: string;
@@ -22,6 +23,7 @@ const initialServices: RepairService[] = [
 
 export const AutoRepairServices = () => {
   const [services, setServices] = useState<RepairService[]>(initialServices);
+  const { formatCurrency } = useCurrency();
 
   const getStatusColor = (status: RepairService["status"]) => {
     switch (status) {
@@ -65,7 +67,7 @@ export const AutoRepairServices = () => {
                 <span className="text-sm">Est. {service.estimatedTime}</span>
               </div>
               <div className="text-green-400 font-bold">
-                ${service.cost.toFixed(2)}
+                {formatCurrency(service.cost)}
               </div>
             </div>
           </Card>

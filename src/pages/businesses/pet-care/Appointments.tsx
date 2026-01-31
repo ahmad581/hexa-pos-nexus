@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { User, Clock, Heart } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface PetAppointment {
   id: string;
@@ -23,6 +24,7 @@ const initialAppointments: PetAppointment[] = [
 
 export const PetAppointments = () => {
   const [appointments, setAppointments] = useState<PetAppointment[]>(initialAppointments);
+  const { formatCurrency } = useCurrency();
 
   const getStatusColor = (status: PetAppointment["status"]) => {
     switch (status) {
@@ -72,7 +74,7 @@ export const PetAppointments = () => {
                 <span className="text-sm">{appointment.appointmentTime}</span>
               </div>
               <div className="text-green-400 font-bold">
-                ${appointment.cost.toFixed(2)}
+                {formatCurrency(appointment.cost)}
               </div>
             </div>
 

@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useBranch } from "@/contexts/BranchContext";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, PieChart, Pie, Cell, Legend } from "recharts";
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
+import { useCurrency } from "@/hooks/useCurrency";
 
 type PeriodType = "today" | "week" | "month";
 
@@ -14,6 +15,7 @@ export const AppointmentsAnalytics = () => {
   const { branches, selectedBranch: contextBranch } = useBranch();
   const [selectedBranch, setSelectedBranch] = useState("all");
   const [periodType, setPeriodType] = useState<PeriodType>("week");
+  const { formatCurrency } = useCurrency();
 
   const getDateRange = () => {
     const now = new Date();
@@ -140,7 +142,7 @@ export const AppointmentsAnalytics = () => {
         </Card>
         <Card className="p-4 bg-gradient-to-br from-purple-500/10 to-transparent border-0">
           <p className="text-xs text-muted-foreground">Revenue</p>
-          <p className="text-2xl font-bold text-foreground">${stats.revenue.toFixed(2)}</p>
+          <p className="text-2xl font-bold text-foreground">{formatCurrency(stats.revenue)}</p>
         </Card>
       </div>
 

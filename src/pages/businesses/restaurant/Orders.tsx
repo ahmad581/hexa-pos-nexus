@@ -12,6 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Clock, MapPin, Phone, Edit, Trash2, Filter, CalendarIcon, X } from "lucide-react";
 import { useOrder } from "@/contexts/OrderContext";
 import { cn } from "@/lib/utils";
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface DisplayOrder {
   id: string;
@@ -39,6 +40,7 @@ export const Orders = () => {
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [timeFilter, setTimeFilter] = useState<string>("all");
   const { orders: contextOrders, updateOrderStatus, deleteOrder: deleteContextOrder } = useOrder();
+  const { formatCurrency } = useCurrency();
 
   // Map context orders to display format
   useEffect(() => {
@@ -366,7 +368,7 @@ export const Orders = () => {
                   </div>
                 </TableCell>
                 <TableCell className="text-green-400 font-bold">
-                  ${order.total.toFixed(2)}
+                  {formatCurrency(order.total)}
                 </TableCell>
                 <TableCell>
                   <Badge className={getStatusColor(order.status)}>

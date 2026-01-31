@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useEmployeeLoans } from '@/hooks/useEmployeeLoans';
 import { Calculator, DollarSign, Clock, AlertTriangle, CheckCircle } from 'lucide-react';
+import { useCurrency } from '@/hooks/useCurrency';
 
 interface Employee {
   id: string;
@@ -39,6 +40,7 @@ export const LoanApplicationDialog = ({
   const [loanAmount, setLoanAmount] = useState<number>(0);
   const [paymentPeriod, setPaymentPeriod] = useState<number>(1);
   const [reason, setReason] = useState('');
+  const { formatCurrency } = useCurrency();
 
   useEffect(() => {
     if (selectedEmployeeId) {
@@ -87,7 +89,7 @@ export const LoanApplicationDialog = ({
       if (calculation && monthlySalary > 0) {
         const maxMonthlyPayment = (monthlySalary * loanSettings.max_monthly_payment_percentage) / 100;
         if (calculation.monthlyPayment > maxMonthlyPayment) {
-          errors.push(`Monthly payment exceeds ${loanSettings.max_monthly_payment_percentage}% of salary (max: ${maxMonthlyPayment.toFixed(2)})`);
+          errors.push(`Monthly payment exceeds ${loanSettings.max_monthly_payment_percentage}% of salary (max: ${formatCurrency(maxMonthlyPayment)})`);
         }
       }
     }
