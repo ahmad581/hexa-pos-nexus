@@ -3,26 +3,16 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Shield, Users, Key, Building2, CheckCircle, XCircle } from "lucide-react";
-import { useRoles, useBusinessTypeRoles, Role } from "@/hooks/useRoles";
+import { useRoles } from "@/hooks/useRoles";
 import { RoleManagement as RoleAssignment } from "@/components/RoleManagement";
 import { RolePermissionsEditor } from "@/components/role-management/RolePermissionsEditor";
-import { useBusinessTypes } from "@/hooks/useBusinessTypes";
+import { BusinessTypeRolesEditor } from "@/components/role-management/BusinessTypeRolesEditor";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface SystemMasterRoleManagementProps {}
 
 export const SystemMasterRoleManagement = ({}: SystemMasterRoleManagementProps) => {
-  
   const { data: roles = [], isLoading: rolesLoading } = useRoles();
-  const { data: businessTypeRoles = [] } = useBusinessTypeRoles();
-  const { businessTypes } = useBusinessTypes();
-  // Get roles for a specific business type
-  const getBusinessTypeRolesList = (businessTypeId: string) => {
-    return businessTypeRoles
-      .filter(btr => btr.business_type_id === businessTypeId)
-      .map(btr => roles.find(r => r.id === btr.role_id))
-      .filter(Boolean) as Role[];
-  };
 
   if (rolesLoading) {
     return (
@@ -127,44 +117,7 @@ export const SystemMasterRoleManagement = ({}: SystemMasterRoleManagementProps) 
         </TabsContent>
 
         <TabsContent value="business-types" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building2 className="h-5 w-5" />
-                Business Type Role Mappings
-              </CardTitle>
-              <CardDescription>
-                Roles available for each business type
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {businessTypes.map(bt => (
-                  <div key={bt.id} className="border rounded-lg p-4">
-                    <div className="flex items-center gap-3 mb-3">
-                      <span className="text-2xl">{bt.icon}</span>
-                      <div>
-                        <h4 className="font-semibold">{bt.name}</h4>
-                        <p className="text-sm text-muted-foreground">{bt.category}</p>
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {getBusinessTypeRolesList(bt.id).map(role => (
-                        <Badge key={role.id} className={role.color_class}>
-                          {role.display_name}
-                        </Badge>
-                      ))}
-                      {getBusinessTypeRolesList(bt.id).length === 0 && (
-                        <span className="text-sm text-muted-foreground">
-                          No specific roles assigned (uses default roles)
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <BusinessTypeRolesEditor />
         </TabsContent>
       </Tabs>
     </div>
