@@ -21,53 +21,53 @@ export const CallCenterStats = ({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-      <Card className="bg-gray-800 border-gray-700 p-6">
+      <Card className="bg-card border-border p-6">
         <div className="flex items-center justify-between">
           <div>
             <div className="text-2xl font-bold text-green-400">{activeCalls}</div>
-            <div className="text-gray-400 text-sm">{t('callCenter.activeCalls')}</div>
+            <div className="text-muted-foreground text-sm">{t('callCenter.activeCalls')}</div>
           </div>
           <PhoneCall className="text-green-400" size={24} />
         </div>
       </Card>
       
-      <Card className="bg-gray-800 border-gray-700 p-6">
+      <Card className="bg-card border-border p-6">
         <div className="flex items-center justify-between">
           <div>
             <div className="text-2xl font-bold text-yellow-400">{ringingCalls}</div>
-            <div className="text-gray-400 text-sm">{t('callCenter.ringing')}</div>
+            <div className="text-muted-foreground text-sm">{t('callCenter.ringing')}</div>
           </div>
           <PhoneIncoming className="text-yellow-400 animate-pulse" size={24} />
         </div>
       </Card>
       
-      <Card className="bg-gray-800 border-gray-700 p-6">
+      <Card className="bg-card border-border p-6">
         <div className="flex items-center justify-between">
           <div>
             <div className="text-2xl font-bold text-blue-400">{onHoldCalls}</div>
-            <div className="text-gray-400 text-sm">On Hold</div>
+            <div className="text-muted-foreground text-sm">On Hold</div>
           </div>
           <Clock className="text-blue-400" size={24} />
         </div>
       </Card>
       
-      <Card className="bg-gray-800 border-gray-700 p-6">
+      <Card className="bg-card border-border p-6">
         <div className="flex items-center justify-between">
           <div>
             <div className="text-2xl font-bold text-purple-400">{totalCallsToday}</div>
-            <div className="text-gray-400 text-sm">{t('callCenter.callsToday')}</div>
+            <div className="text-muted-foreground text-sm">{t('callCenter.callsToday')}</div>
           </div>
           <Phone className="text-purple-400" size={24} />
         </div>
       </Card>
       
-      <Card className="bg-gray-800 border-gray-700 p-6">
+      <Card className="bg-card border-border p-6">
         <div className="flex items-center justify-between">
           <div>
             <div className={`text-2xl font-bold ${realtimeEnabled ? 'text-green-400' : 'text-red-400'}`}>
               {realtimeEnabled ? 'Live' : 'Offline'}
             </div>
-            <div className="text-gray-400 text-sm">Real-time Status</div>
+            <div className="text-muted-foreground text-sm">Real-time Status</div>
           </div>
           {realtimeEnabled ? (
             <Wifi className="text-green-400" size={24} />

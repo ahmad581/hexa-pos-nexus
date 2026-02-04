@@ -10,20 +10,20 @@ export const Header = () => {
   const { selectedBusinessType } = useBusinessType();
 
   return (
-    <header className="bg-gray-800 border-b border-gray-700 px-6 py-4 flex items-center justify-between">
+    <header className="bg-card border-b border-border px-6 py-4 flex items-center justify-between">
       <div className="flex items-center space-x-4">
         <div className="flex items-center space-x-2">
           <span className="text-2xl">{selectedBusinessType?.icon}</span>
-          <span className="text-white font-medium">{selectedBusinessType?.name}</span>
+          <span className="text-foreground font-medium">{selectedBusinessType?.name}</span>
         </div>
-        <div className="w-px h-6 bg-gray-600"></div>
+        <div className="w-px h-6 bg-border"></div>
         <BranchSelector />
       </div>
       
       <div className="flex items-center space-x-4">
         <NotificationPanel />
         
-        <div className="flex items-center space-x-2 text-gray-300">
+        <div className="flex items-center space-x-2 text-muted-foreground">
           <User size={18} />
           <span className="text-sm">{userEmail}</span>
         </div>
@@ -32,7 +32,7 @@ export const Header = () => {
           variant="ghost" 
           size="sm" 
           onClick={logout}
-          className="text-gray-300 hover:text-red-400"
+          className="text-muted-foreground hover:text-red-400"
         >
           <LogOut size={18} />
         </Button>

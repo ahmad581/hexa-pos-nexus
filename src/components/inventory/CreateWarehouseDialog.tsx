@@ -58,7 +58,7 @@ export const CreateWarehouseDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="bg-gray-800 border-gray-700 text-white max-w-md">
+      <DialogContent className="bg-card border-border text-foreground max-w-md">
         <DialogHeader>
           <DialogTitle>Create New Warehouse</DialogTitle>
         </DialogHeader>
@@ -73,7 +73,7 @@ export const CreateWarehouseDialog = ({
                 setFormData((prev) => ({ ...prev, name: e.target.value }))
               }
               placeholder="e.g., Main Warehouse"
-              className="bg-gray-700 border-gray-600 text-white"
+              className="bg-muted border-border text-foreground"
               required
             />
           </div>
@@ -87,7 +87,7 @@ export const CreateWarehouseDialog = ({
                 setFormData((prev) => ({ ...prev, address: e.target.value }))
               }
               placeholder="e.g., 123 Storage St, City"
-              className="bg-gray-700 border-gray-600 text-white"
+              className="bg-muted border-border text-foreground"
               required
             />
           </div>
@@ -101,7 +101,7 @@ export const CreateWarehouseDialog = ({
                 setFormData((prev) => ({ ...prev, phone: e.target.value }))
               }
               placeholder="e.g., +1 234 567 8900"
-              className="bg-gray-700 border-gray-600 text-white"
+              className="bg-muted border-border text-foreground"
             />
           </div>
 
@@ -114,7 +114,7 @@ export const CreateWarehouseDialog = ({
                 setFormData((prev) => ({ ...prev, manager_name: e.target.value }))
               }
               placeholder="e.g., John Smith"
-              className="bg-gray-700 border-gray-600 text-white"
+              className="bg-muted border-border text-foreground"
             />
           </div>
 

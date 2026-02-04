@@ -26,7 +26,7 @@ export const CallHistoryTable = ({ calls, searchTerm }: CallHistoryTableProps) =
       case 'abandoned':
         return 'bg-orange-500/20 text-orange-400';
       default:
-        return 'bg-gray-500/20 text-gray-400';
+        return 'bg-gray-500/20 text-muted-foreground';
     }
   };
 
@@ -39,7 +39,7 @@ export const CallHistoryTable = ({ calls, searchTerm }: CallHistoryTableProps) =
       case 'internal':
         return 'bg-indigo-500/20 text-indigo-400';
       default:
-        return 'bg-gray-500/20 text-gray-400';
+        return 'bg-gray-500/20 text-muted-foreground';
     }
   };
 
@@ -53,31 +53,31 @@ export const CallHistoryTable = ({ calls, searchTerm }: CallHistoryTableProps) =
     <div className="overflow-x-auto">
       <table className="w-full">
         <thead>
-          <tr className="border-b border-gray-700">
-            <th className="text-left py-3 text-gray-400 font-medium">Caller</th>
-            <th className="text-left py-3 text-gray-400 font-medium">Phone</th>
-            <th className="text-left py-3 text-gray-400 font-medium">Type</th>
-            <th className="text-left py-3 text-gray-400 font-medium">Direction</th>
-            <th className="text-left py-3 text-gray-400 font-medium">Status</th>
-            <th className="text-left py-3 text-gray-400 font-medium">Duration</th>
-            <th className="text-left py-3 text-gray-400 font-medium">Time</th>
-            <th className="text-left py-3 text-gray-400 font-medium">Recording</th>
+          <tr className="border-b border-border">
+            <th className="text-left py-3 text-muted-foreground font-medium">Caller</th>
+            <th className="text-left py-3 text-muted-foreground font-medium">Phone</th>
+            <th className="text-left py-3 text-muted-foreground font-medium">Type</th>
+            <th className="text-left py-3 text-muted-foreground font-medium">Direction</th>
+            <th className="text-left py-3 text-muted-foreground font-medium">Status</th>
+            <th className="text-left py-3 text-muted-foreground font-medium">Duration</th>
+            <th className="text-left py-3 text-muted-foreground font-medium">Time</th>
+            <th className="text-left py-3 text-muted-foreground font-medium">Recording</th>
           </tr>
         </thead>
         <tbody>
           {filteredCalls.length === 0 ? (
             <tr>
-              <td colSpan={8} className="py-8 text-center text-gray-400">
+              <td colSpan={8} className="py-8 text-center text-muted-foreground">
                 No call history found
               </td>
             </tr>
           ) : (
             filteredCalls.map((call) => (
-              <tr key={call.id} className="border-b border-gray-700 hover:bg-gray-700/50">
-                <td className="py-3 text-white">{call.caller_name || 'Unknown'}</td>
-                <td className="py-3 text-gray-300">{call.caller_phone}</td>
+              <tr key={call.id} className="border-b border-border hover:bg-accent/50">
+                <td className="py-3 text-foreground">{call.caller_name || 'Unknown'}</td>
+                <td className="py-3 text-muted-foreground">{call.caller_phone}</td>
                 <td className="py-3">
-                  <Badge className="bg-gray-500/20 text-gray-300">
+                  <Badge className="bg-gray-500/20 text-muted-foreground">
                     {call.call_type}
                   </Badge>
                 </td>
@@ -91,10 +91,10 @@ export const CallHistoryTable = ({ calls, searchTerm }: CallHistoryTableProps) =
                     {call.status}
                   </Badge>
                 </td>
-                <td className="py-3 text-gray-300">
+                <td className="py-3 text-muted-foreground">
                   {formatDuration(call.duration_seconds)}
                 </td>
-                <td className="py-3 text-gray-300">
+                <td className="py-3 text-muted-foreground">
                   {format(new Date(call.created_at), 'MMM d, h:mm a')}
                 </td>
                 <td className="py-3">
@@ -120,7 +120,7 @@ export const CallHistoryTable = ({ calls, searchTerm }: CallHistoryTableProps) =
                       </Button>
                     </div>
                   ) : (
-                    <span className="text-gray-500">-</span>
+                    <span className="text-muted-foreground/50">-</span>
                   )}
                 </td>
               </tr>

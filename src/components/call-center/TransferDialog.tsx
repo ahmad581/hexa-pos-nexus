@@ -36,14 +36,14 @@ export const TransferDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-gray-800 border-gray-700 text-white">
+      <DialogContent className="bg-card border-border text-foreground">
         <DialogHeader>
           <DialogTitle>Transfer Call</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           {availableExtensions.length === 0 ? (
-            <p className="text-gray-400 text-center py-4">
+            <p className="text-muted-foreground text-center py-4">
               No available agents to transfer to
             </p>
           ) : (
@@ -54,20 +54,20 @@ export const TransferDialog = ({
                   className={`p-3 rounded-lg cursor-pointer transition-colors ${
                     selectedExtension === ext.profile_id
                       ? 'bg-primary/20 border border-primary'
-                      : 'bg-gray-700 hover:bg-gray-600'
+                      : 'bg-muted hover:bg-accent'
                   }`}
                   onClick={() => setSelectedExtension(ext.profile_id)}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
                         <User size={20} />
                       </div>
                       <div>
                         <p className="font-medium">
                           {ext.profile?.first_name} {ext.profile?.last_name}
                         </p>
-                        <p className="text-sm text-gray-400">
+                        <p className="text-sm text-muted-foreground">
                           Ext: {ext.extension_number}
                         </p>
                       </div>

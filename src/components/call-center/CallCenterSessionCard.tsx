@@ -57,27 +57,27 @@ export const CallCenterSessionCard = ({
   }, [isCheckedIn, loginTime]);
 
   return (
-    <Card className="bg-gray-800 border-gray-700 p-6">
+    <Card className="bg-card border-border p-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-6">
           {/* Current Session Status */}
           <div className="flex items-center gap-3">
             <div className={`w-3 h-3 rounded-full ${isCheckedIn ? 'bg-green-500 animate-pulse' : 'bg-gray-500'}`} />
             <div>
-              <p className="text-sm text-gray-400">Current Session</p>
-              <p className="text-2xl font-bold text-white font-mono">{currentDuration}</p>
+              <p className="text-sm text-muted-foreground">Current Session</p>
+              <p className="text-2xl font-bold text-foreground font-mono">{currentDuration}</p>
             </div>
           </div>
 
           {/* Divider */}
-          <div className="h-12 w-px bg-gray-700" />
+          <div className="h-12 w-px bg-border" />
 
           {/* Today's Total */}
           <div className="flex items-center gap-3">
             <Timer className="h-5 w-5 text-primary" />
             <div>
-              <p className="text-sm text-gray-400">Today's Total</p>
-              <p className="text-lg font-semibold text-white">
+              <p className="text-sm text-muted-foreground">Today's Total</p>
+              <p className="text-lg font-semibold text-foreground">
                 {todayTotalHours}h {todayTotalMinutes}m
               </p>
             </div>
@@ -87,15 +87,15 @@ export const CallCenterSessionCard = ({
           <div className="flex items-center gap-3">
             <Clock className="h-5 w-5 text-blue-400" />
             <div>
-              <p className="text-sm text-gray-400">Sessions Today</p>
-              <p className="text-lg font-semibold text-white">{sessionCount}</p>
+              <p className="text-sm text-muted-foreground">Sessions Today</p>
+              <p className="text-lg font-semibold text-foreground">{sessionCount}</p>
             </div>
           </div>
         </div>
 
         {/* Check In/Out Button */}
         <div className="flex items-center gap-4">
-          <Badge className={isCheckedIn ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}>
+          <Badge className={isCheckedIn ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-muted-foreground'}>
             {isCheckedIn ? 'Active' : 'Inactive'}
           </Badge>
           
@@ -113,7 +113,7 @@ export const CallCenterSessionCard = ({
             <Button
               onClick={onCheckIn}
               disabled={isCheckingIn}
-              className="gap-2 bg-green-600 hover:bg-green-700"
+              className="gap-2 bg-primary hover:bg-primary/90"
             >
               <LogIn className="h-4 w-4" />
               {isCheckingIn ? 'Checking In...' : 'Check In'}
@@ -124,7 +124,7 @@ export const CallCenterSessionCard = ({
 
       {/* Session start time */}
       {isCheckedIn && loginTime && (
-        <p className="text-xs text-gray-500 mt-3">
+        <p className="text-xs text-muted-foreground/70 mt-3">
           Session started at {new Date(loginTime).toLocaleTimeString()}
         </p>
       )}

@@ -72,9 +72,9 @@ export const Sidebar = () => {
               <span className="sr-only">Open menu</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-3/4 sm:w-60 bg-gray-900 text-white">
+          <SheetContent side="left" className="w-3/4 sm:w-60 bg-sidebar-background text-sidebar-foreground">
             <SheetHeader className="text-left">
-              <SheetTitle className="text-white">{t('nav.menu')}</SheetTitle>
+              <SheetTitle className="text-sidebar-foreground">{t('nav.menu')}</SheetTitle>
             </SheetHeader>
             <div className="py-4">
               {employeeNavigationItems.map((item) => (
@@ -83,8 +83,8 @@ export const Sidebar = () => {
                   to={item.to}
                   className={`flex items-center space-x-2 py-2 px-4 rounded-md ${
                     isActiveRoute(item.to) 
-                      ? 'bg-green-600 text-white' 
-                      : 'hover:bg-gray-800'
+                      ? 'bg-primary text-primary-foreground' 
+                      : 'hover:bg-sidebar-accent'
                   }`}
                   onClick={() => setIsSidebarOpen(false)}
                 >
@@ -104,15 +104,15 @@ export const Sidebar = () => {
         </Sheet>
 
         {/* Desktop Sidebar */}
-        <aside className={`hidden md:flex flex-col bg-gray-900 border-r border-gray-700 text-white transition-all duration-300 ${
+        <aside className={`hidden md:flex flex-col bg-sidebar-background border-r border-sidebar-border text-sidebar-foreground transition-all duration-300 ${
           isCollapsed ? 'w-16' : 'w-60'
         }`}>
           {/* Header with Logo and Toggle */}
-          <div className="p-4 border-b border-gray-700 flex items-center justify-between">
+          <div className="p-4 border-b border-sidebar-border flex items-center justify-between">
             {!isCollapsed && (
               <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">
+                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                  <span className="text-primary-foreground font-bold text-sm">
                     {selectedBusinessType?.name?.charAt(0) || 'B'}
                   </span>
                 </div>
@@ -125,7 +125,7 @@ export const Sidebar = () => {
               variant="ghost"
               size="icon"
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="hover:bg-gray-800"
+              className="hover:bg-sidebar-accent"
             >
               {isCollapsed ? <Menu className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
             </Button>
@@ -138,8 +138,8 @@ export const Sidebar = () => {
                 to={item.to}
                 className={`flex items-center py-2 px-4 rounded-md mx-2 mb-1 ${
                   isActiveRoute(item.to) 
-                    ? 'bg-green-600 text-white' 
-                    : 'hover:bg-gray-800'
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'hover:bg-sidebar-accent'
                 }`}
                 title={isCollapsed ? item.label : undefined}
               >
@@ -149,7 +149,7 @@ export const Sidebar = () => {
             ))}
           </nav>
 
-          <div className="p-4 border-t border-gray-700">
+          <div className="p-4 border-t border-sidebar-border">
             <Button
               variant="ghost"
               className={`text-red-500 hover:bg-red-500/10 w-full ${
@@ -266,9 +266,9 @@ export const Sidebar = () => {
             <span className="sr-only">Open menu</span>
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-3/4 sm:w-60 bg-gray-900 text-white">
+        <SheetContent side="left" className="w-3/4 sm:w-60 bg-sidebar-background text-sidebar-foreground">
           <SheetHeader className="text-left">
-            <SheetTitle className="text-white">{t('nav.menu')}</SheetTitle>
+            <SheetTitle className="text-sidebar-foreground">{t('nav.menu')}</SheetTitle>
           </SheetHeader>
           <div className="py-4">
             {filteredNavigationItems.map((item) => (
@@ -277,8 +277,8 @@ export const Sidebar = () => {
                 to={item.to}
                 className={`flex items-center space-x-2 py-2 px-4 rounded-md ${
                   isActiveRoute(item.to) 
-                    ? 'bg-green-600 text-white' 
-                    : 'hover:bg-gray-800'
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'hover:bg-sidebar-accent'
                 }`}
                 onClick={() => setIsSidebarOpen(false)}
               >
@@ -292,8 +292,8 @@ export const Sidebar = () => {
                 to={item.to}
                 className={`flex items-center space-x-2 py-2 px-4 rounded-md ${
                   isActiveRoute(item.to) 
-                    ? 'bg-green-600 text-white' 
-                    : 'hover:bg-gray-800'
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'hover:bg-sidebar-accent'
                 }`}
                 onClick={() => setIsSidebarOpen(false)}
               >
@@ -313,15 +313,15 @@ export const Sidebar = () => {
       </Sheet>
 
       {/* Desktop Sidebar */}
-      <aside className={`hidden md:flex flex-col bg-gray-900 border-r border-gray-700 text-white transition-all duration-300 ${
+      <aside className={`hidden md:flex flex-col bg-sidebar-background border-r border-sidebar-border text-sidebar-foreground transition-all duration-300 ${
         isCollapsed ? 'w-16' : 'w-60'
       }`}>
         {/* Header with Logo and Toggle */}
-        <div className="p-4 border-b border-gray-700 flex items-center justify-between">
+        <div className="p-4 border-b border-sidebar-border flex items-center justify-between">
           {!isCollapsed && (
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-sm">
                   {selectedBusinessType?.name?.charAt(0) || 'B'}
                 </span>
               </div>
@@ -334,7 +334,7 @@ export const Sidebar = () => {
             variant="ghost"
             size="icon"
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="hover:bg-gray-800"
+            className="hover:bg-sidebar-accent"
           >
             {isCollapsed ? <Menu className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </Button>
@@ -347,8 +347,8 @@ export const Sidebar = () => {
               to={item.to}
               className={`flex items-center py-2 px-4 rounded-md mx-2 mb-1 ${
                 isActiveRoute(item.to) 
-                  ? 'bg-green-600 text-white' 
-                  : 'hover:bg-gray-800'
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'hover:bg-sidebar-accent'
               }`}
               title={isCollapsed ? item.label : undefined}
             >
@@ -362,8 +362,8 @@ export const Sidebar = () => {
               to={item.to}
               className={`flex items-center py-2 px-4 rounded-md mx-2 mb-1 ${
                 isActiveRoute(item.to) 
-                  ? 'bg-green-600 text-white' 
-                  : 'hover:bg-gray-800'
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'hover:bg-sidebar-accent'
               }`}
               title={isCollapsed ? item.label : undefined}
             >
@@ -373,7 +373,7 @@ export const Sidebar = () => {
           ))}
         </nav>
 
-        <div className="p-4 border-t border-gray-700">
+        <div className="p-4 border-t border-sidebar-border">
           <Button
             variant="ghost"
             className={`text-red-500 hover:bg-red-500/10 w-full ${

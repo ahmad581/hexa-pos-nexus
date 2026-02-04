@@ -215,46 +215,46 @@ export const Login = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-      <Card className="w-full max-w-2xl bg-gray-800 border-gray-700">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 dark">
+      <Card className="w-full max-w-2xl bg-card border-border">
         <div className="p-8">
           <div className="flex items-center justify-center mb-8">
-            <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center mr-3">
-              <span className="text-white font-bold text-xl">B</span>
+            <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mr-3">
+              <span className="text-primary-foreground font-bold text-xl">B</span>
             </div>
-            <h1 className="text-3xl font-bold text-white">BizHub POS</h1>
+            <h1 className="text-3xl font-bold text-foreground">BizHub POS</h1>
           </div>
           
           <form onSubmit={handleLogin} className="space-y-6 mb-8">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-300">{t('auth.username')}</Label>
+              <Label htmlFor="email" className="text-muted-foreground">{t('auth.username')}</Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="business@bizhub.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400"
+                className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
                 required
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-gray-300">{t('auth.password')}</Label>
+              <Label htmlFor="password" className="text-muted-foreground">{t('auth.password')}</Label>
               <Input
                 id="password"
                 type="password"
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400"
+                className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
                 required
               />
             </div>
             
             <Button
               type="submit"
-              className="w-full bg-green-600 hover:bg-green-700"
+              className="w-full bg-primary hover:bg-primary/90"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -268,9 +268,9 @@ export const Login = () => {
             </Button>
           </form>
           
-            <div className="text-center text-gray-400 text-sm">
-            <p className="mb-4 text-lg font-medium text-white">{t('auth.demoCredentials')}</p>
-            <p className="mb-4 text-gray-300">Password: demo123 for all accounts</p>
+            <div className="text-center text-muted-foreground text-sm">
+            <p className="mb-4 text-lg font-medium text-foreground">{t('auth.demoCredentials')}</p>
+            <p className="mb-4 text-muted-foreground">Password: demo123 for all accounts</p>
             
             <div className="mb-6 space-y-2">
               <Dialog open={masterDialogOpen} onOpenChange={setMasterDialogOpen}>
@@ -360,16 +360,16 @@ export const Login = () => {
                 <Button
                   key={account.email}
                   variant="ghost"
-                  className="text-left justify-start p-4 h-auto bg-gray-700/50 hover:bg-gray-700 border border-gray-600"
+                  className="text-left justify-start p-4 h-auto bg-muted/50 hover:bg-muted border border-border"
                   onClick={() => fillCredentials(account.email)}
                 >
                   <div className="flex items-start space-x-3 w-full">
                     <span className="text-xl">{account.icon}</span>
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-white text-sm">{account.name}</div>
-                      <div className="text-xs text-gray-300">{account.role}</div>
-                      <div className="text-xs text-green-400">{account.business}</div>
-                      <div className="text-xs text-gray-400 truncate">{account.branch}</div>
+                      <div className="font-medium text-foreground text-sm">{account.name}</div>
+                      <div className="text-xs text-muted-foreground">{account.role}</div>
+                      <div className="text-xs text-primary">{account.business}</div>
+                      <div className="text-xs text-muted-foreground/70 truncate">{account.branch}</div>
                     </div>
                   </div>
                 </Button>

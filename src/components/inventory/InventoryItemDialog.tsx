@@ -117,7 +117,7 @@ export const InventoryItemDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-gray-800 border-gray-700 text-white max-w-2xl">
+      <DialogContent className="bg-card border-border text-foreground max-w-2xl">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle>
@@ -130,15 +130,15 @@ export const InventoryItemDialog = ({
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent className="bg-gray-800 border-gray-700 text-white">
+                <AlertDialogContent className="bg-card border-border text-foreground">
                     <AlertDialogHeader>
                       <AlertDialogTitle>{t('inventory.itemDialog.delete')}</AlertDialogTitle>
-                      <AlertDialogDescription className="text-gray-300">
+                      <AlertDialogDescription className="text-muted-foreground">
                         {t('inventory.itemDialog.deleteConfirm')} "{item.name}"? This action cannot be undone.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600">
+                      <AlertDialogCancel className="bg-muted border-border text-foreground hover:bg-accent">
                         {t('inventory.itemDialog.cancel')}
                       </AlertDialogCancel>
                       <AlertDialogAction
@@ -163,7 +163,7 @@ export const InventoryItemDialog = ({
                 onValueChange={(value) => setFormData(prev => ({ ...prev, warehouse_id: value }))}
                 required
               >
-                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                <SelectTrigger className="bg-muted border-border text-foreground">
                   <SelectValue placeholder={t('inventory.selectWarehouse')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -183,7 +183,7 @@ export const InventoryItemDialog = ({
                 onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
                 required
               >
-                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                <SelectTrigger className="bg-muted border-border text-foreground">
                   <SelectValue placeholder={t('inventory.selectCategory')} />
                 </SelectTrigger>
                 <SelectContent className="bg-popover border-border">
@@ -204,7 +204,7 @@ export const InventoryItemDialog = ({
                 id="name"
                 value={formData.name}
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                className="bg-gray-700 border-gray-600 text-white"
+                className="bg-muted border-border text-foreground"
                 required
               />
             </div>
@@ -215,7 +215,7 @@ export const InventoryItemDialog = ({
                 id="sku"
                 value={formData.sku}
                 onChange={(e) => setFormData(prev => ({ ...prev, sku: e.target.value }))}
-                className="bg-gray-700 border-gray-600 text-white"
+                className="bg-muted border-border text-foreground"
                 required
               />
             </div>
@@ -227,7 +227,7 @@ export const InventoryItemDialog = ({
               id="description"
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              className="bg-gray-700 border-gray-600 text-white"
+              className="bg-muted border-border text-foreground"
               rows={2}
             />
           </div>
@@ -240,7 +240,7 @@ export const InventoryItemDialog = ({
                 type="number"
                 value={formData.current_stock}
                 onChange={(e) => setFormData(prev => ({ ...prev, current_stock: parseInt(e.target.value) || 0 }))}
-                className="bg-gray-700 border-gray-600 text-white"
+                className="bg-muted border-border text-foreground"
                 min="0"
                 required
               />
@@ -253,7 +253,7 @@ export const InventoryItemDialog = ({
                 type="number"
                 value={formData.min_stock}
                 onChange={(e) => setFormData(prev => ({ ...prev, min_stock: parseInt(e.target.value) || 0 }))}
-                className="bg-gray-700 border-gray-600 text-white"
+                className="bg-muted border-border text-foreground"
                 min="0"
                 required
               />
@@ -266,7 +266,7 @@ export const InventoryItemDialog = ({
                 type="number"
                 value={formData.max_stock}
                 onChange={(e) => setFormData(prev => ({ ...prev, max_stock: parseInt(e.target.value) || 0 }))}
-                className="bg-gray-700 border-gray-600 text-white"
+                className="bg-muted border-border text-foreground"
                 min="0"
                 required
               />
@@ -282,7 +282,7 @@ export const InventoryItemDialog = ({
                 step="0.01"
                 value={formData.unit_price}
                 onChange={(e) => setFormData(prev => ({ ...prev, unit_price: e.target.value }))}
-                className="bg-gray-700 border-gray-600 text-white"
+                className="bg-muted border-border text-foreground"
                 min="0"
               />
             </div>
@@ -293,7 +293,7 @@ export const InventoryItemDialog = ({
                 id="supplier"
                 value={formData.supplier}
                 onChange={(e) => setFormData(prev => ({ ...prev, supplier: e.target.value }))}
-                className="bg-gray-700 border-gray-600 text-white"
+                className="bg-muted border-border text-foreground"
               />
             </div>
           </div>
@@ -305,7 +305,7 @@ export const InventoryItemDialog = ({
                 type="date"
                 value={formData.expiry_date}
                 onChange={(e) => setFormData(prev => ({ ...prev, expiry_date: e.target.value }))}
-                className="bg-gray-700 border-gray-600 text-white"
+                className="bg-muted border-border text-foreground"
               />
           </div>
 
@@ -314,14 +314,14 @@ export const InventoryItemDialog = ({
               type="button"
               variant="outline"
               onClick={onClose}
-              className="border-gray-600 text-white hover:bg-gray-700"
+              className="border-border text-foreground hover:bg-accent"
             >
               {t('inventory.itemDialog.cancel')}
             </Button>
             <Button
               type="submit"
               disabled={loading}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-primary hover:bg-primary/90"
             >
               {loading ? t('inventory.itemDialog.saving') : item ? t('inventory.itemDialog.update') : t('inventory.itemDialog.create')}
             </Button>

@@ -48,52 +48,52 @@ export const CallCenterSessionHistory = ({
   };
 
   return (
-    <Card className="bg-gray-800 border-gray-700 p-6">
+    <Card className="bg-card border-border p-6">
       <div className="flex items-center gap-2 mb-4">
         <Calendar className="h-5 w-5 text-primary" />
-        <h3 className="text-lg font-semibold text-white">{title}</h3>
+        <h3 className="text-lg font-semibold text-foreground">{title}</h3>
       </div>
 
       {sessions.length === 0 ? (
-        <div className="text-center py-8 text-gray-400">
+        <div className="text-center py-8 text-muted-foreground">
           <Clock className="h-12 w-12 mx-auto mb-3 opacity-50" />
           <p>No sessions recorded</p>
         </div>
       ) : (
         <Table>
           <TableHeader>
-            <TableRow className="border-gray-700">
-              {showEmployee && <TableHead className="text-gray-400">Employee</TableHead>}
-              <TableHead className="text-gray-400">Date</TableHead>
-              <TableHead className="text-gray-400">Login</TableHead>
-              <TableHead className="text-gray-400">Logout</TableHead>
-              <TableHead className="text-gray-400">Duration</TableHead>
-              <TableHead className="text-gray-400">Status</TableHead>
+            <TableRow className="border-border">
+              {showEmployee && <TableHead className="text-muted-foreground">Employee</TableHead>}
+              <TableHead className="text-muted-foreground">Date</TableHead>
+              <TableHead className="text-muted-foreground">Login</TableHead>
+              <TableHead className="text-muted-foreground">Logout</TableHead>
+              <TableHead className="text-muted-foreground">Duration</TableHead>
+              <TableHead className="text-muted-foreground">Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {sessions.map((session) => (
-              <TableRow key={session.id} className="border-gray-700">
+              <TableRow key={session.id} className="border-border">
                 {showEmployee && (
-                  <TableCell className="text-white">
+                  <TableCell className="text-foreground">
                     {session.profile?.first_name} {session.profile?.last_name}
                   </TableCell>
                 )}
-                <TableCell className="text-gray-300">
+                <TableCell className="text-muted-foreground">
                   {formatDate(session.login_time)}
                 </TableCell>
-                <TableCell className="text-gray-300">
+                <TableCell className="text-muted-foreground">
                   {formatTime(session.login_time)}
                 </TableCell>
-                <TableCell className="text-gray-300">
+                <TableCell className="text-muted-foreground">
                   {session.logout_time ? formatTime(session.logout_time) : '-'}
                 </TableCell>
-                <TableCell className="text-gray-300 font-mono">
+                <TableCell className="text-muted-foreground font-mono">
                   {formatDuration(session.session_duration_seconds)}
                 </TableCell>
                 <TableCell>
                   {session.logout_time ? (
-                    <Badge variant="secondary" className="bg-gray-600 text-gray-300">
+                    <Badge variant="secondary" className="bg-secondary text-muted-foreground">
                       Completed
                     </Badge>
                   ) : (

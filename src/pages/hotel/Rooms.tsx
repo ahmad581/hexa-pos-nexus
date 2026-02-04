@@ -35,7 +35,7 @@ export const Rooms = () => {
       case "Occupied": return "bg-red-500/20 text-red-400";
       case "Reserved": return "bg-yellow-500/20 text-yellow-400";
       case "Maintenance": return "bg-blue-500/20 text-blue-400";
-      default: return "bg-gray-500/20 text-gray-400";
+      default: return "bg-gray-500/20 text-muted-foreground";
     }
   };
 
@@ -43,43 +43,43 @@ export const Rooms = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">Room Management</h1>
-          <p className="text-gray-400">Monitor and manage hotel rooms</p>
+          <h1 className="text-3xl font-bold text-foreground">Room Management</h1>
+          <p className="text-muted-foreground">Monitor and manage hotel rooms</p>
         </div>
       </div>
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="bg-gray-800 border-gray-700 p-6">
+        <Card className="bg-card border-border p-6">
           <div className="text-center">
             <div className="text-2xl font-bold text-green-400 mb-1">
               {rooms.filter(r => r.status === "Available").length}
             </div>
-            <div className="text-gray-400 text-sm">Available</div>
+            <div className="text-muted-foreground text-sm">Available</div>
           </div>
         </Card>
-        <Card className="bg-gray-800 border-gray-700 p-6">
+        <Card className="bg-card border-border p-6">
           <div className="text-center">
             <div className="text-2xl font-bold text-red-400 mb-1">
               {rooms.filter(r => r.status === "Occupied").length}
             </div>
-            <div className="text-gray-400 text-sm">Occupied</div>
+            <div className="text-muted-foreground text-sm">Occupied</div>
           </div>
         </Card>
-        <Card className="bg-gray-800 border-gray-700 p-6">
+        <Card className="bg-card border-border p-6">
           <div className="text-center">
             <div className="text-2xl font-bold text-yellow-400 mb-1">
               {rooms.filter(r => r.status === "Reserved").length}
             </div>
-            <div className="text-gray-400 text-sm">Reserved</div>
+            <div className="text-muted-foreground text-sm">Reserved</div>
           </div>
         </Card>
-        <Card className="bg-gray-800 border-gray-700 p-6">
+        <Card className="bg-card border-border p-6">
           <div className="text-center">
             <div className="text-2xl font-bold text-blue-400 mb-1">
               {rooms.filter(r => r.status === "Maintenance").length}
             </div>
-            <div className="text-gray-400 text-sm">Maintenance</div>
+            <div className="text-muted-foreground text-sm">Maintenance</div>
           </div>
         </Card>
       </div>
@@ -87,30 +87,30 @@ export const Rooms = () => {
       {/* Rooms Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {rooms.map((room) => (
-          <Card key={room.id} className="bg-gray-800 border-gray-700 p-6">
+          <Card key={room.id} className="bg-card border-border p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-white">Room {room.number}</h3>
+              <h3 className="text-xl font-bold text-foreground">Room {room.number}</h3>
               <Badge className={getStatusColor(room.status)}>
                 {room.status}
               </Badge>
             </div>
 
             <div className="space-y-3">
-              <div className="flex items-center text-gray-300">
+              <div className="flex items-center text-muted-foreground">
                 <Bed size={16} className="mr-2" />
                 <span className="text-sm">{room.type}</span>
               </div>
-              <div className="flex items-center text-gray-300">
+              <div className="flex items-center text-muted-foreground">
                 <Users size={16} className="mr-2" />
                 <span className="text-sm">Capacity: {room.capacity} guests</span>
               </div>
 
               {room.currentGuest && (
-                <div className="border-t border-gray-700 pt-3">
-                  <div className="text-gray-300 mb-2">
+                <div className="border-t border-border pt-3">
+                  <div className="text-muted-foreground mb-2">
                     <span className="text-sm font-medium">{room.currentGuest.name}</span>
                   </div>
-                  <div className="flex items-center text-gray-300 mb-2">
+                  <div className="flex items-center text-muted-foreground mb-2">
                     <Clock size={16} className="mr-2" />
                     <span className="text-sm">{room.currentGuest.checkIn} - {room.currentGuest.checkOut}</span>
                   </div>
