@@ -317,7 +317,7 @@ export const Employees = () => {
         </div>
         <div className="grid gap-4">
           {[1, 2, 3].map(i => (
-            <Card key={i} className="bg-gray-800 border-gray-700 p-6">
+            <Card key={i} className="bg-card border-border p-6">
               <Skeleton className="h-6 w-48 mb-4" />
               <Skeleton className="h-4 w-full mb-2" />
               <Skeleton className="h-4 w-3/4" />
@@ -368,12 +368,12 @@ export const Employees = () => {
 
       <div className="flex flex-wrap gap-4 items-center">
         <div className="relative flex-1 max-w-md min-w-[240px]">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
           <Input
             placeholder={t('employeesPage.searchEmployees')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 bg-gray-700 border-gray-600"
+            className="pl-10 bg-muted border-border"
           />
         </div>
 
@@ -384,14 +384,14 @@ export const Employees = () => {
             if (branch) setSelectedBranch(branch);
           }}
         >
-          <SelectTrigger className="w-56 bg-gray-700 border-gray-600 text-white">
+          <SelectTrigger className="w-56 bg-muted border-border text-foreground">
             <SelectValue placeholder="Select branch" />
           </SelectTrigger>
-          <SelectContent className="bg-gray-700 border-gray-600">
+          <SelectContent>
             {branches
               .filter((b) => b.isActive)
               .map((branch) => (
-                <SelectItem key={branch.id} value={branch.id} className="text-white hover:bg-gray-600">
+                <SelectItem key={branch.id} value={branch.id}>
                   {branch.name}
                 </SelectItem>
               ))}
@@ -419,19 +419,19 @@ export const Employees = () => {
             }))} 
           />
         ) : (
-          <Card className="bg-gray-800 border-gray-700 p-6">
+          <Card className="bg-card border-border p-6">
             <div className="flex flex-col items-center gap-4">
-              <p className="text-gray-400">Please select a branch to manage loans.</p>
+              <p className="text-muted-foreground">Please select a branch to manage loans.</p>
               <Select onValueChange={(value) => {
                 const branch = branches.find(b => b.id === value);
                 if (branch) setSelectedBranch(branch);
               }}>
-                <SelectTrigger className="w-64 bg-gray-700 border-gray-600 text-white">
+                <SelectTrigger className="w-64 bg-muted border-border text-foreground">
                   <SelectValue placeholder="Select a branch" />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-700 border-gray-600">
+                <SelectContent>
                   {branches.map((branch) => (
-                    <SelectItem key={branch.id} value={branch.id} className="text-white hover:bg-gray-600">
+                    <SelectItem key={branch.id} value={branch.id}>
                       {branch.name}
                     </SelectItem>
                   ))}
@@ -449,14 +449,14 @@ export const Employees = () => {
 
       {/* Employee list */}
       {filteredEmployees.length === 0 ? (
-        <Card className="bg-gray-800 border-gray-700 p-8 text-center">
-          <p className="text-gray-400 mb-4">
+        <Card className="bg-card border-border p-8 text-center">
+          <p className="text-muted-foreground mb-4">
             {employees.length === 0 
               ? "No employees found for this branch. Add your first employee!" 
               : "No employees match your search."}
           </p>
           {employees.length === 0 && (
-            <Button onClick={() => setIsAddDialogOpen(true)} className="bg-green-600 hover:bg-green-700">
+            <Button onClick={() => setIsAddDialogOpen(true)} className="bg-primary hover:bg-primary/90">
               <Plus size={16} className="mr-2" />
               Add Employee
             </Button>
@@ -471,20 +471,20 @@ export const Employees = () => {
             const hourlyRate = calculateHourlyRate(employee);
 
             return (
-              <Card key={employee.id} className="bg-gray-800 border-gray-700 p-6">
+              <Card key={employee.id} className="bg-card border-border p-6">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <div className="flex items-center gap-4 mb-2">
-                      <h3 className="text-xl font-semibold text-white">{getEmployeeName(employee)}</h3>
+                      <h3 className="text-xl font-semibold text-foreground">{getEmployeeName(employee)}</h3>
                       <Badge className={employee.is_active ? "bg-green-600" : "bg-red-600"}>
                         {employee.is_active ? t('employees.statusActive') : t('employees.statusInactive')}
                       </Badge>
-                      <Badge className={isCheckedIn ? "bg-blue-600" : "bg-gray-600"}>
+                      <Badge className={isCheckedIn ? "bg-blue-600" : "bg-secondary"}>
                         {isCheckedIn ? t('employees.checkedIn') : t('employees.checkedOut')}
                       </Badge>
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-4 text-gray-300 mb-4">
+                    <div className="grid grid-cols-2 gap-4 text-muted-foreground mb-4">
                       <div>
                         <p><strong>{t('employees.role')}:</strong> {employee.position}</p>
                         <p><strong>{t('employees.phone')}:</strong> {employee.phone || 'Not set'}</p>
@@ -514,30 +514,30 @@ export const Employees = () => {
                     </div>
 
                     {/* Check In/Out Section */}
-                    <div className="bg-gray-700 p-4 rounded-lg mb-4">
+                    <div className="bg-muted p-4 rounded-lg mb-4">
                       <div className="grid grid-cols-4 gap-4 text-sm mb-3">
                         <div>
-                          <p className="text-gray-400">{t('employees.checkInTime')}</p>
-                          <p className="text-white font-semibold">
+                          <p className="text-muted-foreground">{t('employees.checkInTime')}</p>
+                          <p className="text-foreground font-semibold">
                             {currentSession 
                               ? format(new Date(currentSession.check_in_time), 'hh:mm a')
                               : t('employees.notCheckedIn')}
                           </p>
                         </div>
                         <div>
-                          <p className="text-gray-400">{t('employees.checkOutTime')}</p>
-                          <p className="text-white font-semibold">
+                          <p className="text-muted-foreground">{t('employees.checkOutTime')}</p>
+                          <p className="text-foreground font-semibold">
                             {currentSession?.check_out_time 
                               ? format(new Date(currentSession.check_out_time), 'hh:mm a')
                               : t('employees.notCheckedOut')}
                           </p>
                         </div>
                         <div>
-                          <p className="text-gray-400">{t('employees.dailyHours')}</p>
-                          <p className="text-white font-semibold">{(todaySummary?.total_hours || 0).toFixed(2)}h</p>
+                          <p className="text-muted-foreground">{t('employees.dailyHours')}</p>
+                          <p className="text-foreground font-semibold">{(todaySummary?.total_hours || 0).toFixed(2)}h</p>
                         </div>
                         <div>
-                          <p className="text-gray-400">{t('employees.todaysEarnings')}</p>
+                          <p className="text-muted-foreground">{t('employees.todaysEarnings')}</p>
                           <p className="text-green-400 font-semibold">{formatCurrency(todaySummary?.total_earnings || 0)}</p>
                         </div>
                       </div>
@@ -547,7 +547,7 @@ export const Employees = () => {
                           size="sm" 
                           onClick={() => handleCheckIn(employee.id)}
                           disabled={isCheckedIn || checkIn.isPending}
-                          className="bg-green-600 hover:bg-green-700"
+                          className="bg-primary hover:bg-primary/90"
                         >
                           <LogIn size={14} className="mr-1" />
                           {t('employeesPage.checkIn')}
@@ -556,7 +556,7 @@ export const Employees = () => {
                           size="sm" 
                           onClick={() => handleCheckOut(employee.id)}
                           disabled={!isCheckedIn || checkOut.isPending}
-                          className="bg-red-600 hover:bg-red-700"
+                          className="bg-destructive hover:bg-destructive/90"
                         >
                           <LogOut size={14} className="mr-1" />
                           {t('employeesPage.checkOut')}
@@ -588,23 +588,23 @@ export const Employees = () => {
                       <CollapsibleTrigger asChild>
                         <Button 
                           variant="outline" 
-                          className="w-full mb-4 border-gray-600 text-gray-300"
+                          className="w-full mb-4"
                         >
                           <Calendar size={16} className="mr-2" />
                           {expandedEmployees.has(employee.id) ? t('common.close') : t('common.view')} {t('employeesPage.workingDays')}
                         </Button>
                       </CollapsibleTrigger>
                       <CollapsibleContent className="mb-4">
-                        <div className="bg-gray-700 p-4 rounded-lg">
-                          <h4 className="text-white font-semibold mb-3">Work History</h4>
+                        <div className="bg-muted p-4 rounded-lg">
+                          <h4 className="text-foreground font-semibold mb-3">Work History</h4>
                           {dailySummaries.filter(s => s.employee_id === employee.id).length > 0 ? (
                             <Table>
                               <TableHeader>
-                                <TableRow className="border-gray-600">
-                                  <TableHead className="text-gray-300">Date</TableHead>
-                                  <TableHead className="text-gray-300">Sessions</TableHead>
-                                  <TableHead className="text-gray-300">Total Hours</TableHead>
-                                  <TableHead className="text-gray-300">Total Earnings</TableHead>
+                                <TableRow className="border-border">
+                                  <TableHead className="text-muted-foreground">Date</TableHead>
+                                  <TableHead className="text-muted-foreground">Sessions</TableHead>
+                                  <TableHead className="text-muted-foreground">Total Hours</TableHead>
+                                  <TableHead className="text-muted-foreground">Total Earnings</TableHead>
                                 </TableRow>
                               </TableHeader>
                               <TableBody>
@@ -612,14 +612,14 @@ export const Employees = () => {
                                   .filter(s => s.employee_id === employee.id)
                                   .slice(0, 10)
                                   .map((summary) => (
-                                    <TableRow key={summary.id} className="border-gray-600">
-                                      <TableCell className="text-white">
+                                    <TableRow key={summary.id} className="border-border">
+                                      <TableCell className="text-foreground">
                                         {format(new Date(summary.work_date), 'MMM d, yyyy')}
                                       </TableCell>
-                                      <TableCell className="text-white">
+                                      <TableCell className="text-foreground">
                                         {summary.session_count || 1} session(s)
                                       </TableCell>
-                                      <TableCell className="text-white">{(summary.total_hours || 0).toFixed(2)}h</TableCell>
+                                      <TableCell className="text-foreground">{(summary.total_hours || 0).toFixed(2)}h</TableCell>
                                       <TableCell className="text-green-400 font-semibold">
                                         {formatCurrency(summary.total_earnings || 0)}
                                       </TableCell>
@@ -628,22 +628,22 @@ export const Employees = () => {
                               </TableBody>
                             </Table>
                           ) : (
-                            <p className="text-gray-400 text-center py-4">No work history recorded</p>
+                            <p className="text-muted-foreground text-center py-4">No work history recorded</p>
                           )}
                         </div>
                       </CollapsibleContent>
                     </Collapsible>
 
                     {/* Salary Summary */}
-                    <div className="bg-gray-700 p-4 rounded-lg">
+                    <div className="bg-muted p-4 rounded-lg">
                       <div className="grid grid-cols-3 gap-4 text-sm">
                         <div>
-                          <p className="text-gray-400">Monthly Salary</p>
-                          <p className="text-white font-semibold">${(employee.salary || 0).toLocaleString()}</p>
+                          <p className="text-muted-foreground">Monthly Salary</p>
+                          <p className="text-foreground font-semibold">${(employee.salary || 0).toLocaleString()}</p>
                         </div>
                         <div>
-                          <p className="text-gray-400">Total Hours (This Month)</p>
-                          <p className="text-white font-semibold">
+                          <p className="text-muted-foreground">Total Hours (This Month)</p>
+                          <p className="text-foreground font-semibold">
                             {dailySummaries
                               .filter(s => s.employee_id === employee.id)
                               .reduce((sum, s) => sum + (s.total_hours || 0), 0)
@@ -651,7 +651,7 @@ export const Employees = () => {
                           </p>
                         </div>
                         <div>
-                          <p className="text-gray-400">Total Earnings</p>
+                          <p className="text-muted-foreground">Total Earnings</p>
                           <p className="text-green-400 font-semibold">
                             ${dailySummaries
                               .filter(s => s.employee_id === employee.id)
@@ -667,7 +667,6 @@ export const Employees = () => {
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      className="border-gray-600 text-gray-300"
                       onClick={() => openSalaryDialog(employee)}
                     >
                       <DollarSign size={16} className="mr-1" />
@@ -676,7 +675,6 @@ export const Employees = () => {
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      className="border-gray-600 text-gray-300"
                       onClick={() => openEditDialog(employee)}
                     >
                       <Edit size={16} />
@@ -684,7 +682,6 @@ export const Employees = () => {
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      className="border-gray-600 text-gray-300"
                       onClick={() => handleDeleteEmployee(employee.id)}
                     >
                       <Trash2 size={16} />
@@ -699,9 +696,9 @@ export const Employees = () => {
 
       {/* Add Employee Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="bg-gray-800 border-gray-700">
+        <DialogContent className="bg-card border-border">
           <DialogHeader>
-            <DialogTitle className="text-white">{t('employeesPage.addEmployee')}</DialogTitle>
+            <DialogTitle className="text-foreground">{t('employeesPage.addEmployee')}</DialogTitle>
           </DialogHeader>
           
           <Form {...form}>
@@ -711,9 +708,9 @@ export const Employees = () => {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-300">{t('employees.name')}</FormLabel>
+                    <FormLabel className="text-muted-foreground">{t('employees.name')}</FormLabel>
                     <FormControl>
-                      <Input {...field} className="bg-gray-700 border-gray-600 text-white" />
+                      <Input {...field} className="bg-muted border-border text-foreground" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -725,9 +722,9 @@ export const Employees = () => {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-300">Email</FormLabel>
+                    <FormLabel className="text-muted-foreground">Email</FormLabel>
                     <FormControl>
-                      <Input {...field} type="email" placeholder="employee@example.com" className="bg-gray-700 border-gray-600 text-white" />
+                      <Input {...field} type="email" placeholder="employee@example.com" className="bg-muted border-border text-foreground" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -739,15 +736,15 @@ export const Employees = () => {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-300">Password</FormLabel>
+                    <FormLabel className="text-muted-foreground">Password</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
                         <Input 
                           {...field} 
                           type="password" 
                           placeholder="Min. 6 characters" 
-                          className="bg-gray-700 border-gray-600 text-white pl-10" 
+                          className="bg-muted border-border text-foreground pl-10" 
                         />
                       </div>
                     </FormControl>
@@ -761,16 +758,16 @@ export const Employees = () => {
                 name="role"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-300">{t('employees.role')}</FormLabel>
+                    <FormLabel className="text-muted-foreground">{t('employees.role')}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value || 'Employee'}>
                       <FormControl>
-                        <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                        <SelectTrigger className="bg-muted border-border text-foreground">
                           <SelectValue placeholder="Select a role" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent className="bg-gray-700 border-gray-600">
+                      <SelectContent>
                         {availableRoles.map((role) => (
-                          <SelectItem key={role.value} value={role.value} className="text-white hover:bg-gray-600">
+                          <SelectItem key={role.value} value={role.value}>
                             {role.label}
                           </SelectItem>
                         ))}
@@ -786,16 +783,16 @@ export const Employees = () => {
                 name="branch_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-300">Branch</FormLabel>
+                    <FormLabel className="text-muted-foreground">Branch</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value || selectedBranch?.id}>
                       <FormControl>
-                        <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                        <SelectTrigger className="bg-muted border-border text-foreground">
                           <SelectValue placeholder="Select a branch" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent className="bg-gray-700 border-gray-600">
+                      <SelectContent>
                         {branches.map((branch) => (
-                          <SelectItem key={branch.id} value={branch.id} className="text-white hover:bg-gray-600">
+                          <SelectItem key={branch.id} value={branch.id}>
                             {branch.name}
                           </SelectItem>
                         ))}
@@ -811,9 +808,9 @@ export const Employees = () => {
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-300">{t('employees.phone')}</FormLabel>
+                    <FormLabel className="text-muted-foreground">{t('employees.phone')}</FormLabel>
                     <FormControl>
-                      <Input {...field} className="bg-gray-700 border-gray-600 text-white" />
+                      <Input {...field} className="bg-muted border-border text-foreground" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -825,13 +822,13 @@ export const Employees = () => {
                 name="monthlySalary"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-300">{t('employeesPage.monthlySalary')}</FormLabel>
+                    <FormLabel className="text-muted-foreground">{t('employeesPage.monthlySalary')}</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         {...field}
                         onChange={(e) => field.onChange(Number(e.target.value))}
-                        className="bg-gray-700 border-gray-600 text-white"
+                        className="bg-muted border-border text-foreground"
                       />
                     </FormControl>
                     <FormMessage />
@@ -840,7 +837,7 @@ export const Employees = () => {
               />
               
               <div className="flex gap-2">
-                <Button type="submit" className="bg-green-600 hover:bg-green-700" disabled={isAddingEmployee}>
+                <Button type="submit" className="bg-primary hover:bg-primary/90" disabled={isAddingEmployee}>
                   {isAddingEmployee ? "Creating..." : t('employeesPage.addEmployee')}
                 </Button>
                 <Button 
@@ -859,9 +856,9 @@ export const Employees = () => {
 
       {/* Edit Employee Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-gray-800 border-gray-700">
+        <DialogContent className="bg-card border-border">
           <DialogHeader>
-            <DialogTitle className="text-white">
+            <DialogTitle className="text-foreground">
               Edit Employee - {selectedEmployee ? getEmployeeName(selectedEmployee) : ''}
             </DialogTitle>
           </DialogHeader>
@@ -873,9 +870,9 @@ export const Employees = () => {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-300">Name</FormLabel>
+                    <FormLabel className="text-muted-foreground">Name</FormLabel>
                     <FormControl>
-                      <Input {...field} className="bg-gray-700 border-gray-600 text-white" />
+                      <Input {...field} className="bg-muted border-border text-foreground" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -887,9 +884,9 @@ export const Employees = () => {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-300">Email</FormLabel>
+                    <FormLabel className="text-muted-foreground">Email</FormLabel>
                     <FormControl>
-                      <Input {...field} type="email" className="bg-gray-700 border-gray-600 text-white" />
+                      <Input {...field} type="email" className="bg-muted border-border text-foreground" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -901,9 +898,9 @@ export const Employees = () => {
                 name="role"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-300">Role/Position</FormLabel>
+                    <FormLabel className="text-muted-foreground">Role/Position</FormLabel>
                     <FormControl>
-                      <Input {...field} className="bg-gray-700 border-gray-600 text-white" />
+                      <Input {...field} className="bg-muted border-border text-foreground" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -915,9 +912,9 @@ export const Employees = () => {
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-300">Phone</FormLabel>
+                    <FormLabel className="text-muted-foreground">Phone</FormLabel>
                     <FormControl>
-                      <Input {...field} className="bg-gray-700 border-gray-600 text-white" />
+                      <Input {...field} className="bg-muted border-border text-foreground" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -929,13 +926,13 @@ export const Employees = () => {
                 name="monthlySalary"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-300">Monthly Salary ($)</FormLabel>
+                    <FormLabel className="text-muted-foreground">Monthly Salary ($)</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         {...field}
                         onChange={(e) => field.onChange(Number(e.target.value))}
-                        className="bg-gray-700 border-gray-600 text-white"
+                        className="bg-muted border-border text-foreground"
                       />
                     </FormControl>
                     <FormMessage />
@@ -944,7 +941,7 @@ export const Employees = () => {
               />
               
               <div className="flex gap-2">
-                <Button type="submit" className="bg-green-600 hover:bg-green-700" disabled={updateEmployee.isPending}>
+                <Button type="submit" className="bg-primary hover:bg-primary/90" disabled={updateEmployee.isPending}>
                   {updateEmployee.isPending ? "Updating..." : "Update Employee"}
                 </Button>
                 <Button 
@@ -962,9 +959,9 @@ export const Employees = () => {
 
       {/* Salary Configuration Dialog */}
       <Dialog open={isSalaryDialogOpen} onOpenChange={setIsSalaryDialogOpen}>
-        <DialogContent className="bg-gray-800 border-gray-700">
+        <DialogContent className="bg-card border-border">
           <DialogHeader>
-            <DialogTitle className="text-white">
+            <DialogTitle className="text-foreground">
               Configure Salary - {selectedEmployee ? getEmployeeName(selectedEmployee) : ''}
             </DialogTitle>
           </DialogHeader>
@@ -976,14 +973,14 @@ export const Employees = () => {
                 name="monthlySalary"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-300">Monthly Salary ($)</FormLabel>
+                    <FormLabel className="text-muted-foreground">Monthly Salary ($)</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         placeholder="5000"
                         {...field}
                         onChange={(e) => field.onChange(Number(e.target.value))}
-                        className="bg-gray-700 border-gray-600 text-white"
+                        className="bg-muted border-border text-foreground"
                       />
                     </FormControl>
                     <FormMessage />
@@ -996,14 +993,14 @@ export const Employees = () => {
                 name="hourlyRate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-300">Hourly Rate ($)</FormLabel>
+                    <FormLabel className="text-muted-foreground">Hourly Rate ($)</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         placeholder="25"
                         {...field}
                         onChange={(e) => field.onChange(Number(e.target.value))}
-                        className="bg-gray-700 border-gray-600 text-white"
+                        className="bg-muted border-border text-foreground"
                       />
                     </FormControl>
                     <FormMessage />
@@ -1012,7 +1009,7 @@ export const Employees = () => {
               />
               
               <div className="flex gap-2">
-                <Button type="submit" className="bg-green-600 hover:bg-green-700" disabled={updateEmployee.isPending}>
+                <Button type="submit" className="bg-primary hover:bg-primary/90" disabled={updateEmployee.isPending}>
                   {updateEmployee.isPending ? "Updating..." : "Update Salary"}
                 </Button>
                 <Button 
@@ -1031,7 +1028,7 @@ export const Employees = () => {
       {/* QR Scanner Modal */}
       {showQRScanner && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-900 p-6 rounded-lg max-w-md w-full mx-4">
+          <div className="bg-background p-6 rounded-lg max-w-md w-full mx-4">
             <QRScanner 
               onScanResult={handleQRScan}
               onClose={() => setShowQRScanner(false)}
@@ -1043,7 +1040,7 @@ export const Employees = () => {
       {/* Biometric Auth Modal */}
       {showBiometric.show && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-900 p-6 rounded-lg max-w-md w-full mx-4">
+          <div className="bg-background p-6 rounded-lg max-w-md w-full mx-4">
             <BiometricAuth 
               employeeId={showBiometric.employeeId}
               employeeName={employees.find(emp => emp.id === showBiometric.employeeId) 
@@ -1060,14 +1057,14 @@ export const Employees = () => {
       {/* QR Generator Modal */}
       {showQRGenerator.show && showQRGenerator.employee && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-900 p-6 rounded-lg max-w-md w-full mx-4">
+          <div className="bg-background p-6 rounded-lg max-w-md w-full mx-4">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-white">Employee QR Code</h3>
+              <h3 className="text-lg font-semibold text-foreground">Employee QR Code</h3>
               <Button 
                 size="sm" 
                 variant="ghost" 
                 onClick={() => setShowQRGenerator({show: false, employee: null})}
-                className="text-gray-400 hover:text-white"
+                className="text-muted-foreground hover:text-foreground"
               >
                 <X size={16} />
               </Button>

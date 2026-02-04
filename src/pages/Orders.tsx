@@ -62,7 +62,7 @@ export const Orders = () => {
       case "pending": return "bg-yellow-500/20 text-yellow-400";
       case "preparing": return "bg-blue-500/20 text-blue-400";
       case "ready": return "bg-green-500/20 text-green-400";
-      case "served": return "bg-gray-500/20 text-gray-400";
+      case "served": return "bg-gray-500/20 text-muted-foreground";
       default: return "bg-red-500/20 text-red-400";
     }
   };
@@ -120,10 +120,10 @@ export const Orders = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-white">
+          <h1 className="text-3xl font-bold text-foreground">
             {showDeletedOrders ? t('ordersPage.deletedOrders') : t('ordersPage.title')}
           </h1>
-          <p className="text-gray-400">
+          <p className="text-muted-foreground">
             {showDeletedOrders ? t('ordersPage.viewDeleted') : t('ordersPage.track')}
           </p>
         </div>
@@ -131,11 +131,10 @@ export const Orders = () => {
           <Button
             onClick={() => setShowDeletedOrders(!showDeletedOrders)}
             variant="outline"
-            className="border-gray-600 text-gray-300"
           >
             {showDeletedOrders ? t('ordersPage.viewActive') : t('ordersPage.viewDeleted')}
           </Button>
-          <Button onClick={exportOrders} className="bg-green-600 hover:bg-green-700">
+          <Button onClick={exportOrders} className="bg-primary hover:bg-primary/90">
             <Download size={16} className="mr-2" />
             {t('common.export')} {showDeletedOrders ? t('ordersPage.deletedOrders') : ''}
           </Button>
@@ -143,29 +142,29 @@ export const Orders = () => {
       </div>
 
       {/* Filters */}
-      <Card className="bg-gray-800 border-gray-700 p-6">
+      <Card className="bg-card border-border p-6">
         <div className="flex flex-wrap gap-4 items-center">
           <div className="flex items-center space-x-2">
-            <Filter size={16} className="text-gray-400" />
-            <span className="text-white font-medium">{t('common.filter')}:</span>
+            <Filter size={16} className="text-muted-foreground" />
+            <span className="text-foreground font-medium">{t('common.filter')}:</span>
           </div>
           
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
             <Input
               placeholder={t('ordersPage.searchOrders')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-gray-700 border-gray-600"
+              className="pl-10 bg-muted border-border"
             />
           </div>
 
           {!showDeletedOrders && (
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-48 bg-gray-700 border-gray-600">
+              <SelectTrigger className="w-48 bg-muted border-border">
                 <SelectValue placeholder={t('ordersPage.filterByStatus')} />
               </SelectTrigger>
-              <SelectContent className="bg-gray-800 border-gray-700">
+              <SelectContent>
                 <SelectItem value="all">{t('ordersPage.allStatuses')}</SelectItem>
                 <SelectItem value="pending">{t('orders.pending')}</SelectItem>
                 <SelectItem value="preparing">{t('orders.preparing')}</SelectItem>
@@ -178,28 +177,28 @@ export const Orders = () => {
       </Card>
 
       {/* Orders Table */}
-      <Card className="bg-gray-800 border-gray-700 p-6">
+      <Card className="bg-card border-border p-6">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-700">
-                <th className="text-left py-3 text-gray-400 font-medium">{t('ordersPage.orderId')}</th>
-                <th className="text-left py-3 text-gray-400 font-medium">{t('ordersPage.branch')}</th>
-                <th className="text-left py-3 text-gray-400 font-medium">{t('ordersPage.customer')}</th>
-                <th className="text-left py-3 text-gray-400 font-medium">{t('ordersPage.type')}</th>
-                <th className="text-left py-3 text-gray-400 font-medium">{t('ordersPage.items')}</th>
-                <th className="text-left py-3 text-gray-400 font-medium">{t('common.total')}</th>
-                <th className="text-left py-3 text-gray-400 font-medium">{t('common.status')}</th>
-                <th className="text-left py-3 text-gray-400 font-medium">{t('common.time')}</th>
-                <th className="text-left py-3 text-gray-400 font-medium">{t('common.actions')}</th>
+              <tr className="border-b border-border">
+                <th className="text-left py-3 text-muted-foreground font-medium">{t('ordersPage.orderId')}</th>
+                <th className="text-left py-3 text-muted-foreground font-medium">{t('ordersPage.branch')}</th>
+                <th className="text-left py-3 text-muted-foreground font-medium">{t('ordersPage.customer')}</th>
+                <th className="text-left py-3 text-muted-foreground font-medium">{t('ordersPage.type')}</th>
+                <th className="text-left py-3 text-muted-foreground font-medium">{t('ordersPage.items')}</th>
+                <th className="text-left py-3 text-muted-foreground font-medium">{t('common.total')}</th>
+                <th className="text-left py-3 text-muted-foreground font-medium">{t('common.status')}</th>
+                <th className="text-left py-3 text-muted-foreground font-medium">{t('common.time')}</th>
+                <th className="text-left py-3 text-muted-foreground font-medium">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
               {filteredOrders.map((order) => (
-                <tr key={order.id} className="border-b border-gray-700">
-                  <td className="py-3 text-white font-mono">{order.id}</td>
-                  <td className="py-3 text-gray-300">{order.branchName}</td>
-                  <td className="py-3 text-gray-300">
+                <tr key={order.id} className="border-b border-border">
+                  <td className="py-3 text-foreground font-mono">{order.id}</td>
+                  <td className="py-3 text-muted-foreground">{order.branchName}</td>
+                  <td className="py-3 text-muted-foreground">
                     {order.customerInfo?.name || t('ordersPage.walkIn')}
                   </td>
                   <td className="py-3">
@@ -207,21 +206,20 @@ export const Orders = () => {
                       {typeLabel(order.orderType)}
                     </Badge>
                   </td>
-                  <td className="py-3 text-gray-300">{order.items.length} {t('ordersPage.itemsCount')}</td>
+                  <td className="py-3 text-muted-foreground">{order.items.length} {t('ordersPage.itemsCount')}</td>
                   <td className="py-3 text-green-400 font-semibold">{formatCurrency(order.total)}</td>
                   <td className="py-3">
                     <Badge className={getStatusColor(order.status)}>
                       {statusLabel(order.status)}
                     </Badge>
                   </td>
-                  <td className="py-3 text-gray-300">{order.timestamp}</td>
+                  <td className="py-3 text-muted-foreground">{order.timestamp}</td>
                   <td className="py-3">
                     <div className="flex space-x-2">
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => openOrderDetail(order)}
-                        className="border-gray-600 text-gray-300"
                       >
                         <Eye size={14} />
                       </Button>
@@ -250,7 +248,6 @@ export const Orders = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="border-gray-600 text-gray-300"
                           >
                             <Edit size={14} />
                           </Button>
@@ -274,7 +271,7 @@ export const Orders = () => {
 
         {filteredOrders.length === 0 && (
           <div className="text-center py-8">
-            <p className="text-gray-400">
+            <p className="text-muted-foreground">
               {showDeletedOrders ? t('ordersPage.noOrders') : t('ordersPage.noOrders')}
             </p>
           </div>
@@ -283,30 +280,30 @@ export const Orders = () => {
 
       {/* Order Detail Dialog */}
       <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
-        <DialogContent className="bg-gray-800 border-gray-700 max-w-2xl">
+        <DialogContent className="bg-card border-border max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-white">{t('ordersPage.orderDetails')} - {selectedOrder?.id}</DialogTitle>
+            <DialogTitle className="text-foreground">{t('ordersPage.orderDetails')} - {selectedOrder?.id}</DialogTitle>
           </DialogHeader>
           
           {selectedOrder && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <h4 className="text-sm font-medium text-gray-400 mb-1">{t('ordersPage.branch')}</h4>
-                  <p className="text-white">{selectedOrder.branchName}</p>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">{t('ordersPage.branch')}</h4>
+                  <p className="text-foreground">{selectedOrder.branchName}</p>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-400 mb-1">{t('ordersPage.type')}</h4>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">{t('ordersPage.type')}</h4>
                     <Badge className="bg-blue-500/20 text-blue-400">
                       {typeLabel(selectedOrder.orderType)}
                     </Badge>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-400 mb-1">{t('ordersPage.customer')}</h4>
-                  <p className="text-white">{selectedOrder.customerInfo?.name || t('ordersPage.walkIn')}</p>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">{t('ordersPage.customer')}</h4>
+                  <p className="text-foreground">{selectedOrder.customerInfo?.name || t('ordersPage.walkIn')}</p>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-400 mb-1">{t('common.status')}</h4>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">{t('common.status')}</h4>
                     <Badge className={getStatusColor(selectedOrder.status)}>
                       {statusLabel(selectedOrder.status)}
                     </Badge>
@@ -314,13 +311,13 @@ export const Orders = () => {
               </div>
 
               <div>
-                <h4 className="text-sm font-medium text-gray-400 mb-2">{t('ordersPage.orderItems')}</h4>
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">{t('ordersPage.orderItems')}</h4>
                 <div className="space-y-2">
                   {selectedOrder.items.map((item, index) => (
-                    <div key={index} className="flex justify-between items-center bg-gray-700 p-3 rounded">
+                    <div key={index} className="flex justify-between items-center bg-muted p-3 rounded">
                       <div>
-                        <p className="text-white font-medium">{item.name}</p>
-                        <p className="text-gray-400 text-sm">{t('common.quantity')}: {item.quantity}</p>
+                        <p className="text-foreground font-medium">{item.name}</p>
+                        <p className="text-muted-foreground text-sm">{t('common.quantity')}: {item.quantity}</p>
                       </div>
                       <p className="text-green-400 font-semibold">
                         {formatCurrency(item.price * item.quantity)}
@@ -330,8 +327,8 @@ export const Orders = () => {
                 </div>
               </div>
 
-              <div className="flex justify-between items-center pt-4 border-t border-gray-700">
-                <span className="text-xl font-bold text-white">{t('common.total')}:</span>
+              <div className="flex justify-between items-center pt-4 border-t border-border">
+                <span className="text-xl font-bold text-foreground">{t('common.total')}:</span>
                 <span className="text-xl font-bold text-green-400">
                   {formatCurrency(selectedOrder.total)}
                 </span>

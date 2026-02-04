@@ -48,7 +48,7 @@ export const CreateCategoryDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="bg-gray-800 border-gray-700 text-white max-w-md">
+      <DialogContent className="bg-card border-border text-foreground max-w-md">
         <DialogHeader>
           <DialogTitle>Create New Category</DialogTitle>
         </DialogHeader>
@@ -64,7 +64,7 @@ export const CreateCategoryDialog = ({
                 setError("");
               }}
               placeholder="e.g., Beverages, Dairy, Produce"
-              className="bg-gray-700 border-gray-600 text-white"
+              className="bg-muted border-border text-foreground"
               required
             />
             {error && (
@@ -74,12 +74,12 @@ export const CreateCategoryDialog = ({
 
           {existingCategories.length > 0 && (
             <div className="space-y-2">
-              <Label className="text-gray-400 text-sm">Existing Categories:</Label>
+              <Label className="text-muted-foreground text-sm">Existing Categories:</Label>
               <div className="flex flex-wrap gap-2">
                 {existingCategories.map((cat) => (
                   <span
                     key={cat}
-                    className="px-2 py-1 bg-gray-700 rounded text-sm text-gray-300"
+                    className="px-2 py-1 bg-muted rounded text-sm text-muted-foreground"
                   >
                     {cat}
                   </span>

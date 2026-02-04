@@ -37,16 +37,16 @@ export const GroceryInventory = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">Grocery Inventory</h1>
-          <p className="text-gray-400">Monitor fresh products and expiry dates</p>
+          <h1 className="text-3xl font-bold text-foreground">Grocery Inventory</h1>
+          <p className="text-muted-foreground">Monitor fresh products and expiry dates</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {items.map((item) => (
-          <Card key={item.id} className="bg-gray-800 border-gray-700 p-6">
+          <Card key={item.id} className="bg-card border-border p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-white">{item.name}</h3>
+              <h3 className="text-lg font-bold text-foreground">{item.name}</h3>
               <Badge className={getStatusColor(item.status)}>
                 {item.status === "Expiring Soon" || item.status === "Expired" ? (
                   <span className="flex items-center gap-1">
@@ -60,16 +60,16 @@ export const GroceryInventory = () => {
             </div>
 
             <div className="space-y-3">
-              <div className="text-gray-300">
+              <div className="text-muted-foreground">
                 <span className="text-sm">Category: {item.category}</span>
               </div>
-              <div className="text-gray-300">
+              <div className="text-muted-foreground">
                 <span className="text-sm">Stock: {item.stock} units</span>
               </div>
-              <div className="text-gray-300">
+              <div className="text-muted-foreground">
                 <span className="text-sm">Supplier: {item.supplier}</span>
               </div>
-              <div className="flex items-center text-gray-300">
+              <div className="flex items-center text-muted-foreground">
                 <Calendar size={16} className="mr-2" />
                 <span className="text-sm">Expires: {item.expiryDate}</span>
               </div>
