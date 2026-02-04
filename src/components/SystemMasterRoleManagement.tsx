@@ -1,33 +1,21 @@
-import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Shield, Users, Settings, Key, Building2, CheckCircle, XCircle } from "lucide-react";
+import { Shield, Users, Key, Building2, CheckCircle, XCircle } from "lucide-react";
 import { useRoles, useBusinessTypeRoles, Role } from "@/hooks/useRoles";
-import { useRolePermissions } from "@/hooks/usePermissions";
 import { RoleManagement as RoleAssignment } from "@/components/RoleManagement";
+import { RolePermissionsEditor } from "@/components/role-management/RolePermissionsEditor";
 import { useBusinessTypes } from "@/hooks/useBusinessTypes";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface SystemMasterRoleManagementProps {}
 
 export const SystemMasterRoleManagement = ({}: SystemMasterRoleManagementProps) => {
-  const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
   
   const { data: roles = [], isLoading: rolesLoading } = useRoles();
-  const { data: permissions = [], isLoading: permissionsLoading } = useRolePermissions(selectedRoleId || undefined);
   const { data: businessTypeRoles = [] } = useBusinessTypeRoles();
   const { businessTypes } = useBusinessTypes();
-
-  const selectedRole = roles.find(r => r.id === selectedRoleId);
-
-  // Get permissions for a specific role
-  const getRolePermissions = (roleId: string) => {
-    return permissions.filter(p => p.role_id === roleId && p.is_granted);
-  };
-
   // Get roles for a specific business type
   const getBusinessTypeRolesList = (businessTypeId: string) => {
     return businessTypeRoles
@@ -98,8 +86,7 @@ export const SystemMasterRoleManagement = ({}: SystemMasterRoleManagementProps) 
                   {roles.map(role => (
                     <TableRow 
                       key={role.id} 
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => setSelectedRoleId(role.id)}
+                      className="hover:bg-muted/50"
                     >
                       <TableCell>
                         <Badge className={role.color_class}>
@@ -122,9 +109,9 @@ export const SystemMasterRoleManagement = ({}: SystemMasterRoleManagementProps) 
                       </TableCell>
                       <TableCell>
                         {role.is_active ? (
-                          <CheckCircle className="h-4 w-4 text-green-500" />
+                          <CheckCircle className="h-4 w-4 text-emerald-500" />
                         ) : (
-                          <XCircle className="h-4 w-4 text-red-500" />
+                          <XCircle className="h-4 w-4 text-destructive" />
                         )}
                       </TableCell>
                     </TableRow>
@@ -136,75 +123,7 @@ export const SystemMasterRoleManagement = ({}: SystemMasterRoleManagementProps) 
         </TabsContent>
 
         <TabsContent value="permissions" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Role selector */}
-            <Card className="lg:col-span-1">
-              <CardHeader>
-                <CardTitle className="text-sm">Select Role</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {roles.map(role => (
-                  <Button
-                    key={role.id}
-                    variant={selectedRoleId === role.id ? "default" : "ghost"}
-                    className="w-full justify-start"
-                    onClick={() => setSelectedRoleId(role.id)}
-                  >
-                    <Badge className={`mr-2 ${role.color_class}`}>
-                      {role.hierarchy_level}
-                    </Badge>
-                    {role.display_name}
-                  </Button>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* Permissions display */}
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Key className="h-5 w-5" />
-                  {selectedRole ? `${selectedRole.display_name} Permissions` : 'Select a Role'}
-                </CardTitle>
-                <CardDescription>
-                  {selectedRole?.description || 'Click on a role to view its permissions'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {selectedRoleId && !permissionsLoading ? (
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {getRolePermissions(selectedRoleId).length > 0 ? (
-                      getRolePermissions(selectedRoleId).map(perm => (
-                        <div 
-                          key={perm.id}
-                          className="flex items-center gap-2 p-3 rounded-lg border bg-green-50 border-green-200"
-                        >
-                          <CheckCircle className="h-4 w-4 text-green-600" />
-                          <span className="text-sm font-medium">
-                            {perm.permission_key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                          </span>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="col-span-full text-center text-muted-foreground py-8">
-                        No permissions assigned to this role
-                      </div>
-                    )}
-                  </div>
-                ) : permissionsLoading ? (
-                  <div className="space-y-2">
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-10 w-full" />
-                  </div>
-                ) : (
-                  <div className="text-center text-muted-foreground py-8">
-                    Select a role from the list to view its permissions
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+          <RolePermissionsEditor />
         </TabsContent>
 
         <TabsContent value="business-types" className="space-y-4">
