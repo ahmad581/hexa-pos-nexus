@@ -27,6 +27,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   userEmail: string | null;
   businessType: string | null;
+  businessName: string | null;
   userProfile: UserProfile | null;
   userBranchId: string | null;
   user: User | null;
@@ -40,24 +41,27 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Helper to fetch business type from database
-const fetchBusinessType = async (businessId: string): Promise<string | null> => {
+// Helper to fetch business details from database
+const fetchBusinessDetails = async (businessId: string): Promise<{ type: string | null; name: string | null }> => {
   try {
     const { data: business, error } = await supabase
       .from("custom_businesses")
-      .select("business_type")
+      .select("business_type, name")
       .eq("id", businessId)
       .single();
 
     if (error) {
       // Common when RLS prevents access or the row doesn't exist.
-      return null;
+      return { type: null, name: null };
     }
 
-    return business?.business_type || null;
+    return { 
+      type: business?.business_type || null, 
+      name: business?.name || null 
+    };
   } catch (error) {
-    console.error("Error fetching business type:", error);
-    return null;
+    console.error("Error fetching business details:", error);
+    return { type: null, name: null };
   }
 };
 
@@ -82,7 +86,7 @@ const fetchBusinessTypeFromBranch = async (branchId: string): Promise<string | n
 };
 
 // Helper to fetch business type by user email (for demo/local fallback)
-const fetchBusinessTypeByEmail = async (email: string): Promise<string | null> => {
+const fetchBusinessTypeByEmail = async (email: string): Promise<{ type: string | null; name: string | null }> => {
   try {
     const { data: profile, error } = await supabase
       .from("profiles")
@@ -90,29 +94,30 @@ const fetchBusinessTypeByEmail = async (email: string): Promise<string | null> =
       .eq("email", email)
       .single();
 
-    if (error || !profile) return null;
+    if (error || !profile) return { type: null, name: null };
 
     if (profile.business_id) {
-      const fromBusiness = await fetchBusinessType(profile.business_id);
-      if (fromBusiness) return fromBusiness;
+      const fromBusiness = await fetchBusinessDetails(profile.business_id);
+      if (fromBusiness.type) return fromBusiness;
     }
 
     if (profile.branch_id) {
-      return fetchBusinessTypeFromBranch(profile.branch_id);
+      const bType = await fetchBusinessTypeFromBranch(profile.branch_id);
+      return { type: bType, name: null };
     }
 
-    return null;
+    return { type: null, name: null };
   } catch (error) {
     console.error("Error fetching business type by email:", error);
-    return null;
+    return { type: null, name: null };
   }
 };
-
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [businessType, setBusinessType] = useState<string | null>(null);
+  const [businessName, setBusinessName] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [userBranchId, setUserBranchId] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -134,17 +139,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUserBranchId(profile.branch_id);
         setPrimaryRole(profile.primary_role);
         
-        // Fetch the actual business type.
+        // Fetch the actual business details.
         // Note: Cashier/test users may not have SELECT access to custom_businesses due to RLS,
         // so we fall back to branches.business_type.
         if (profile.business_id) {
-          let bType = await fetchBusinessType(profile.business_id);
-          if (!bType && profile.branch_id) {
-            bType = await fetchBusinessTypeFromBranch(profile.branch_id);
+          const details = await fetchBusinessDetails(profile.business_id);
+          if (details.type) {
+            setBusinessType(details.type);
+            localStorage.setItem("businessType", details.type);
+          } else if (profile.branch_id) {
+            const bType = await fetchBusinessTypeFromBranch(profile.branch_id);
+            if (bType) {
+              setBusinessType(bType);
+              localStorage.setItem("businessType", bType);
+            }
           }
-          if (bType) {
-            setBusinessType(bType);
-            localStorage.setItem("businessType", bType);
+          if (details.name) {
+            setBusinessName(details.name);
+            localStorage.setItem("businessName", details.name);
           }
         } else if (profile.branch_id) {
           const bType = await fetchBusinessTypeFromBranch(profile.branch_id);
@@ -211,15 +223,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setIsAuthenticated(authenticated);
           setUserEmail(email);
           
-          // Use stored business type or fetch from DB
+          // Use stored business type/name or fetch from DB
           if (storedBusinessType) {
             setBusinessType(storedBusinessType);
-          } else {
+          }
+          const storedBusinessName = localStorage.getItem("businessName");
+          if (storedBusinessName) {
+            setBusinessName(storedBusinessName);
+          }
+          
+          if (!storedBusinessType) {
             // Fetch from database
-            fetchBusinessTypeByEmail(email).then(bType => {
-              if (bType) {
-                setBusinessType(bType);
-                localStorage.setItem("businessType", bType);
+            fetchBusinessTypeByEmail(email).then(details => {
+              if (details.type) {
+                setBusinessType(details.type);
+                localStorage.setItem("businessType", details.type);
+              }
+              if (details.name) {
+                setBusinessName(details.name);
+                localStorage.setItem("businessName", details.name);
               }
             });
           }
@@ -310,15 +332,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUserBranchId(profile.branch_id);
         setPrimaryRole(profile.primary_role);
         
-        // Fetch the actual business type (with branch fallback for RLS)
+        // Fetch the actual business details (with branch fallback for RLS)
         if (profile.business_id) {
-          let bType = await fetchBusinessType(profile.business_id);
-          if (!bType && profile.branch_id) {
-            bType = await fetchBusinessTypeFromBranch(profile.branch_id);
+          const details = await fetchBusinessDetails(profile.business_id);
+          if (details.type) {
+            setBusinessType(details.type);
+            localStorage.setItem("businessType", details.type);
+          } else if (profile.branch_id) {
+            const bType = await fetchBusinessTypeFromBranch(profile.branch_id);
+            if (bType) {
+              setBusinessType(bType);
+              localStorage.setItem("businessType", bType);
+            }
           }
-          if (bType) {
-            setBusinessType(bType);
-            localStorage.setItem("businessType", bType);
+          if (details.name) {
+            setBusinessName(details.name);
+            localStorage.setItem("businessName", details.name);
           }
         } else if (profile.branch_id) {
           const bType = await fetchBusinessTypeFromBranch(profile.branch_id);
@@ -327,8 +356,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             localStorage.setItem("businessType", bType);
           }
         }
-
-        
         // Fetch user roles
         const { data: roles } = await supabase
           .from('user_roles')
@@ -367,6 +394,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setIsAuthenticated(false);
     setUserEmail(null);
     setBusinessType(null);
+    setBusinessName(null);
     setUserProfile(null);
     setUserBranchId(null);
     setUser(null);
@@ -375,6 +403,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.removeItem("isAuthenticated");
     localStorage.removeItem("userEmail");
     localStorage.removeItem("businessType");
+    localStorage.removeItem("businessName");
     localStorage.removeItem("userBranchId");
   };
 
@@ -382,7 +411,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     <AuthContext.Provider value={{ 
       isAuthenticated, 
       userEmail, 
-      businessType, 
+      businessType,
+      businessName, 
       userProfile, 
       userBranchId, 
       user,
