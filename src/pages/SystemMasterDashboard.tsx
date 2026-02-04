@@ -429,7 +429,8 @@ export const SystemMasterDashboard = () => {
               <DialogDescription>
                 {dialogStep === 1 ? "Enter client details and select business type" : 
                  dialogStep === 2 ? "Select features for the business" :
-                 "Configure telephony for the business (optional)"}
+                 dialogStep === 3 ? "Configure telephony for the call center" :
+                 "Review and create"}
               </DialogDescription>
             </DialogHeader>
             
@@ -637,8 +638,22 @@ export const SystemMasterDashboard = () => {
                 </Button>
               )}
               {dialogStep === 2 && (
-                <Button onClick={() => setDialogStep(3)}>
-                  Next: Telephony Setup
+                <Button 
+                  onClick={() => {
+                    // Only show telephony step if call-center feature is selected
+                    if (selectedFeatures.includes('call-center')) {
+                      setDialogStep(3);
+                    } else {
+                      createClientMutation.mutate();
+                    }
+                  }}
+                  disabled={createClientMutation.isPending}
+                >
+                  {selectedFeatures.includes('call-center') 
+                    ? "Next: Telephony Setup" 
+                    : createClientMutation.isPending 
+                      ? "Creating..." 
+                      : "Create Client & Business"}
                 </Button>
               )}
               {dialogStep === 3 && (
