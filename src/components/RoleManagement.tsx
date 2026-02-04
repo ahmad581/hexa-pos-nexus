@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Shield, Plus } from "lucide-react";
+import { Users, Shield, Plus, Search, Filter } from "lucide-react";
 import { toast } from "sonner";
 import { useRoles, useBusinessTypeRoles, getRoleColor, getRoleDisplayName, getRoleHierarchy, Role } from "@/hooks/useRoles";
 import { useHasPermission } from "@/hooks/usePermissions";
@@ -16,6 +17,7 @@ interface UserWithRoles {
   first_name: string | null;
   last_name: string | null;
   primary_role: string | null;
+  business_id: string | null;
   roles: Array<{
     id: string;
     role: string;
@@ -39,6 +41,12 @@ export const RoleManagement = () => {
   const [selectedRole, setSelectedRole] = useState<string>("Employee");
   const [selectedBusinessId, setSelectedBusinessId] = useState<string>("");
   const [branchId, setBranchId] = useState<string>("");
+  
+  // Filter states
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [filterRole, setFilterRole] = useState<string>("all");
+  const [filterBusinessId, setFilterBusinessId] = useState<string>("all");
+  
   const { userProfile, hasRole, user } = useAuth();
   const { hasPermission } = useHasPermission();
   
@@ -64,6 +72,28 @@ export const RoleManagement = () => {
       fetchBusinesses();
     }
   }, [canManageRoles]);
+
+  // Auto-populate business and branch when user is selected
+  useEffect(() => {
+    if (selectedUserId) {
+      const selectedUser = users.find(u => u.id === selectedUserId);
+      if (selectedUser?.business_id) {
+        setSelectedBusinessId(selectedUser.business_id);
+        
+        // Find branch from user's existing roles
+        const userRole = selectedUser.roles.find(r => r.branch_id);
+        if (userRole?.branch_id) {
+          setBranchId(userRole.branch_id);
+        } else {
+          setBranchId("");
+        }
+      } else {
+        // Reset if user has no business
+        setSelectedBusinessId("");
+        setBranchId("");
+      }
+    }
+  }, [selectedUserId, users]);
 
   const fetchBusinesses = async () => {
     try {
@@ -113,7 +143,7 @@ export const RoleManagement = () => {
     try {
       setLoading(true);
       
-      // Fetch users with their profiles
+      // Fetch users with their profiles including business_id
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
@@ -137,6 +167,7 @@ export const RoleManagement = () => {
           first_name: profile.first_name,
           last_name: profile.last_name,
           primary_role: profile.primary_role,
+          business_id: profile.business_id,
           roles: userRoles?.filter(role => role.user_id === profile.user_id) || []
         })) || [];
 
@@ -204,6 +235,34 @@ export const RoleManagement = () => {
                           hasRole('Manager') ? 2 : 100;
     const roleHierarchy = getRoleHierarchy(roleToDeactivate, allRoles);
     return roleHierarchy > userHierarchy;
+  };
+
+  // Filter users based on search and filters
+  const filteredUsers = users.filter(user => {
+    // Search filter
+    const searchLower = searchQuery.toLowerCase();
+    const matchesSearch = !searchQuery || 
+      user.email.toLowerCase().includes(searchLower) ||
+      (user.first_name?.toLowerCase().includes(searchLower)) ||
+      (user.last_name?.toLowerCase().includes(searchLower)) ||
+      (`${user.first_name} ${user.last_name}`.toLowerCase().includes(searchLower));
+    
+    // Role filter
+    const matchesRole = filterRole === "all" || 
+      user.roles.some(r => r.role === filterRole && r.is_active);
+    
+    // Business filter
+    const matchesBusiness = filterBusinessId === "all" || 
+      user.business_id === filterBusinessId;
+    
+    return matchesSearch && matchesRole && matchesBusiness;
+  });
+
+  // Get branch name helper
+  const getBranchName = (branchId: string | null) => {
+    if (!branchId) return null;
+    const branch = branches.find(b => b.id === branchId);
+    return branch?.name || branchId;
   };
 
   if (!canManageRoles) {
@@ -305,12 +364,58 @@ export const RoleManagement = () => {
             Current Users & Roles
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {/* Filters */}
+          <div className="flex flex-col md:flex-row gap-4 p-4 bg-muted/50 rounded-lg">
+            <div className="flex items-center gap-2 flex-1">
+              <Search className="h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by name or email..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="max-w-sm"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <Select value={filterRole} onValueChange={setFilterRole}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue placeholder="Filter by role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Roles</SelectItem>
+                  {allRoles.map(role => (
+                    <SelectItem key={role.id} value={role.name}>
+                      {role.display_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={filterBusinessId} onValueChange={setFilterBusinessId}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by business" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Businesses</SelectItem>
+                  {businesses.map(business => (
+                    <SelectItem key={business.id} value={business.id}>
+                      {business.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           {loading ? (
             <div className="text-center py-4">Loading users...</div>
+          ) : filteredUsers.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              {users.length === 0 ? "No users found" : "No users match the current filters"}
+            </div>
           ) : (
             <div className="space-y-4">
-              {users.map(user => (
+              {filteredUsers.map(user => (
                 <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
                   <div>
                     <div className="font-medium">
@@ -319,6 +424,11 @@ export const RoleManagement = () => {
                         : user.email}
                     </div>
                     <div className="text-sm text-muted-foreground">{user.email}</div>
+                    {user.business_id && (
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Business: {businesses.find(b => b.id === user.business_id)?.name || 'Unknown'}
+                      </div>
+                    )}
                     <div className="flex gap-2 mt-2 flex-wrap">
                       {user.roles
                         .filter(role => role.is_active)
@@ -330,7 +440,7 @@ export const RoleManagement = () => {
                               className={getRoleColor(role.role, allRoles)}
                             >
                               {getRoleDisplayName(role.role, allRoles)}
-                              {role.branch_id && ` (${role.branch_id})`}
+                              {role.branch_id && ` (${getBranchName(role.branch_id)})`}
                             </Badge>
                             {canDeactivateRole(role.role) && (
                               <Button
