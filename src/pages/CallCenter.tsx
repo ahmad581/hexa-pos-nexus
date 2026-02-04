@@ -90,8 +90,8 @@ export const CallCenter = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">{t('callCenter.pageTitle')}</h1>
-          <p className="text-gray-400">
+          <h1 className="text-3xl font-bold text-foreground">{t('callCenter.pageTitle')}</h1>
+          <p className="text-muted-foreground">
             {t('callCenter.manageCalls')} {selectedBranch?.name || 'All Locations'} - {selectedBusinessType?.name || 'Business'}
           </p>
         </div>
@@ -99,22 +99,22 @@ export const CallCenter = () => {
         {/* Agent Status & Extension */}
         <div className="flex items-center space-x-4">
           {callCenterNumber && (
-            <div className="flex items-center space-x-2 bg-gray-800 px-4 py-2 rounded-lg">
+            <div className="flex items-center space-x-2 bg-card px-4 py-2 rounded-lg">
               <Phone size={16} className="text-primary" />
-              <span className="text-gray-300 text-sm">Business Line:</span>
-              <span className="text-white font-medium">{callCenterNumber.phone_number}</span>
+              <span className="text-muted-foreground text-sm">Business Line:</span>
+              <span className="text-foreground font-medium">{callCenterNumber.phone_number}</span>
             </div>
           )}
           
           {myExtension && (
-            <div className="flex items-center space-x-4 bg-gray-800 px-4 py-2 rounded-lg">
+            <div className="flex items-center space-x-4 bg-card px-4 py-2 rounded-lg">
               <div className="flex items-center space-x-2">
-                <User size={16} className="text-gray-400" />
-                <span className="text-gray-300 text-sm">Ext:</span>
-                <span className="text-white font-medium">{myExtension.extension_number}</span>
+                <User size={16} className="text-muted-foreground" />
+                <span className="text-muted-foreground text-sm">Ext:</span>
+                <span className="text-foreground font-medium">{myExtension.extension_number}</span>
               </div>
               <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-400">Available</span>
+                <span className="text-sm text-muted-foreground">Available</span>
                 <Switch
                   checked={myExtension.is_available}
                   onCheckedChange={(checked) => updateAvailability(checked)}
@@ -160,16 +160,16 @@ export const CallCenter = () => {
       />
 
       {/* Active Call Queue */}
-      <Card className="bg-gray-800 border-gray-700 p-6">
+      <Card className="bg-card border-border p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-white">{t('callCenter.incomingCalls')}</h3>
-          <Badge className={realtimeEnabled ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}>
+          <h3 className="text-lg font-semibold text-foreground">{t('callCenter.incomingCalls')}</h3>
+          <Badge className={realtimeEnabled ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-muted-foreground'}>
             {realtimeEnabled ? '● Live' : '○ Polling'}
           </Badge>
         </div>
         
         {callQueue.length === 0 ? (
-          <div className="text-center py-8 text-gray-400">
+          <div className="text-center py-8 text-muted-foreground">
             <Phone size={48} className="mx-auto mb-4 opacity-50" />
             <p>No active calls in queue</p>
             <p className="text-sm mt-2">Incoming calls will appear here in real-time</p>
@@ -195,29 +195,29 @@ export const CallCenter = () => {
       </Card>
 
       {/* Available Agents */}
-      <Card className="bg-gray-800 border-gray-700 p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Available Agents</h3>
+      <Card className="bg-card border-border p-6">
+        <h3 className="text-lg font-semibold text-foreground mb-4">Available Agents</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
           {employeeExtensions.map((ext) => (
             <div
               key={ext.id}
               className={`p-3 rounded-lg ${
-                ext.is_available ? 'bg-green-500/10 border border-green-500/30' : 'bg-gray-700'
+                ext.is_available ? 'bg-green-500/10 border border-green-500/30' : 'bg-muted'
               }`}
             >
               <div className="flex items-center space-x-2">
                 <div className={`w-2 h-2 rounded-full ${ext.is_available ? 'bg-green-500' : 'bg-gray-500'}`} />
                 <div>
-                  <p className="text-sm font-medium text-white">
+                  <p className="text-sm font-medium text-foreground">
                     {ext.profile?.first_name} {ext.profile?.last_name?.[0]}.
                   </p>
-                  <p className="text-xs text-gray-400">Ext: {ext.extension_number}</p>
+                  <p className="text-xs text-muted-foreground">Ext: {ext.extension_number}</p>
                 </div>
               </div>
             </div>
           ))}
           {employeeExtensions.length === 0 && (
-            <div className="col-span-full text-center py-4 text-gray-400">
+            <div className="col-span-full text-center py-4 text-muted-foreground">
               No call center agents configured
             </div>
           )}
@@ -226,18 +226,18 @@ export const CallCenter = () => {
 
       {/* Call History and Sessions */}
       <Tabs defaultValue="calls" className="w-full">
-        <TabsList className="bg-gray-800 border-gray-700">
-          <TabsTrigger value="calls" className="data-[state=active]:bg-gray-700">
+        <TabsList className="bg-card border-border">
+          <TabsTrigger value="calls" className="data-[state=active]:bg-muted">
             Call History
           </TabsTrigger>
           {isCallCenterEmployee && (
-            <TabsTrigger value="sessions" className="data-[state=active]:bg-gray-700">
+            <TabsTrigger value="sessions" className="data-[state=active]:bg-muted">
               <Clock className="h-4 w-4 mr-2" />
               My Sessions
             </TabsTrigger>
           )}
           {!isCallCenterEmployee && (
-            <TabsTrigger value="all-sessions" className="data-[state=active]:bg-gray-700">
+            <TabsTrigger value="all-sessions" className="data-[state=active]:bg-muted">
               <Clock className="h-4 w-4 mr-2" />
               Agent Sessions
             </TabsTrigger>
@@ -245,16 +245,16 @@ export const CallCenter = () => {
         </TabsList>
 
         <TabsContent value="calls" className="mt-4">
-          <Card className="bg-gray-800 border-gray-700 p-6">
+          <Card className="bg-card border-border p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-white">{t('callCenter.recentCalls')}</h3>
+              <h3 className="text-lg font-semibold text-foreground">{t('callCenter.recentCalls')}</h3>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
                 <Input
                   placeholder={t('callCenter.searchCalls')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-64 pl-10 bg-gray-700 border-gray-600"
+                  className="w-64 pl-10 bg-muted border-border"
                 />
               </div>
             </div>

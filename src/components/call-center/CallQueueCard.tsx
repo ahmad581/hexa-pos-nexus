@@ -39,7 +39,7 @@ export const CallQueueCard = ({
       case 'transferred':
         return 'bg-purple-500/20 text-purple-400';
       default:
-        return 'bg-gray-500/20 text-gray-400';
+        return 'bg-gray-500/20 text-muted-foreground';
     }
   };
 
@@ -54,7 +54,7 @@ export const CallQueueCard = ({
       case 'low':
         return 'bg-green-500/20 text-green-400 border-green-500';
       default:
-        return 'bg-gray-500/20 text-gray-400 border-gray-500';
+        return 'bg-gray-500/20 text-muted-foreground border-border';
     }
   };
 
@@ -71,7 +71,7 @@ export const CallQueueCard = ({
       case 'internal':
         return 'bg-indigo-500/20 text-indigo-400';
       default:
-        return 'bg-gray-500/20 text-gray-400';
+        return 'bg-gray-500/20 text-muted-foreground';
     }
   };
 
@@ -81,26 +81,26 @@ export const CallQueueCard = ({
   const isMyCall = call.answered_by === currentUserId;
 
   return (
-    <div className={`bg-gray-700 p-4 rounded-lg border-l-4 ${
+    <div className={`bg-muted p-4 rounded-lg border-l-4 ${
       isRinging ? 'border-l-yellow-500 animate-pulse' : 
       isActive ? 'border-l-green-500' : 
-      isOnHold ? 'border-l-blue-500' : 'border-l-gray-500'
+      isOnHold ? 'border-l-blue-500' : 'border-l-border'
     }`}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center space-x-4">
           <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
             isRinging ? 'bg-yellow-500 animate-pulse' : 
             isActive ? 'bg-green-500' : 
-            isOnHold ? 'bg-blue-500' : 'bg-gray-500'
+            isOnHold ? 'bg-blue-500' : 'bg-secondary'
           }`}>
-            <Phone size={20} className="text-white" />
+            <Phone size={20} className="text-foreground" />
           </div>
           <div>
-            <h4 className="font-medium text-white flex items-center gap-2">
+            <h4 className="font-medium text-foreground flex items-center gap-2">
               {call.caller_name || 'Unknown Caller'}
               {isMyCall && <Badge variant="outline" className="text-xs">Your Call</Badge>}
             </h4>
-            <p className="text-gray-400 text-sm">{call.caller_phone}</p>
+            <p className="text-muted-foreground text-sm">{call.caller_phone}</p>
           </div>
         </div>
         <div className="flex items-center space-x-2">
@@ -117,7 +117,7 @@ export const CallQueueCard = ({
       </div>
 
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center space-x-4 text-sm text-gray-300">
+        <div className="flex items-center space-x-4 text-sm text-muted-foreground">
           <div className="flex items-center">
             <Clock size={14} className="mr-1" />
             {formatDistanceToNow(new Date(call.created_at), { addSuffix: true })}
@@ -136,7 +136,7 @@ export const CallQueueCard = ({
           <Button
             size="sm"
             onClick={() => onAnswer(call.id)}
-            className="bg-green-600 hover:bg-green-700"
+            className="bg-primary hover:bg-primary/90"
             disabled={isAnswering}
           >
             <Phone size={14} className="mr-1" />
@@ -172,7 +172,7 @@ export const CallQueueCard = ({
           <Button
             size="sm"
             onClick={() => onAnswer(call.id)}
-            className="bg-green-600 hover:bg-green-700"
+            className="bg-primary hover:bg-primary/90"
             disabled={isAnswering}
           >
             <Phone size={14} className="mr-1" />
