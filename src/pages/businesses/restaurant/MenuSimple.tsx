@@ -60,10 +60,10 @@ export const MenuSimple = ({ menuItems, categories, toggleSoldOut, isEditingOrde
           <div className="flex-1 overflow-y-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pr-2">
               {filteredItems.map((item) => (
-                <div key={item.id} className="bg-gray-700 border border-gray-600 rounded-lg overflow-hidden">
+                <div key={item.id} className="bg-muted border border-border rounded-lg overflow-hidden">
                   <div className="p-4">
                     <div className="flex justify-between items-start mb-2">
-                      <h3 className="text-base font-semibold text-white truncate">{item.name}</h3>
+                      <h3 className="text-base font-semibold text-foreground truncate">{item.name}</h3>
                       <div className="flex gap-1 ml-2">
                         {item.soldOut && (
                           <Badge className="bg-red-600 text-white text-xs">{t('menu.soldOut')}</Badge>
@@ -71,7 +71,7 @@ export const MenuSimple = ({ menuItems, categories, toggleSoldOut, isEditingOrde
                       </div>
                     </div>
                     
-                    <p className="text-gray-400 text-xs mb-3 line-clamp-2">{item.description}</p>
+                    <p className="text-muted-foreground text-xs mb-3 line-clamp-2">{item.description}</p>
                     
                     <div className="flex justify-between items-center mb-3">
                       <span className="text-lg font-bold text-green-400">{formatCurrency(item.price)}</span>
@@ -82,7 +82,7 @@ export const MenuSimple = ({ menuItems, categories, toggleSoldOut, isEditingOrde
                         onClick={() => addItemToOrder({ name: item.name, price: item.price })}
                         disabled={!item.available || item.soldOut}
                         size="sm"
-                        className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-xs"
+                        className="flex-1 bg-primary hover:bg-primary/90 disabled:bg-secondary text-xs"
                       >
                         <Plus size={14} className="mr-1" />
                         {t('common.add')}
@@ -106,7 +106,7 @@ export const MenuSimple = ({ menuItems, categories, toggleSoldOut, isEditingOrde
 
             {filteredItems.length === 0 && (
               <div className="flex items-center justify-center h-full">
-                <p className="text-gray-400">{t('menu.noItemsFound')}</p>
+                <p className="text-muted-foreground">{t('menu.noItemsFound')}</p>
               </div>
             )}
           </div>
@@ -114,7 +114,7 @@ export const MenuSimple = ({ menuItems, categories, toggleSoldOut, isEditingOrde
       </div>
 
       {/* Divider */}
-      <div className="border-t border-gray-600 my-4"></div>
+      <div className="border-t border-border my-4"></div>
 
       {/* Bottom Part - Categories (30% height) */}
       <div className="h-48">
@@ -133,7 +133,7 @@ export const MenuSimple = ({ menuItems, categories, toggleSoldOut, isEditingOrde
                   className={`h-full flex flex-col justify-center items-center p-2 ${
                     selectedCategory === category.value 
                       ? "bg-blue-600 hover:bg-blue-700 text-white" 
-                      : "bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+                      : "bg-muted border-border text-muted-foreground hover:bg-accent"
                   }`}
                 >
                   <div className="text-2xl mb-1">
@@ -144,7 +144,7 @@ export const MenuSimple = ({ menuItems, categories, toggleSoldOut, isEditingOrde
                     {category.value === 'mains' && '🍽️'}
                   </div>
                   <span className="text-xs font-medium text-center leading-tight">{category.label}</span>
-                  <span className="text-xs text-gray-400">{itemCount}</span>
+                  <span className="text-xs text-muted-foreground">{itemCount}</span>
                 </Button>
               );
             })}

@@ -65,7 +65,7 @@ export const RequestStockDialog = ({
       case "Out of Stock": return "bg-red-500/20 text-red-400";
       case "Overstock": return "bg-blue-500/20 text-blue-400";
       case "Expired": return "bg-red-500/20 text-red-400";
-      default: return "bg-gray-500/20 text-gray-400";
+      default: return "bg-gray-500/20 text-muted-foreground";
     }
   };
 
@@ -73,21 +73,21 @@ export const RequestStockDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-gray-800 border-gray-700 text-white">
+      <DialogContent className="bg-card border-border text-foreground">
         <DialogHeader>
           <DialogTitle>{t('inventory.requestDialog.title')}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           {/* Request Info */}
-          <div className="bg-gray-700 p-4 rounded-lg">
+          <div className="bg-muted p-4 rounded-lg">
             <div className="flex items-center justify-between mb-2">
               <h3 className="font-semibold">{item.name}</h3>
               <Badge className={getStatusColor(item.status)}>
                 {item.status}
               </Badge>
             </div>
-            <div className="text-sm text-gray-300 space-y-1">
+            <div className="text-sm text-muted-foreground space-y-1">
               <div>{t('inventory.sku')}: {item.sku}</div>
               <div>{t('inventory.requestDialog.requestingBranch')}: {selectedBranch.name}</div>
               <div>{t('inventory.requestDialog.currentWarehouseStock')}: {item.current_stock} {t('inventoryReports.units')}</div>
@@ -102,7 +102,7 @@ export const RequestStockDialog = ({
                 onValueChange={setSelectedWarehouse}
                 required
               >
-                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                <SelectTrigger className="bg-muted border-border text-foreground">
                   <SelectValue placeholder={t('inventory.requestDialog.chooseWarehouse')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -122,12 +122,12 @@ export const RequestStockDialog = ({
                 type="number"
                 value={requestedQuantity}
                 onChange={(e) => setRequestedQuantity(e.target.value)}
-                className="bg-gray-700 border-gray-600 text-white"
+                className="bg-muted border-border text-foreground"
                 min="1"
                 max={item.current_stock}
                 required
               />
-              <div className="text-xs text-gray-400">
+              <div className="text-xs text-muted-foreground">
                 {t('inventory.requestDialog.maximumAvailable')}: {item.current_stock} {t('inventoryReports.units')}
               </div>
             </div>
@@ -138,7 +138,7 @@ export const RequestStockDialog = ({
                 id="notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className="bg-gray-700 border-gray-600 text-white"
+                className="bg-muted border-border text-foreground"
                 placeholder=""
                 rows={3}
               />
@@ -149,7 +149,6 @@ export const RequestStockDialog = ({
                 type="button"
                 variant="outline"
                 onClick={onClose}
-                className="border-gray-600 text-white hover:bg-gray-700"
               >
                 {t('inventory.itemDialog.cancel')}
               </Button>

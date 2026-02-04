@@ -159,7 +159,7 @@ export const InventoryReports = () => {
       case 'Remove': return <TrendingDown className="h-4 w-4 text-red-400" />;
       case 'Transfer': return <Package className="h-4 w-4 text-blue-400" />;
       case 'Adjustment': return <BarChart3 className="h-4 w-4 text-yellow-400" />;
-      default: return <Package className="h-4 w-4 text-gray-400" />;
+      default: return <Package className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
@@ -192,10 +192,10 @@ export const InventoryReports = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">{t('inventoryReports.title')}</h2>
-          <p className="text-gray-400">{t('inventoryReports.subtitle')}</p>
+          <h2 className="text-2xl font-bold text-foreground">{t('inventoryReports.title')}</h2>
+          <p className="text-muted-foreground">{t('inventoryReports.subtitle')}</p>
         </div>
-        <Button onClick={exportReport} className="bg-green-600 hover:bg-green-700">
+        <Button onClick={exportReport} className="bg-primary hover:bg-primary/90">
           <Download className="h-4 w-4 mr-2" />
           {t('inventoryReports.exportCsv')}
         </Button>
@@ -204,7 +204,7 @@ export const InventoryReports = () => {
       {/* Filters */}
       <div className="flex gap-4">
         <Select value={selectedWarehouse} onValueChange={setSelectedWarehouse}>
-          <SelectTrigger className="w-[200px] bg-gray-800 border-gray-700 text-white">
+          <SelectTrigger className="w-[200px] bg-card border-border text-foreground">
             <SelectValue placeholder={t('inventory.selectWarehouse')} />
           </SelectTrigger>
           <SelectContent>
@@ -218,7 +218,7 @@ export const InventoryReports = () => {
         </Select>
 
         <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-          <SelectTrigger className="w-[200px] bg-gray-800 border-gray-700 text-white">
+          <SelectTrigger className="w-[200px] bg-card border-border text-foreground">
             <SelectValue placeholder={t('inventoryReports.selectMonth')} />
           </SelectTrigger>
           <SelectContent>
@@ -241,41 +241,41 @@ export const InventoryReports = () => {
         <>
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="bg-gray-800 border-gray-700 p-6">
+            <Card className="bg-card border-border p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-400">{t('inventoryReports.totalItems')}</p>
-                  <p className="text-2xl font-bold text-white">{monthlyReport.totalItems}</p>
+                  <p className="text-sm text-muted-foreground">{t('inventoryReports.totalItems')}</p>
+                  <p className="text-2xl font-bold text-foreground">{monthlyReport.totalItems}</p>
                 </div>
                 <Package className="h-8 w-8 text-blue-400" />
               </div>
             </Card>
 
-            <Card className="bg-gray-800 border-gray-700 p-6">
+            <Card className="bg-card border-border p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-400">{t('inventoryReports.totalValue')}</p>
-                  <p className="text-2xl font-bold text-white">{formatCurrency(monthlyReport.totalValue)}</p>
+                  <p className="text-sm text-muted-foreground">{t('inventoryReports.totalValue')}</p>
+                  <p className="text-2xl font-bold text-foreground">{formatCurrency(monthlyReport.totalValue)}</p>
                 </div>
                 <DollarSign className="h-8 w-8 text-green-400" />
               </div>
             </Card>
 
-            <Card className="bg-gray-800 border-gray-700 p-6">
+            <Card className="bg-card border-border p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-400">{t('inventoryReports.lowStockAlert')}</p>
+                  <p className="text-sm text-muted-foreground">{t('inventoryReports.lowStockAlert')}</p>
                   <p className="text-2xl font-bold text-yellow-400">{monthlyReport.lowStockItems}</p>
                 </div>
                 <AlertTriangle className="h-8 w-8 text-yellow-400" />
               </div>
             </Card>
 
-            <Card className="bg-gray-800 border-gray-700 p-6">
+            <Card className="bg-card border-border p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-400">{t('inventoryReports.transactions')}</p>
-                  <p className="text-2xl font-bold text-white">{monthlyReport.transactions}</p>
+                  <p className="text-sm text-muted-foreground">{t('inventoryReports.transactions')}</p>
+                  <p className="text-2xl font-bold text-foreground">{monthlyReport.transactions}</p>
                 </div>
                 <BarChart3 className="h-8 w-8 text-purple-400" />
               </div>
@@ -283,41 +283,41 @@ export const InventoryReports = () => {
           </div>
 
           {/* Transaction Summary */}
-          <Card className="bg-gray-800 border-gray-700 p-6">
-            <h3 className="text-lg font-bold text-white mb-4">{t('inventoryReports.transactionSummary')}</h3>
+          <Card className="bg-card border-border p-6">
+            <h3 className="text-lg font-bold text-foreground mb-4">{t('inventoryReports.transactionSummary')}</h3>
             <div className="space-y-3">
               {transactions.length > 0 ? (
                 transactions.map((transaction) => (
-                  <div key={transaction.type} className="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
+                  <div key={transaction.type} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                     <div className="flex items-center gap-3">
                       {getTransactionIcon(transaction.type)}
-                      <span className="text-white font-medium">{transaction.type}</span>
+                      <span className="text-foreground font-medium">{transaction.type}</span>
                     </div>
                   <div className="text-right">
-                    <div className="text-white font-bold">{transaction.count} {t('inventoryReports.transactions').toLowerCase()}</div>
-                    <div className="text-sm text-gray-400">{transaction.totalQuantity} {t('inventoryReports.units')}</div>
+                    <div className="text-foreground font-bold">{transaction.count} {t('inventoryReports.transactions').toLowerCase()}</div>
+                    <div className="text-sm text-muted-foreground">{transaction.totalQuantity} {t('inventoryReports.units')}</div>
                   </div>
                   </div>
                 ))
               ) : (
-                <p className="text-gray-400 text-center py-4">No transactions found for this period.</p>
+                <p className="text-muted-foreground text-center py-4">No transactions found for this period.</p>
               )}
             </div>
           </Card>
 
           {/* Category Breakdown */}
-          <Card className="bg-gray-800 border-gray-700 p-6">
-            <h3 className="text-lg font-bold text-white mb-4">{t('inventoryReports.categoryBreakdown')}</h3>
+          <Card className="bg-card border-border p-6">
+            <h3 className="text-lg font-bold text-foreground mb-4">{t('inventoryReports.categoryBreakdown')}</h3>
             <div className="space-y-3">
               {getCategoryBreakdown().map((category) => (
-                <div key={category.category} className="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
+                <div key={category.category} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                   <div>
-                    <span className="text-white font-medium">{category.category}</span>
-                    <p className="text-sm text-gray-400">{category.count} {t('inventoryReports.items')}</p>
+                    <span className="text-foreground font-medium">{category.category}</span>
+                    <p className="text-sm text-muted-foreground">{category.count} {t('inventoryReports.items')}</p>
                   </div>
                   <div className="text-right">
-                    <div className="text-white font-bold">{formatCurrency(category.value)}</div>
-                    <div className="text-sm text-gray-400">{category.stock} {t('inventoryReports.units')}</div>
+                    <div className="text-foreground font-bold">{formatCurrency(category.value)}</div>
+                    <div className="text-sm text-muted-foreground">{category.stock} {t('inventoryReports.units')}</div>
                   </div>
                 </div>
               ))}

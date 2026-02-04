@@ -69,7 +69,7 @@ export const StockUpdateDialog = ({
       case "Out of Stock": return "bg-red-500/20 text-red-400";
       case "Overstock": return "bg-blue-500/20 text-blue-400";
       case "Expired": return "bg-red-500/20 text-red-400";
-      default: return "bg-gray-500/20 text-gray-400";
+      default: return "bg-gray-500/20 text-muted-foreground";
     }
   };
 
@@ -77,21 +77,21 @@ export const StockUpdateDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-gray-800 border-gray-700 text-white">
+      <DialogContent className="bg-card border-border text-foreground">
         <DialogHeader>
           <DialogTitle>{t('inventory.stockDialog.title')} - {item.name}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           {/* Current Item Info */}
-          <div className="bg-gray-700 p-4 rounded-lg">
+          <div className="bg-muted p-4 rounded-lg">
             <div className="flex items-center justify-between mb-2">
               <h3 className="font-semibold">{item.name}</h3>
               <Badge className={getStatusColor(item.status)}>
                 {item.status}
               </Badge>
             </div>
-            <div className="text-sm text-gray-300 space-y-1">
+            <div className="text-sm text-muted-foreground space-y-1">
               <div>SKU: {item.sku}</div>
               <div>Current Stock: {item.current_stock} units</div>
               <div>Min: {item.min_stock} | Max: {item.max_stock}</div>
@@ -106,7 +106,7 @@ export const StockUpdateDialog = ({
                 value={transactionType}
                 onValueChange={(value: 'Add' | 'Remove' | 'Adjustment') => setTransactionType(value)}
               >
-                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                <SelectTrigger className="bg-muted border-border text-foreground">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -126,17 +126,17 @@ export const StockUpdateDialog = ({
                 type="number"
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
-                className="bg-gray-700 border-gray-600 text-white"
+                className="bg-muted border-border text-foreground"
                 min={transactionType === 'Adjustment' ? "0" : "1"}
                 required
               />
             </div>
 
             {quantity && (
-              <div className="bg-gray-700 p-3 rounded">
-              <div className="text-sm text-gray-300">
+              <div className="bg-muted p-3 rounded">
+              <div className="text-sm text-muted-foreground">
                 <div>{t('inventory.stockDialog.currentStock')}: {item.current_stock}</div>
-                <div className="font-semibold">{t('inventory.stockDialog.newStock')}: {getNewStock()}</div>
+                <div className="font-semibold text-foreground">{t('inventory.stockDialog.newStock')}: {getNewStock()}</div>
               </div>
               </div>
             )}
@@ -147,7 +147,7 @@ export const StockUpdateDialog = ({
                 id="reason"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                className="bg-gray-700 border-gray-600 text-white"
+                className="bg-muted border-border text-foreground"
                 placeholder=""
                 rows={2}
               />
@@ -158,14 +158,13 @@ export const StockUpdateDialog = ({
                 type="button"
                 variant="outline"
                 onClick={onClose}
-                className="border-gray-600 text-white hover:bg-gray-700"
               >
                 {t('inventory.itemDialog.cancel')}
               </Button>
               <Button
                 type="submit"
                 disabled={loading || !quantity}
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-primary hover:bg-primary/90"
               >
                 {loading ? t('inventory.stockDialog.updating') : t('inventory.stockDialog.update')}
               </Button>
