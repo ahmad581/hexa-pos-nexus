@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 
 export const Header = () => {
-  const { logout, userEmail } = useAuth();
+  const { logout, userEmail, businessName } = useAuth();
   const { selectedBusinessType } = useBusinessType();
 
   return (
@@ -14,7 +14,9 @@ export const Header = () => {
       <div className="flex items-center space-x-4">
         <div className="flex items-center space-x-2">
           <span className="text-2xl">{selectedBusinessType?.icon}</span>
-          <span className="text-foreground font-medium">{selectedBusinessType?.name}</span>
+          <span className="text-foreground font-medium">
+            {businessName || selectedBusinessType?.name || 'Business'}
+          </span>
         </div>
         <div className="w-px h-6 bg-border"></div>
         <BranchSelector />
