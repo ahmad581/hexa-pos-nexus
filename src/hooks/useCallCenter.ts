@@ -3,6 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { TelephonyProviderType } from "@/types/telephony";
+
+// Base URL for the unified telephony gateway
+const TELEPHONY_GATEWAY_URL = 'https://fcdfephraaiusolzfdvf.supabase.co/functions/v1/telephony-gateway';
 
 export interface CallQueueItem {
   id: string;
@@ -10,8 +14,12 @@ export interface CallQueueItem {
   caller_phone: string;
   caller_name: string | null;
   caller_address: string | null;
-  twilio_call_sid: string | null;
-  status: 'ringing' | 'queued' | 'answered' | 'on_hold' | 'transferred' | 'completed' | 'missed' | 'abandoned';
+  twilio_call_sid: string | null; // Legacy, deprecated
+  external_call_id: string | null;
+  provider_type: TelephonyProviderType;
+  phone_number_id: string | null;
+  original_caller_id: string | null;
+  status: 'ringing' | 'queued' | 'answered' | 'on_hold' | 'transferred' | 'completed' | 'missed' | 'abandoned' | 'failed';
   priority: 'low' | 'medium' | 'high' | 'urgent';
   call_type: 'sales' | 'support' | 'appointment' | 'complaint' | 'general' | 'internal';
   answered_by: string | null;
@@ -40,6 +48,10 @@ export interface CallHistoryItem {
   handled_by: string | null;
   notes: string | null;
   outcome: string | null;
+  provider_type: TelephonyProviderType;
+  external_call_id: string | null;
+  phone_number_id: string | null;
+  original_caller_id: string | null;
   created_at: string;
 }
 
@@ -54,6 +66,14 @@ export interface EmployeeExtension {
     last_name: string | null;
     email: string;
   };
+}
+
+export interface BusinessPhoneNumberInfo {
+  id: string;
+  phone_number: string;
+  display_name: string | null;
+  is_default: boolean;
+  capabilities: string[];
 }
 
 export const useCallCenter = () => {
@@ -123,12 +143,24 @@ export const useCallCenter = () => {
     enabled: !!businessId,
   });
 
-  // Fetch business call center number
+  // Fetch business call center number (legacy + new)
   const { data: callCenterNumber } = useQuery({
     queryKey: ['call-center-number', businessId],
     queryFn: async () => {
       if (!businessId) return null;
 
+      // Try new business_phone_numbers first
+      const { data: newNumber, error: newError } = await supabase
+        .from('business_phone_numbers')
+        .select('id, phone_number, display_name, is_default, is_active')
+        .eq('business_id', businessId)
+        .eq('is_active', true)
+        .eq('is_default', true)
+        .single();
+      
+      if (newNumber) return newNumber;
+
+      // Fallback to legacy call_center_numbers
       const { data, error } = await supabase
         .from('call_center_numbers')
         .select('*')
@@ -138,6 +170,25 @@ export const useCallCenter = () => {
 
       if (error && error.code !== 'PGRST116') throw error;
       return data;
+    },
+    enabled: !!businessId,
+  });
+
+  // Fetch available phone numbers for outbound calls
+  const { data: outboundNumbers = [] } = useQuery({
+    queryKey: ['outbound-numbers', businessId],
+    queryFn: async () => {
+      if (!businessId) return [];
+
+      const { data, error } = await supabase
+        .from('business_phone_numbers')
+        .select('id, phone_number, display_name, is_default, capabilities')
+        .eq('business_id', businessId)
+        .eq('is_active', true)
+        .contains('capabilities', ['outbound']);
+
+      if (error) throw error;
+      return data as BusinessPhoneNumberInfo[];
     },
     enabled: !!businessId,
   });
@@ -183,14 +234,14 @@ export const useCallCenter = () => {
     };
   }, [businessId, queryClient, toast]);
 
-  // Answer call mutation
+  // Answer call mutation (using unified gateway)
   const answerCallMutation = useMutation({
     mutationFn: async (callId: string) => {
       const { data: session } = await supabase.auth.getSession();
       if (!session.session) throw new Error('Not authenticated');
 
       const response = await fetch(
-        'https://fcdfephraaiusolzfdvf.supabase.co/functions/v1/twilio-webhook/answer',
+        `${TELEPHONY_GATEWAY_URL}/answer`,
         {
           method: 'POST',
           headers: {
@@ -217,14 +268,14 @@ export const useCallCenter = () => {
     },
   });
 
-  // Put call on hold mutation
+  // Put call on hold mutation (using unified gateway)
   const holdCallMutation = useMutation({
     mutationFn: async (callId: string) => {
       const { data: session } = await supabase.auth.getSession();
       if (!session.session) throw new Error('Not authenticated');
 
       const response = await fetch(
-        'https://fcdfephraaiusolzfdvf.supabase.co/functions/v1/twilio-webhook/hold',
+        `${TELEPHONY_GATEWAY_URL}/hold`,
         {
           method: 'POST',
           headers: {
@@ -251,14 +302,14 @@ export const useCallCenter = () => {
     },
   });
 
-  // Transfer call mutation
+  // Transfer call mutation (using unified gateway)
   const transferCallMutation = useMutation({
     mutationFn: async ({ callId, transferToProfileId }: { callId: string; transferToProfileId: string }) => {
       const { data: session } = await supabase.auth.getSession();
       if (!session.session) throw new Error('Not authenticated');
 
       const response = await fetch(
-        'https://fcdfephraaiusolzfdvf.supabase.co/functions/v1/twilio-webhook/transfer',
+        `${TELEPHONY_GATEWAY_URL}/transfer`,
         {
           method: 'POST',
           headers: {
@@ -285,14 +336,14 @@ export const useCallCenter = () => {
     },
   });
 
-  // End call mutation
+  // End call mutation (using unified gateway)
   const endCallMutation = useMutation({
     mutationFn: async ({ callId, notes, outcome }: { callId: string; notes?: string; outcome?: string }) => {
       const { data: session } = await supabase.auth.getSession();
       if (!session.session) throw new Error('Not authenticated');
 
       const response = await fetch(
-        'https://fcdfephraaiusolzfdvf.supabase.co/functions/v1/twilio-webhook/end',
+        `${TELEPHONY_GATEWAY_URL}/end`,
         {
           method: 'POST',
           headers: {
@@ -314,6 +365,40 @@ export const useCallCenter = () => {
       queryClient.invalidateQueries({ queryKey: ['call-queue', businessId] });
       queryClient.invalidateQueries({ queryKey: ['call-history', businessId] });
       toast({ title: 'Call ended' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  // Initiate outbound call mutation
+  const initiateCallMutation = useMutation({
+    mutationFn: async ({ toNumber, phoneNumberId }: { toNumber: string; phoneNumberId?: string }) => {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session) throw new Error('Not authenticated');
+
+      const response = await fetch(
+        `${TELEPHONY_GATEWAY_URL}/initiate`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.session.access_token}`,
+          },
+          body: JSON.stringify({ toNumber, phoneNumberId }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to initiate call');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['call-queue', businessId] });
+      toast({ title: 'Call initiated' });
     },
     onError: (error: Error) => {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
@@ -352,6 +437,7 @@ export const useCallCenter = () => {
     callHistory,
     employeeExtensions,
     callCenterNumber,
+    outboundNumbers,
     stats,
     isLoading: isLoadingQueue || isLoadingHistory || isLoadingExtensions,
     realtimeEnabled,
@@ -359,10 +445,12 @@ export const useCallCenter = () => {
     holdCall: holdCallMutation.mutate,
     transferCall: transferCallMutation.mutate,
     endCall: endCallMutation.mutate,
+    initiateCall: initiateCallMutation.mutate,
     updateAvailability,
     isAnswering: answerCallMutation.isPending,
     isHolding: holdCallMutation.isPending,
     isTransferring: transferCallMutation.isPending,
     isEnding: endCallMutation.isPending,
+    isInitiating: initiateCallMutation.isPending,
   };
 };

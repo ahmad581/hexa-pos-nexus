@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Building2, Plus, Settings, Trash2, Users, BarChart3, Crown, Shield, LogOut, Info, ExternalLink, ArrowLeft, DollarSign } from "lucide-react";
+import { Building2, Plus, Settings, Trash2, Users, BarChart3, Crown, Shield, LogOut, Info, ExternalLink, ArrowLeft, DollarSign, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { ClientManagement } from "@/components/ClientManagement";
 import { SystemMasterRoleManagement } from "@/components/SystemMasterRoleManagement";
@@ -52,6 +52,14 @@ export const SystemMasterDashboard = () => {
     email: "",
     business_type: "",
     password: "",
+  });
+  
+  // Telephony provider setup state
+  const [telephonySetup, setTelephonySetup] = useState({
+    enabled: false,
+    provider_type: "twilio" as "twilio" | "sip" | "pbx" | "mock",
+    phone_number: "",
+    display_name: "",
   });
 
   // Fetch business types from database
@@ -222,6 +230,19 @@ export const SystemMasterDashboard = () => {
       const selectedBusinessType = businessTypes.find(bt => bt.id === newClient.business_type);
       if (!selectedBusinessType) throw new Error("Business type not found");
 
+      // Prepare telephony provider data if enabled
+      const telephony_provider = telephonySetup.enabled ? {
+        type: telephonySetup.provider_type,
+        display_name: `${telephonySetup.provider_type.charAt(0).toUpperCase() + telephonySetup.provider_type.slice(1)} Provider`,
+        config: {},
+      } : undefined;
+
+      const phone_number = telephonySetup.enabled && telephonySetup.phone_number ? {
+        number: telephonySetup.phone_number,
+        display_name: telephonySetup.display_name || 'Primary Number',
+        capabilities: ['inbound', 'outbound'],
+      } : undefined;
+
       // Call edge function to create client with all related data
       const { data, error } = await supabase.functions.invoke('create-client', {
         body: {
@@ -232,7 +253,9 @@ export const SystemMasterDashboard = () => {
           icon: selectedBusinessType.icon,
           category: selectedBusinessType.category,
           terminology: selectedBusinessType.terminology,
-          features: selectedFeatures
+          features: selectedFeatures,
+          telephony_provider,
+          phone_number,
         }
       });
 
@@ -263,6 +286,7 @@ export const SystemMasterDashboard = () => {
       setDialogStep(1);
       setNewClient({ name: "", email: "", business_type: "", password: "" });
       setSelectedFeatures([]);
+      setTelephonySetup({ enabled: false, provider_type: "twilio", phone_number: "", display_name: "" });
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to create client");
@@ -390,6 +414,7 @@ export const SystemMasterDashboard = () => {
               setDialogStep(1);
               setNewClient({ name: "", email: "", business_type: "", password: "" });
               setSelectedFeatures([]);
+              setTelephonySetup({ enabled: false, provider_type: "twilio", phone_number: "", display_name: "" });
             }
           }}>
           <DialogTrigger asChild>
@@ -402,7 +427,9 @@ export const SystemMasterDashboard = () => {
             <DialogHeader>
               <DialogTitle>Create New Client & Business</DialogTitle>
               <DialogDescription>
-                {dialogStep === 1 ? "Enter client details and select business type" : "Select features for the business"}
+                {dialogStep === 1 ? "Enter client details and select business type" : 
+                 dialogStep === 2 ? "Select features for the business" :
+                 "Configure telephony for the business (optional)"}
               </DialogDescription>
             </DialogHeader>
             
@@ -503,6 +530,87 @@ export const SystemMasterDashboard = () => {
                 </div>
               </div>
             )}
+
+            {dialogStep === 3 && (
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Phone className="w-4 h-4" />
+                      Telephony Provider Setup
+                    </CardTitle>
+                    <CardDescription>
+                      Configure call center capabilities for this business
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center space-x-3">
+                      <Checkbox
+                        id="enable-telephony"
+                        checked={telephonySetup.enabled}
+                        onCheckedChange={(checked) => setTelephonySetup(prev => ({ ...prev, enabled: !!checked }))}
+                      />
+                      <Label htmlFor="enable-telephony" className="cursor-pointer">
+                        Enable Call Center / Telephony
+                      </Label>
+                    </div>
+
+                    {telephonySetup.enabled && (
+                      <>
+                        <div className="grid gap-2">
+                          <Label>Provider Type</Label>
+                          <Select
+                            value={telephonySetup.provider_type}
+                            onValueChange={(value: "twilio" | "sip" | "pbx" | "mock") => 
+                              setTelephonySetup(prev => ({ ...prev, provider_type: value }))
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select provider type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="twilio">Twilio (Cloud)</SelectItem>
+                              <SelectItem value="sip">SIP Trunk (On-Premise)</SelectItem>
+                              <SelectItem value="pbx">PBX (Asterisk/FreePBX)</SelectItem>
+                              <SelectItem value="mock">Mock (Testing)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-muted-foreground">
+                            {telephonySetup.provider_type === 'twilio' && "Cloud-based telephony via Twilio"}
+                            {telephonySetup.provider_type === 'sip' && "Connect to existing SIP trunk or provider"}
+                            {telephonySetup.provider_type === 'pbx' && "Connect to on-premise PBX system"}
+                            {telephonySetup.provider_type === 'mock' && "For testing - no actual calls"}
+                          </p>
+                        </div>
+
+                        <div className="grid gap-2">
+                          <Label htmlFor="phone-number">Business Phone Number</Label>
+                          <Input
+                            id="phone-number"
+                            placeholder="+1234567890"
+                            value={telephonySetup.phone_number}
+                            onChange={(e) => setTelephonySetup(prev => ({ ...prev, phone_number: e.target.value }))}
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            The main phone number for this business (can be configured later)
+                          </p>
+                        </div>
+
+                        <div className="grid gap-2">
+                          <Label htmlFor="phone-display-name">Display Name (optional)</Label>
+                          <Input
+                            id="phone-display-name"
+                            placeholder="Main Office Line"
+                            value={telephonySetup.display_name}
+                            onChange={(e) => setTelephonySetup(prev => ({ ...prev, display_name: e.target.value }))}
+                          />
+                        </div>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            )}
             
             <DialogFooter>
               {dialogStep === 2 && (
@@ -511,17 +619,29 @@ export const SystemMasterDashboard = () => {
                   Back
                 </Button>
               )}
+              {dialogStep === 3 && (
+                <Button variant="outline" onClick={() => setDialogStep(2)}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back
+                </Button>
+              )}
               <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                 Cancel
               </Button>
-              {dialogStep === 1 ? (
+              {dialogStep === 1 && (
                 <Button 
                   onClick={() => setDialogStep(2)}
                   disabled={!newClient.name || !newClient.email || !newClient.password || !newClient.business_type}
                 >
                   Next: Select Features
                 </Button>
-              ) : (
+              )}
+              {dialogStep === 2 && (
+                <Button onClick={() => setDialogStep(3)}>
+                  Next: Telephony Setup
+                </Button>
+              )}
+              {dialogStep === 3 && (
                 <Button 
                   onClick={() => createClientMutation.mutate()}
                   disabled={createClientMutation.isPending}

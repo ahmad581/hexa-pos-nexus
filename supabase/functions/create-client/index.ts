@@ -24,7 +24,17 @@ serve(async (req) => {
     )
 
     // Get the request body
-    const { name, email, password, business_type, icon, category, features } = await req.json()
+    const { 
+      name, 
+      email, 
+      password, 
+      business_type, 
+      icon, 
+      category, 
+      features,
+      telephony_provider,
+      phone_number
+    } = await req.json()
 
     // Validate required fields
     if (!name || !email || !password || !business_type) {
@@ -109,11 +119,64 @@ serve(async (req) => {
       if (featuresError) throw featuresError
     }
 
+    // 6. Set up telephony provider if specified
+    let telephonyProviderRecord = null;
+    let phoneNumberRecord = null;
+
+    if (telephony_provider) {
+      // Create telephony provider
+      const { data: provider, error: providerError } = await supabaseAdmin
+        .from('telephony_providers')
+        .insert({
+          business_id: business.id,
+          provider_type: telephony_provider.type || 'mock',
+          display_name: telephony_provider.display_name || `${telephony_provider.type || 'Mock'} Provider`,
+          config: telephony_provider.config || {},
+          is_active: true,
+          is_default: true,
+          webhook_mode: telephony_provider.webhook_mode || null,
+        })
+        .select()
+        .single();
+
+      if (providerError) {
+        console.error('Error creating telephony provider:', providerError);
+      } else {
+        telephonyProviderRecord = provider;
+
+        // If phone number is provided, add it
+        if (phone_number) {
+          const { data: phoneNum, error: phoneError } = await supabaseAdmin
+            .from('business_phone_numbers')
+            .insert({
+              business_id: business.id,
+              provider_id: provider.id,
+              phone_number: phone_number.number,
+              display_name: phone_number.display_name || 'Primary Number',
+              is_default: true,
+              capabilities: phone_number.capabilities || ['inbound', 'outbound'],
+              external_id: phone_number.external_id || null,
+              is_active: true,
+            })
+            .select()
+            .single();
+
+          if (phoneError) {
+            console.error('Error creating phone number:', phoneError);
+          } else {
+            phoneNumberRecord = phoneNum;
+          }
+        }
+      }
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
         user: authData.user,
-        business
+        business,
+        telephonyProvider: telephonyProviderRecord,
+        phoneNumber: phoneNumberRecord,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

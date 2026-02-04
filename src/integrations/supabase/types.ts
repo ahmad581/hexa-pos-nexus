@@ -271,6 +271,63 @@ export type Database = {
           },
         ]
       }
+      business_phone_numbers: {
+        Row: {
+          business_id: string
+          capabilities: string[]
+          created_at: string
+          display_name: string | null
+          external_id: string | null
+          id: string
+          is_active: boolean
+          is_default: boolean
+          phone_number: string
+          provider_id: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          capabilities?: string[]
+          created_at?: string
+          display_name?: string | null
+          external_id?: string | null
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          phone_number: string
+          provider_id: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          capabilities?: string[]
+          created_at?: string
+          display_name?: string | null
+          external_id?: string | null
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          phone_number?: string
+          provider_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_phone_numbers_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "custom_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_phone_numbers_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "telephony_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_type_features: {
         Row: {
           business_type_id: string
@@ -474,6 +531,70 @@ export type Database = {
           },
         ]
       }
+      call_events: {
+        Row: {
+          business_id: string
+          call_history_id: string | null
+          call_queue_id: string | null
+          created_at: string
+          error_code: string | null
+          error_message: string | null
+          event_data: Json
+          event_type: string
+          external_call_id: string | null
+          id: string
+          provider_type: string
+        }
+        Insert: {
+          business_id: string
+          call_history_id?: string | null
+          call_queue_id?: string | null
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          event_data?: Json
+          event_type: string
+          external_call_id?: string | null
+          id?: string
+          provider_type: string
+        }
+        Update: {
+          business_id?: string
+          call_history_id?: string | null
+          call_queue_id?: string | null
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          event_data?: Json
+          event_type?: string
+          external_call_id?: string | null
+          id?: string
+          provider_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "custom_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_events_call_history_id_fkey"
+            columns: ["call_history_id"]
+            isOneToOne: false
+            referencedRelation: "call_history"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_events_call_queue_id_fkey"
+            columns: ["call_queue_id"]
+            isOneToOne: false
+            referencedRelation: "call_queue"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       call_history: {
         Row: {
           business_id: string
@@ -485,10 +606,14 @@ export type Database = {
           created_at: string | null
           direction: string
           duration_seconds: number | null
+          external_call_id: string | null
           handled_by: string | null
           id: string
           notes: string | null
+          original_caller_id: string | null
           outcome: string | null
+          phone_number_id: string | null
+          provider_type: string | null
           recording_duration_seconds: number | null
           recording_url: string | null
           status: string
@@ -503,10 +628,14 @@ export type Database = {
           created_at?: string | null
           direction?: string
           duration_seconds?: number | null
+          external_call_id?: string | null
           handled_by?: string | null
           id?: string
           notes?: string | null
+          original_caller_id?: string | null
           outcome?: string | null
+          phone_number_id?: string | null
+          provider_type?: string | null
           recording_duration_seconds?: number | null
           recording_url?: string | null
           status: string
@@ -521,10 +650,14 @@ export type Database = {
           created_at?: string | null
           direction?: string
           duration_seconds?: number | null
+          external_call_id?: string | null
           handled_by?: string | null
           id?: string
           notes?: string | null
+          original_caller_id?: string | null
           outcome?: string | null
+          phone_number_id?: string | null
+          provider_type?: string | null
           recording_duration_seconds?: number | null
           recording_url?: string | null
           status?: string
@@ -551,6 +684,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "call_history_phone_number_id_fkey"
+            columns: ["phone_number_id"]
+            isOneToOne: false
+            referencedRelation: "business_phone_numbers"
+            referencedColumns: ["id"]
+          },
         ]
       }
       call_queue: {
@@ -565,8 +705,12 @@ export type Database = {
           caller_phone: string
           completed_at: string | null
           created_at: string | null
+          external_call_id: string | null
           id: string
+          original_caller_id: string | null
+          phone_number_id: string | null
           priority: string | null
+          provider_type: string | null
           queue_position: number | null
           status: string
           transferred_at: string | null
@@ -586,8 +730,12 @@ export type Database = {
           caller_phone: string
           completed_at?: string | null
           created_at?: string | null
+          external_call_id?: string | null
           id?: string
+          original_caller_id?: string | null
+          phone_number_id?: string | null
           priority?: string | null
+          provider_type?: string | null
           queue_position?: number | null
           status?: string
           transferred_at?: string | null
@@ -607,8 +755,12 @@ export type Database = {
           caller_phone?: string
           completed_at?: string | null
           created_at?: string | null
+          external_call_id?: string | null
           id?: string
+          original_caller_id?: string | null
+          phone_number_id?: string | null
           priority?: string | null
+          provider_type?: string | null
           queue_position?: number | null
           status?: string
           transferred_at?: string | null
@@ -637,6 +789,13 @@ export type Database = {
             columns: ["call_center_number_id"]
             isOneToOne: false
             referencedRelation: "call_center_numbers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_queue_phone_number_id_fkey"
+            columns: ["phone_number_id"]
+            isOneToOne: false
+            referencedRelation: "business_phone_numbers"
             referencedColumns: ["id"]
           },
           {
@@ -2065,6 +2224,53 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      telephony_providers: {
+        Row: {
+          business_id: string
+          config: Json
+          created_at: string
+          display_name: string
+          id: string
+          is_active: boolean
+          is_default: boolean
+          provider_type: string
+          updated_at: string
+          webhook_mode: string | null
+        }
+        Insert: {
+          business_id: string
+          config?: Json
+          created_at?: string
+          display_name: string
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          provider_type: string
+          updated_at?: string
+          webhook_mode?: string | null
+        }
+        Update: {
+          business_id?: string
+          config?: Json
+          created_at?: string
+          display_name?: string
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          provider_type?: string
+          updated_at?: string
+          webhook_mode?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telephony_providers_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "custom_businesses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
