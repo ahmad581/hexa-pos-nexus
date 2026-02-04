@@ -115,6 +115,74 @@ This document outlines the architecture for refactoring the existing Twilio-base
 
 ---
 
+## Call Routing Responsibility
+
+- **Agent assignment**, **queues**, **skills**, **business hours**, and **overflow logic** are handled by the **Call Center Core**.
+- Telephony providers are **execution-only** — they connect, route, and manage media but do not make routing decisions.
+- The Call Center Core determines which agent receives a call; the provider simply bridges the connection.
+
+---
+
+## Deployment Models
+
+Supported deployment models:
+
+| Model | Description |
+|-------|-------------|
+| **Platform-hosted PBX** | Shared or isolated PBX infrastructure managed by the platform |
+| **Customer-hosted PBX** | On-prem or cloud-hosted PBX managed by the customer (Asterisk, FreePBX, etc.) |
+| **Hybrid** | Combination of cloud provider (e.g., Twilio) + local PBX for different use cases |
+
+Each `telephony_providers` record represents **one isolated integration endpoint**. A business may have:
+- Multiple providers of the same type (e.g., two SIP trunks for different regions)
+- Mixed providers (e.g., Twilio for outbound, SIP for inbound)
+
+---
+
+## Media Handling Strategy
+
+| Provider Type | Signaling | Media |
+|---------------|-----------|-------|
+| **Cloud (Twilio)** | Handled by provider | Handled by provider |
+| **SIP/PBX** | Handled by provider | Handled by PBX |
+| **WebRTC Agents** | Via gateway | Requires WebRTC-to-SIP bridge |
+
+**Key considerations:**
+- Cloud providers (Twilio) handle both signaling and media end-to-end
+- SIP/PBX providers handle signaling only; media flows through the PBX
+- Browser-based agents using WebRTC require a **WebRTC-to-SIP gateway** (e.g., Ovislink, Obi, Obi200, or sipjs/FreeSWITCH bridges)
+- Audio quality and latency are provider-dependent; the abstraction layer does not normalize media
+
+---
+
+## Failure Handling
+
+| Scenario | Behavior |
+|----------|----------|
+| **Provider timeout** | Normalized to `CallStatus = 'failed'` with error metadata |
+| **Provider rejection** | Normalized to `CallStatus = 'failed'` with rejection reason |
+| **Network issues** | Retry per provider-specific rules; surfaced uniformly via `call_events` |
+| **Recording failure** | Call continues; recording marked as unavailable |
+
+**Retry Rules:**
+- Retry logic is **provider-specific** (e.g., Twilio has built-in retry; SIP may need custom retry)
+- All retry attempts are logged to `call_events` for debugging
+- **No automatic cross-provider failover** unless explicitly configured per business
+- Failover configuration (if enabled) is stored in `telephony_providers.config`
+
+**Error Normalization:**
+```typescript
+interface CallError {
+  code: string;           // Normalized error code (e.g., 'TIMEOUT', 'REJECTED', 'UNAVAILABLE')
+  message: string;        // Human-readable message
+  providerCode?: string;  // Original provider error code
+  providerMessage?: string; // Original provider error message
+  retryable: boolean;     // Whether the operation can be retried
+}
+```
+
+---
+
 ## Provider Interface
 
 ### ITelephonyProvider
