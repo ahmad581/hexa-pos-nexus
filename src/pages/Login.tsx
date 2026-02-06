@@ -39,11 +39,23 @@ export const Login = () => {
       });
 
       if (!authError && authData?.session) {
+        // Check if user is a SystemMaster and redirect accordingly
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('primary_role')
+          .eq('user_id', authData.user.id)
+          .single();
+
         toast({
           title: t('auth.login') + " Successful",
           description: "Welcome to BizHub POS!",
         });
-        navigate("/");
+        
+        if (profile?.primary_role === 'SystemMaster') {
+          navigate("/system-master");
+        } else {
+          navigate("/");
+        }
         return;
       }
 

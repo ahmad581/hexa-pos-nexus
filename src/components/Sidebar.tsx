@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { FileText, LayoutDashboard, ListChecks, Settings, Users, ShoppingBag, File, Home, Hotel, ClipboardList, UserPlus, BarChartBig, Phone, Menu, ChevronLeft, Pill, Package, Calendar, Dumbbell, Car, Heart, Building, Shield, Crown } from "lucide-react";
+import { FileText, LayoutDashboard, ListChecks, Settings, Users, ShoppingBag, File, Home, Hotel, ClipboardList, UserPlus, BarChartBig, Phone, Menu, ChevronLeft, Pill, Package, Calendar, Dumbbell, Car, Heart, Building, Shield } from "lucide-react";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRole } from "@/hooks/useRole";
@@ -170,7 +170,6 @@ export const Sidebar = () => {
   // Managers get full branch-level access
   const filteredNavigationItems = isCashierRole ? [] : [
     { to: "/", icon: LayoutDashboard, label: t('nav.dashboard') },
-    ...(isSystemMaster() ? [{ to: "/system-master", icon: Crown, label: "SystemMaster Dashboard" }] : []),
     ...(canAccessEmployees() && hasRouteAccess('/employees') ? [{ to: "/employees", icon: UserPlus, label: t('nav.employees') }] : []),
     ...(canHandleCalls() && hasRouteAccess('/call-center') ? [{ to: "/call-center", icon: Phone, label: t('nav.callCenter') }] : []),
     { to: "/settings", icon: Settings, label: t('nav.settings') },
