@@ -52,24 +52,26 @@ export interface DailySummary {
 export const useEmployees = (branchId?: string) => {
   const queryClient = useQueryClient();
 
-  // Fetch employees for a branch
+  // Fetch employees for a branch - ONLY if branchId is provided
+  // This prevents cross-business data leakage
   const { data: employees = [], isLoading, refetch } = useQuery({
     queryKey: ['employees', branchId],
     queryFn: async () => {
-      let query = supabase
+      // Don't fetch if no branch is selected - prevents showing all employees across businesses
+      if (!branchId) {
+        return [] as DatabaseEmployee[];
+      }
+      
+      const { data, error } = await supabase
         .from('employees')
         .select('*')
+        .eq('branch_id', branchId)
         .order('first_name', { ascending: true });
       
-      if (branchId) {
-        query = query.eq('branch_id', branchId);
-      }
-
-      const { data, error } = await query;
       if (error) throw error;
       return data as DatabaseEmployee[];
     },
-    enabled: true,
+    enabled: !!branchId, // Only run query when branchId is available
   });
 
   // Fetch today's work sessions for employees
