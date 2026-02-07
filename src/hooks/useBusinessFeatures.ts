@@ -33,7 +33,7 @@ export const useBusinessFeatures = () => {
   const { userProfile, isAuthenticated, user } = useAuth();
 
   const { data: enabledFeatures = [], isLoading } = useQuery({
-    queryKey: ['business-features', userProfile?.business_id],
+    queryKey: ['business-features', userProfile?.business_id, user?.id],
     queryFn: async () => {
       if (!userProfile?.business_id) return [];
 
@@ -57,6 +57,9 @@ export const useBusinessFeatures = () => {
       return data?.map(bf => bf.available_features as BusinessFeature).filter(Boolean) || [];
     },
     enabled: isAuthenticated && !!userProfile?.business_id,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
 
   const hasFeatureAccess = (featureId: string): boolean => {
