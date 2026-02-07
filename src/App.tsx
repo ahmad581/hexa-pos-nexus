@@ -121,7 +121,7 @@ const App = () => (
                         
                         {/* Restaurant routes */}
                         <Route path="menu" element={
-                          <BusinessRoute allowedBusinessTypes={['restaurant']}>
+                          <BusinessRoute allowedBusinessTypes={['restaurant', 'retail-store', 'pharmacy', 'grocery']}>
                             <Menu />
                           </BusinessRoute>
                         } />

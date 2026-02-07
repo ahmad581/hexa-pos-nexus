@@ -194,6 +194,7 @@ export const Sidebar = () => {
   ].filter(item => hasRouteAccess(item.to));
 
   const retailItems = [
+    ...(hasRouteAccess('/menu') ? [{ to: "/menu", icon: FileText, label: t('nav.menu') }] : []),
     { to: "/products", icon: ShoppingBag, label: t('nav.products') },
     { to: "/retail-inventory", icon: Package, label: t('nav.inventory') }
   ].filter(item => hasRouteAccess(item.to));
@@ -204,6 +205,7 @@ export const Sidebar = () => {
   ].filter(item => hasRouteAccess(item.to));
 
   const pharmacyItems = [
+    ...(hasRouteAccess('/menu') ? [{ to: "/menu", icon: FileText, label: t('nav.menu') }] : []),
     { to: "/prescriptions", icon: Pill, label: t('nav.prescriptions') }
   ].filter(item => hasRouteAccess(item.to));
 
