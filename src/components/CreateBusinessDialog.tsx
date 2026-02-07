@@ -49,6 +49,22 @@ export const CreateBusinessDialog = ({ open, onOpenChange }: CreateBusinessDialo
   const isSystemMaster = userProfile?.primary_role === 'SystemMaster';
   const canCreateBusiness = isAuthenticated && user?.id && isSystemMaster;
 
+  // Fetch ALL features so we can show shared features for any business type
+  const { data: allAvailableFeatures = [] } = useQuery({
+    queryKey: ['available-features'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('available_features')
+        .select('id, name, description, icon, category')
+        .order('category', { ascending: true })
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      return (data || []) as AvailableFeature[];
+    },
+    enabled: !!canCreateBusiness,
+  });
+
   // Auto-select default features when business type changes
   useEffect(() => {
     if (businessTypeFeatures && businessTypeFeatures.length > 0) {
@@ -69,8 +85,32 @@ export const CreateBusinessDialog = ({ open, onOpenChange }: CreateBusinessDialo
     }
   }, [open, isAuthenticated, user?.id, isSystemMaster]);
 
-  // Get available features from business type features
-  const availableFeatures = businessTypeFeatures?.map(bf => bf.available_features as unknown as AvailableFeature).filter(Boolean) || [];
+  // Shared feature categories that should be selectable for ALL business types
+  const SHARED_CATEGORIES = new Set([
+    'operations',
+    'hr',
+    'analytics',
+    'customer service',
+    'scheduling',
+  ]);
+
+  // Available features = shared features + business-type-specific features (deduped)
+  const availableFeatures = (() => {
+    const map = new Map<string, AvailableFeature>();
+
+    for (const f of allAvailableFeatures) {
+      if (SHARED_CATEGORIES.has((f.category || '').toLowerCase())) {
+        map.set(f.id, f);
+      }
+    }
+
+    for (const bf of businessTypeFeatures || []) {
+      const f = bf.available_features as unknown as AvailableFeature;
+      if (f?.id) map.set(f.id, f);
+    }
+
+    return Array.from(map.values());
+  })();
 
   const createMutation = useMutation({
     mutationFn: async () => {

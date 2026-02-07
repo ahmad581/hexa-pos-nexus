@@ -65,8 +65,24 @@ export const SystemMasterDashboard = () => {
   // Fetch business types from database
   const { businessTypes, isLoading: isLoadingTypes } = useBusinessTypes();
   
-  // Fetch features for selected business type
+  // Fetch features for selected business type (drives defaults)
   const { features: businessTypeFeatures } = useBusinessTypeFeatures(newClient.business_type);
+
+  // Fetch ALL features so shared features (like Menu Management) can be selected for ANY business type
+  const { data: allAvailableFeatures = [] } = useQuery({
+    queryKey: ['available-features'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('available_features')
+        .select('id, name, description, icon, category')
+        .order('category', { ascending: true })
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      return (data || []) as AvailableFeature[];
+    },
+    enabled: isAuthenticated && userProfile?.primary_role === 'SystemMaster',
+  });
 
   // Auto-select default features when business type changes
   useEffect(() => {
@@ -79,6 +95,33 @@ export const SystemMasterDashboard = () => {
       setSelectedFeatures([]);
     }
   }, [businessTypeFeatures]);
+
+  // Shared feature categories that should be selectable for ALL business types
+  const SHARED_CATEGORIES = new Set([
+    'operations',
+    'hr',
+    'analytics',
+    'customer service',
+    'scheduling',
+  ]);
+
+  // Available features = shared features + business-type-specific features (deduped)
+  const availableFeatures = (() => {
+    const map = new Map<string, AvailableFeature>();
+
+    for (const f of allAvailableFeatures) {
+      if (SHARED_CATEGORIES.has((f.category || '').toLowerCase())) {
+        map.set(f.id, f);
+      }
+    }
+
+    for (const bf of businessTypeFeatures || []) {
+      const f = bf.available_features as unknown as AvailableFeature;
+      if (f?.id) map.set(f.id, f);
+    }
+
+    return Array.from(map.values());
+  })();
 
   // Fetch clients from database
   const { data: clients = [], isLoading } = useQuery({
@@ -105,7 +148,7 @@ export const SystemMasterDashboard = () => {
         .in('user_id', userIds);
 
       // Create a map for quick profile lookup
-      const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+      const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
 
       // Fetch branches count and features for each business
       const clientsWithDetails = await Promise.all(
@@ -128,8 +171,8 @@ export const SystemMasterDashboard = () => {
             .eq('business_id', business.id)
             .eq('is_enabled', true);
 
-          const profile = profileMap.get(business.user_id);
-          const ownerName = profile 
+          const profile = business.user_id ? profileMap.get(business.user_id) : undefined;
+          const ownerName = profile
             ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.email
             : 'Unknown';
 
@@ -145,18 +188,15 @@ export const SystemMasterDashboard = () => {
             created_at: business.created_at,
             owner: ownerName,
             subscription: 'Standard',
-            features: features as string[]
+            features: features as string[],
           };
         })
       );
 
       return clientsWithDetails as Client[];
     },
-    enabled: isAuthenticated && userProfile?.primary_role === 'SystemMaster'
+    enabled: isAuthenticated && userProfile?.primary_role === 'SystemMaster',
   });
-
-  // Available features are now derived from business type features
-  const availableFeatures = businessTypeFeatures?.map(bf => bf.available_features as unknown as AvailableFeature).filter(Boolean) || [];
 
   // Fetch analytics data
   const { data: analyticsData } = useQuery({

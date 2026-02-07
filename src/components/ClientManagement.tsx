@@ -158,11 +158,18 @@ export const ClientManagement = ({ clients, isLoading }: { clients: Client[], is
       
       // Always show core business features
       if (categoryLower.includes('core')) return true;
+
+      // Shared categories available for ALL business types ("shared features")
+      const sharedCategories = ['operations', 'hr', 'analytics', 'customer service', 'scheduling'];
+      if (sharedCategories.some(cat => categoryLower.includes(cat))) {
+        return true;
+      }
       
       // Universal features available for all business types
       const universalKeywords = [
-        'employee', 'hr', 'staff', 'call center', 'inventory', 
-        'analytics', 'reporting', 'branch', 'financial', 'user management'
+        'employee', 'hr', 'staff', 'call center', 'inventory',
+        'analytics', 'reporting', 'branch', 'financial', 'user management',
+        'menu', 'catalog'
       ];
       
       if (universalKeywords.some(keyword => 
