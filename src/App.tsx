@@ -13,6 +13,7 @@ import { TranslationProvider } from "./contexts/TranslationContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { RoleBasedRoute } from "./components/RoleBasedRoute";
 import { BusinessRoute } from "./components/BusinessRoute";
+import { FeatureRoute } from "./components/FeatureRoute";
 import { Layout } from "./components/Layout";
 import { Login } from "./pages/Login";
 import { Dashboard } from "./pages/Dashboard";
@@ -119,11 +120,11 @@ const App = () => (
                           </RoleBasedRoute>
                         } />
                         
-                        {/* Restaurant routes */}
+                        {/* Menu route - available for all business types with menu-management feature */}
                         <Route path="menu" element={
-                          <BusinessRoute allowedBusinessTypes={['restaurant', 'retail-store', 'pharmacy', 'grocery']}>
+                          <FeatureRoute featureId="menu-management">
                             <Menu />
-                          </BusinessRoute>
+                          </FeatureRoute>
                         } />
                         <Route path="tables" element={
                           <BusinessRoute allowedBusinessTypes={['restaurant']}>

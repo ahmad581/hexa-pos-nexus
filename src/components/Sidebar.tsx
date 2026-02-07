@@ -184,11 +184,13 @@ export const Sidebar = () => {
   ];
 
   const hotelItems = [
+    ...(hasRouteAccess('/menu') ? [{ to: "/menu", icon: FileText, label: t('nav.menu') }] : []),
     { to: "/rooms", icon: Home, label: t('nav.rooms') },
     { to: "/hotel-services", icon: ListChecks, label: t('nav.services') }
   ].filter(item => hasRouteAccess(item.to));
 
   const salonItems = [
+    ...(hasRouteAccess('/menu') ? [{ to: "/menu", icon: FileText, label: t('nav.menu') }] : []),
     { to: "/appointments", icon: ClipboardList, label: t('nav.appointments') },
     { to: "/stylists", icon: Users, label: t('nav.stylists') }
   ].filter(item => hasRouteAccess(item.to));
@@ -200,6 +202,7 @@ export const Sidebar = () => {
   ].filter(item => hasRouteAccess(item.to));
 
   const clinicItems = [
+    ...(hasRouteAccess('/menu') ? [{ to: "/menu", icon: FileText, label: t('nav.menu') }] : []),
     { to: "/patients", icon: Users, label: "Patients" },
     { to: "/appointments", icon: ClipboardList, label: t('nav.appointments') }
   ].filter(item => hasRouteAccess(item.to));
@@ -210,22 +213,26 @@ export const Sidebar = () => {
   ].filter(item => hasRouteAccess(item.to));
 
   const groceryItems = [
+    ...(hasRouteAccess('/menu') ? [{ to: "/menu", icon: FileText, label: t('nav.menu') }] : []),
     { to: "/grocery-inventory", icon: Package, label: t('nav.inventory') },
     { to: "/suppliers", icon: Users, label: "Suppliers" }
   ].filter(item => hasRouteAccess(item.to));
 
   const gymItems = [
+    ...(hasRouteAccess('/menu') ? [{ to: "/menu", icon: FileText, label: t('nav.menu') }] : []),
     { to: "/members", icon: Users, label: t('nav.members') },
     { to: "/classes", icon: Calendar, label: "Classes" },
     { to: "/equipment", icon: Dumbbell, label: "Equipment" }
   ].filter(item => hasRouteAccess(item.to));
 
   const autoRepairItems = [
+    ...(hasRouteAccess('/menu') ? [{ to: "/menu", icon: FileText, label: t('nav.menu') }] : []),
     { to: "/auto-services", icon: Car, label: t('nav.services') },
     { to: "/vehicles", icon: Car, label: "Vehicles" }
   ].filter(item => hasRouteAccess(item.to));
 
   const petCareItems = [
+    ...(hasRouteAccess('/menu') ? [{ to: "/menu", icon: FileText, label: t('nav.menu') }] : []),
     { to: "/pet-appointments", icon: Calendar, label: t('nav.appointments') },
     { to: "/pets", icon: Heart, label: "Pets" }
   ].filter(item => hasRouteAccess(item.to));
