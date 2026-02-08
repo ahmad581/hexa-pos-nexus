@@ -26,6 +26,18 @@ const initialPrescriptions: Prescription[] = [
 export const Prescriptions = () => {
   const [prescriptions, setPrescriptions] = useState<Prescription[]>(initialPrescriptions);
 
+  const handleFillPrescription = (id: string) => {
+    setPrescriptions(prev => 
+      prev.map(p => p.id === id ? { ...p, status: "Ready" as const } : p)
+    );
+  };
+
+  const handleDispense = (id: string) => {
+    setPrescriptions(prev => 
+      prev.map(p => p.id === id ? { ...p, status: "Dispensed" as const, pickupDate: new Date().toISOString().split('T')[0] } : p)
+    );
+  };
+
   const getStatusColor = (status: Prescription["status"]) => {
     switch (status) {
       case "Pending": return "bg-yellow-500/20 text-yellow-400";
@@ -82,12 +94,12 @@ export const Prescriptions = () => {
 
             <div className="mt-4 flex gap-2">
               {prescription.status === "Pending" && (
-                <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => handleFillPrescription(prescription.id)}>
                   Fill Prescription
                 </Button>
               )}
               {prescription.status === "Ready" && (
-                <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleDispense(prescription.id)}>
                   Dispense
                 </Button>
               )}
