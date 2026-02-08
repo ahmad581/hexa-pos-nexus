@@ -42,6 +42,9 @@ import { Inventory } from "./pages/businesses/retail/Inventory";
 
 // Pharmacy imports
 import { Prescriptions } from "./pages/businesses/pharmacy/Prescriptions";
+import { Patients } from "./pages/businesses/pharmacy/Patients";
+import { PatientProfile } from "./pages/businesses/pharmacy/PatientProfile";
+import { PharmacyPOS } from "./pages/businesses/pharmacy/PharmacyPOS";
 
 // Grocery imports
 import { GroceryInventory } from "./pages/businesses/grocery/Inventory";
@@ -176,6 +179,21 @@ const App = () => (
                         <Route path="prescriptions" element={
                           <BusinessRoute allowedBusinessTypes={['pharmacy']}>
                             <Prescriptions />
+                          </BusinessRoute>
+                        } />
+                        <Route path="pharmacy-patients" element={
+                          <BusinessRoute allowedBusinessTypes={['pharmacy']}>
+                            <Patients />
+                          </BusinessRoute>
+                        } />
+                        <Route path="patient/:id" element={
+                          <BusinessRoute allowedBusinessTypes={['pharmacy']}>
+                            <PatientProfile />
+                          </BusinessRoute>
+                        } />
+                        <Route path="pharmacy-pos" element={
+                          <BusinessRoute allowedBusinessTypes={['pharmacy']}>
+                            <PharmacyPOS />
                           </BusinessRoute>
                         } />
                         

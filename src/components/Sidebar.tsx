@@ -209,7 +209,9 @@ export const Sidebar = () => {
 
   const pharmacyItems = [
     ...(hasRouteAccess('/menu') ? [{ to: "/menu", icon: FileText, label: t('nav.menu') }] : []),
-    { to: "/prescriptions", icon: Pill, label: t('nav.prescriptions') }
+    { to: "/prescriptions", icon: Pill, label: t('nav.prescriptions') },
+    { to: "/pharmacy-patients", icon: Users, label: "Patients" },
+    { to: "/pharmacy-pos", icon: ShoppingBag, label: "Checkout" }
   ].filter(item => hasRouteAccess(item.to));
 
   const groceryItems = [
