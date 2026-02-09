@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, Users, DollarSign, Shield, Plus, Settings, Trash2, UserPlus, Info } from "lucide-react";
+import { Building2, Users, DollarSign, Shield, Plus, Settings, Trash2, UserPlus, Info, Pill, UserCheck, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 
 interface Client {
@@ -307,6 +307,45 @@ export const ClientManagement = ({ clients, isLoading }: { clients: Client[], is
       };
     },
     enabled: !!clientBusiness
+  });
+
+  // Fetch pharmacy-specific stats for pharmacy clients
+  const { data: pharmacyStats } = useQuery({
+    queryKey: ['client-pharmacy-stats', clientBusiness?.id],
+    queryFn: async () => {
+      if (!clientBusiness) return null;
+
+      const { data: branches } = await supabase
+        .from('branches')
+        .select('id')
+        .eq('business_id', clientBusiness.id);
+
+      const branchIds = branches?.map(b => b.id) || [];
+      if (branchIds.length === 0) return { prescriptions: 0, activePrescriptions: 0, patients: 0, checkouts: 0 };
+
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const [prescriptions, activePrescriptions, patients, checkouts] = await Promise.all([
+        supabase.from('prescriptions').select('*', { count: 'exact', head: true })
+          .in('branch_id', branchIds).gte('created_at', startOfMonth.toISOString()),
+        supabase.from('prescriptions').select('*', { count: 'exact', head: true })
+          .in('branch_id', branchIds).in('status', ['received', 'verified', 'processing', 'ready']),
+        supabase.from('pharmacy_patients').select('*', { count: 'exact', head: true })
+          .eq('business_id', clientBusiness.id),
+        supabase.from('pharmacy_checkout').select('*', { count: 'exact', head: true })
+          .in('branch_id', branchIds).gte('created_at', startOfMonth.toISOString()),
+      ]);
+
+      return {
+        prescriptions: prescriptions.count || 0,
+        activePrescriptions: activePrescriptions.count || 0,
+        patients: patients.count || 0,
+        checkouts: checkouts.count || 0,
+      };
+    },
+    enabled: !!clientBusiness && selectedClient?.business_type === 'pharmacy'
   });
 
   const handleViewClient = (client: Client) => {
@@ -671,6 +710,60 @@ export const ClientManagement = ({ clients, isLoading }: { clients: Client[], is
                   </Card>
                 ))}
               </div>
+
+              {/* Pharmacy-specific stats */}
+              {selectedClient?.business_type === 'pharmacy' && pharmacyStats && (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <Pill className="w-4 h-4 text-muted-foreground" />
+                        Prescriptions This Month
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-2xl font-bold">{pharmacyStats.prescriptions}</p>
+                      <p className="text-sm text-muted-foreground">Total received</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <Pill className="w-4 h-4 text-muted-foreground" />
+                        Active Prescriptions
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-2xl font-bold">{pharmacyStats.activePrescriptions}</p>
+                      <p className="text-sm text-muted-foreground">In progress or ready</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <UserCheck className="w-4 h-4 text-muted-foreground" />
+                        Total Patients
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-2xl font-bold">{pharmacyStats.patients}</p>
+                      <p className="text-sm text-muted-foreground">Registered patients</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <ShoppingCart className="w-4 h-4 text-muted-foreground" />
+                        Checkouts This Month
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-2xl font-bold">{pharmacyStats.checkouts}</p>
+                      <p className="text-sm text-muted-foreground">Completed transactions</p>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="financial" className="space-y-4 max-h-[50vh] overflow-y-auto">
