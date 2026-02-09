@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Building2, Plus, Settings, Trash2, Users, BarChart3, Crown, Shield, LogOut, Info, ExternalLink, ArrowLeft, DollarSign, Phone } from "lucide-react";
+import { Building2, Plus, Settings, Trash2, Users, BarChart3, Crown, Shield, LogOut, Info, ExternalLink, ArrowLeft, DollarSign, Phone, Pill, UserCheck, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import { ClientManagement } from "@/components/ClientManagement";
 import { SystemMasterRoleManagement } from "@/components/SystemMasterRoleManagement";
@@ -249,13 +249,37 @@ export const SystemMasterDashboard = () => {
         0
       ) || 0;
 
+      // Pharmacy stats
+      const { count: totalPrescriptions } = await supabase
+        .from('prescriptions')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', startOfMonth.toISOString());
+
+      const { count: activePrescriptions } = await supabase
+        .from('prescriptions')
+        .select('*', { count: 'exact', head: true })
+        .in('status', ['received', 'verified', 'processing', 'ready']);
+
+      const { count: totalPatients } = await supabase
+        .from('pharmacy_patients')
+        .select('*', { count: 'exact', head: true });
+
+      const { count: checkoutsThisMonth } = await supabase
+        .from('pharmacy_checkout')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', startOfMonth.toISOString());
+
       return {
         totalBusinesses: totalBusinesses || 0,
         activeBusinesses: activeCount,
         totalBranches: totalBranches || 0,
         totalEmployees: totalEmployees || 0,
         ordersThisMonth: ordersThisMonth || 0,
-        revenueThisMonth
+        revenueThisMonth,
+        totalPrescriptions: totalPrescriptions || 0,
+        activePrescriptions: activePrescriptions || 0,
+        totalPatients: totalPatients || 0,
+        checkoutsThisMonth: checkoutsThisMonth || 0,
       };
     },
     enabled: isAuthenticated && userProfile?.primary_role === 'SystemMaster'
@@ -883,7 +907,7 @@ export const SystemMasterDashboard = () => {
                 </p>
               </CardContent>
             </Card>
-            <Card>
+           <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Revenue This Month</CardTitle>
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -895,6 +919,50 @@ export const SystemMasterDashboard = () => {
                 <p className="text-xs text-muted-foreground">
                   From paid orders
                 </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Pharmacy Analytics */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Prescriptions This Month</CardTitle>
+                <Pill className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{analyticsData?.totalPrescriptions || 0}</div>
+                <p className="text-xs text-muted-foreground">Total prescriptions received</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Active Prescriptions</CardTitle>
+                <Pill className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{analyticsData?.activePrescriptions || 0}</div>
+                <p className="text-xs text-muted-foreground">In progress or ready</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Patients</CardTitle>
+                <UserCheck className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{analyticsData?.totalPatients || 0}</div>
+                <p className="text-xs text-muted-foreground">Registered patients</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Checkouts This Month</CardTitle>
+                <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{analyticsData?.checkoutsThisMonth || 0}</div>
+                <p className="text-xs text-muted-foreground">Completed transactions</p>
               </CardContent>
             </Card>
           </div>
