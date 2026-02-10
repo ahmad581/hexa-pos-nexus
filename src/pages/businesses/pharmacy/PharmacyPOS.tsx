@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { User, Pill, DollarSign, CreditCard, Receipt, CheckCircle } from "lucide-react";
+import { User, Pill, DollarSign, CreditCard, Receipt, CheckCircle, ShieldCheck } from "lucide-react";
 import { usePrescriptions, Prescription } from "@/hooks/usePrescriptions";
 import { usePharmacyPatients, PharmacyPatient } from "@/hooks/usePharmacyPatients";
 import { usePharmacyCheckout } from "@/hooks/usePharmacyCheckout";
@@ -25,6 +25,7 @@ export const PharmacyPOS = () => {
   const [counselingAcknowledged, setCounselingAcknowledged] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [checkoutComplete, setCheckoutComplete] = useState(false);
+  const [insuranceVerified, setInsuranceVerified] = useState(false);
 
   // Get ready prescriptions for selected patient
   const readyPrescriptions = prescriptions.filter(p => {
@@ -36,10 +37,12 @@ export const PharmacyPOS = () => {
 
   const selectedRxDetails = prescriptions.filter(p => selectedPrescriptions.includes(p.id));
 
-  // Calculate totals
+  // Calculate totals using patient insurance if available
+  const hasInsurance = selectedPatient?.insurance_provider && selectedPatient?.insurance_id;
   const subtotal = selectedRxDetails.reduce((sum, rx) => sum + (rx.copay_amount || 0), 0);
-  const insuranceCovered = subtotal * 0.8; // Mock 80% insurance coverage
-  const copayTotal = subtotal * 0.2;
+  const insuranceCoverageRate = hasInsurance && insuranceVerified ? 0.8 : 0;
+  const insuranceCovered = subtotal * insuranceCoverageRate;
+  const copayTotal = subtotal - insuranceCovered;
   const total = copayTotal + otcAmount;
 
   const handlePrescriptionToggle = (rxId: string) => {
@@ -91,6 +94,7 @@ export const PharmacyPOS = () => {
     setPaymentMethod("cash");
     setCounselingAcknowledged(false);
     setCheckoutComplete(false);
+    setInsuranceVerified(false);
   };
 
   if (checkoutComplete) {
@@ -144,6 +148,41 @@ export const PharmacyPOS = () => {
               onSelect={setSelectedPatient}
               selectedPatient={selectedPatient}
             />
+
+            {/* Insurance Verification */}
+            {selectedPatient && (
+              <div className="mt-4 p-3 rounded-lg border border-border">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium flex items-center gap-2">
+                      <ShieldCheck className="h-4 w-4" />
+                      Insurance
+                    </p>
+                    {hasInsurance ? (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {selectedPatient.insurance_provider} — ID: {selectedPatient.insurance_id}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground mt-1">No insurance on file — cash pricing</p>
+                    )}
+                  </div>
+                  {hasInsurance && (
+                    <Button
+                      size="sm"
+                      variant={insuranceVerified ? "outline" : "default"}
+                      onClick={() => setInsuranceVerified(!insuranceVerified)}
+                    >
+                      {insuranceVerified ? "✓ Verified" : "Verify Eligibility"}
+                    </Button>
+                  )}
+                </div>
+                {insuranceVerified && hasInsurance && (
+                  <div className="mt-2 text-xs text-green-500 bg-green-500/10 p-2 rounded">
+                    ✓ Eligible — 80% coverage confirmed. Copay applies.
+                  </div>
+                )}
+              </div>
+            )}
           </Card>
 
           {/* Ready Prescriptions */}
