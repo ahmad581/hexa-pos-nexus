@@ -10,6 +10,8 @@ import { usePrescriptions, CreatePrescriptionInput, PrescriptionType } from "@/h
 import { usePharmacyPatients, PharmacyPatient } from "@/hooks/usePharmacyPatients";
 import { PatientSearchAutocomplete } from "./PatientSearchAutocomplete";
 
+export type ReceiptMethod = "walk_in" | "e_prescribe" | "fax" | "phone";
+
 interface CreatePrescriptionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -18,6 +20,7 @@ interface CreatePrescriptionDialogProps {
 export const CreatePrescriptionDialog = ({ open, onOpenChange }: CreatePrescriptionDialogProps) => {
   const { createPrescription } = usePrescriptions();
   const [selectedPatient, setSelectedPatient] = useState<PharmacyPatient | null>(null);
+  const [receiptMethod, setReceiptMethod] = useState<ReceiptMethod>("walk_in");
   const [formData, setFormData] = useState<CreatePrescriptionInput>({
     patient_name: "",
     patient_phone: "",
@@ -62,6 +65,7 @@ export const CreatePrescriptionDialog = ({ open, onOpenChange }: CreatePrescript
 
     // Reset form
     setSelectedPatient(null);
+    setReceiptMethod("walk_in");
     setFormData({
       patient_name: "",
       patient_phone: "",
@@ -87,6 +91,30 @@ export const CreatePrescriptionDialog = ({ open, onOpenChange }: CreatePrescript
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Receipt Method */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Receipt Method</h3>
+            <div className="grid grid-cols-4 gap-2">
+              {([
+                { value: "walk_in" as const, label: "Walk-in" },
+                { value: "e_prescribe" as const, label: "E-Prescribe" },
+                { value: "fax" as const, label: "Fax" },
+                { value: "phone" as const, label: "Phone" },
+              ]).map(({ value, label }) => (
+                <Button
+                  key={value}
+                  type="button"
+                  variant={receiptMethod === value ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setReceiptMethod(value)}
+                  className="w-full"
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
+          </div>
+
           {/* Patient Section */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Patient Information</h3>
@@ -124,14 +152,31 @@ export const CreatePrescriptionDialog = ({ open, onOpenChange }: CreatePrescript
 
           {/* Prescriber Section */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Prescriber</h3>
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Prescriber Information</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="doctor_name">Prescriber Name *</Label>
+                <Input
+                  id="doctor_name"
+                  value={formData.doctor_name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, doctor_name: e.target.value }))}
+                  placeholder="Dr. ..."
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="doctor_license">License / DEA #</Label>
+                <Input
+                  id="doctor_license"
+                  placeholder="DEA or license number"
+                />
+              </div>
+            </div>
             <div className="space-y-2">
-              <Label htmlFor="doctor_name">Doctor Name</Label>
+              <Label htmlFor="doctor_clinic">Clinic / Facility</Label>
               <Input
-                id="doctor_name"
-                value={formData.doctor_name}
-                onChange={(e) => setFormData(prev => ({ ...prev, doctor_name: e.target.value }))}
-                placeholder="Dr. ..."
+                id="doctor_clinic"
+                placeholder="Clinic name and phone"
               />
             </div>
           </div>
