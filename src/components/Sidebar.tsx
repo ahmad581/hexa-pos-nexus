@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { FileText, LayoutDashboard, ListChecks, Settings, Users, ShoppingBag, File, Home, Hotel, ClipboardList, UserPlus, BarChartBig, Phone, Menu, ChevronLeft, Pill, Package, Calendar, Dumbbell, Car, Heart, Building, Shield } from "lucide-react";
+import { FileText, LayoutDashboard, ListChecks, Settings, Users, ShoppingBag, File, Home, Hotel, ClipboardList, UserPlus, BarChartBig, Phone, Menu, ChevronLeft, Pill, Package, Calendar, Dumbbell, Car, Heart, Building, Shield, ShoppingCart, RotateCcw } from "lucide-react";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRole } from "@/hooks/useRole";
@@ -198,6 +198,10 @@ export const Sidebar = () => {
   const retailItems = [
     ...(hasRouteAccess('/menu') ? [{ to: "/menu", icon: FileText, label: t('nav.menu') }] : []),
     { to: "/products", icon: ShoppingBag, label: t('nav.products') },
+    { to: "/retail-pos", icon: ShoppingCart, label: "POS" },
+    { to: "/retail-orders", icon: ClipboardList, label: "Orders" },
+    { to: "/retail-customers", icon: Users, label: "Customers" },
+    { to: "/retail-returns", icon: RotateCcw, label: "Returns" },
     { to: "/retail-inventory", icon: Package, label: t('nav.inventory') }
   ].filter(item => hasRouteAccess(item.to));
 

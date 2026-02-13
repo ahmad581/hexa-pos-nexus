@@ -39,6 +39,10 @@ import { Stylists } from "./pages/salon/Stylists";
 // Retail imports
 import { Products } from "./pages/businesses/retail/Products";
 import { Inventory } from "./pages/businesses/retail/Inventory";
+import { RetailCustomers } from "./pages/businesses/retail/Customers";
+import { RetailPOS } from "./pages/businesses/retail/RetailPOS";
+import { RetailOrders } from "./pages/businesses/retail/RetailOrders";
+import { RetailReturns } from "./pages/businesses/retail/Returns";
 
 // Pharmacy imports
 import { Prescriptions } from "./pages/businesses/pharmacy/Prescriptions";
@@ -161,17 +165,35 @@ const App = () => (
                         } />
                         
                         {/* Retail routes */}
+                        <Route path="inventory" element={<RestaurantInventory />} />
                         <Route path="products" element={
                           <BusinessRoute allowedBusinessTypes={['retail-store']}>
                             <Products />
                           </BusinessRoute>
                         } />
-                        <Route path="inventory" element={<RestaurantInventory />} />
-                        
-                        {/* Retail inventory route */}
                         <Route path="retail-inventory" element={
                           <BusinessRoute allowedBusinessTypes={['retail-store']}>
                             <Inventory />
+                          </BusinessRoute>
+                        } />
+                        <Route path="retail-customers" element={
+                          <BusinessRoute allowedBusinessTypes={['retail-store']}>
+                            <RetailCustomers />
+                          </BusinessRoute>
+                        } />
+                        <Route path="retail-pos" element={
+                          <BusinessRoute allowedBusinessTypes={['retail-store']}>
+                            <RetailPOS />
+                          </BusinessRoute>
+                        } />
+                        <Route path="retail-orders" element={
+                          <BusinessRoute allowedBusinessTypes={['retail-store']}>
+                            <RetailOrders />
+                          </BusinessRoute>
+                        } />
+                        <Route path="retail-returns" element={
+                          <BusinessRoute allowedBusinessTypes={['retail-store']}>
+                            <RetailReturns />
                           </BusinessRoute>
                         } />
                         
