@@ -18,7 +18,7 @@ export const ProductsAnalytics = () => {
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['products-analytics', branchFilter],
     queryFn: async () => {
-      let query = supabase.from('products').select('id, name, price, cost, category, stock_quantity, min_stock_level, is_active');
+      let query = supabase.from('retail_products').select('id, name, selling_price, cost_price, category, stock_quantity, min_stock, is_active');
       
       if (branchFilter) {
         query = query.eq('branch_id', branchFilter);
@@ -26,7 +26,13 @@ export const ProductsAnalytics = () => {
       
       const { data, error } = await query;
       if (error) throw error;
-      return data || [];
+      return (data || []).map(p => ({
+        ...p,
+        price: p.selling_price,
+        cost: p.cost_price,
+        stock_quantity: p.stock_quantity,
+        min_stock_level: p.min_stock,
+      }));
     }
   });
 
