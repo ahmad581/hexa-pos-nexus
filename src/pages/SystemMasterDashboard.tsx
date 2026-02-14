@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Building2, Plus, Settings, Trash2, Users, BarChart3, Crown, Shield, LogOut, Info, ExternalLink, ArrowLeft, DollarSign, Phone, Pill, UserCheck, ShoppingCart } from "lucide-react";
+import { Building2, Plus, Settings, Trash2, Users, BarChart3, Crown, Shield, LogOut, Info, ExternalLink, ArrowLeft, DollarSign, Phone, Pill, UserCheck, ShoppingCart, Package, RotateCcw, Heart } from "lucide-react";
 import { toast } from "sonner";
 import { ClientManagement } from "@/components/ClientManagement";
 import { SystemMasterRoleManagement } from "@/components/SystemMasterRoleManagement";
@@ -269,6 +269,37 @@ export const SystemMasterDashboard = () => {
         .select('*', { count: 'exact', head: true })
         .gte('created_at', startOfMonth.toISOString());
 
+      // Retail stats
+      const { count: totalRetailProducts } = await supabase
+        .from('retail_products')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_active', true);
+
+      const { count: totalRetailCustomers } = await supabase
+        .from('retail_customers')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_active', true);
+
+      const { count: retailOrdersThisMonth } = await supabase
+        .from('retail_orders')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', startOfMonth.toISOString());
+
+      const { data: retailRevenueData } = await supabase
+        .from('retail_orders')
+        .select('total_amount')
+        .gte('created_at', startOfMonth.toISOString())
+        .eq('payment_status', 'paid');
+
+      const retailRevenueThisMonth = retailRevenueData?.reduce(
+        (sum, order) => sum + (Number(order.total_amount) || 0), 0
+      ) || 0;
+
+      const { count: retailReturnsThisMonth } = await supabase
+        .from('retail_returns')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', startOfMonth.toISOString());
+
       return {
         totalBusinesses: totalBusinesses || 0,
         activeBusinesses: activeCount,
@@ -280,6 +311,11 @@ export const SystemMasterDashboard = () => {
         activePrescriptions: activePrescriptions || 0,
         totalPatients: totalPatients || 0,
         checkoutsThisMonth: checkoutsThisMonth || 0,
+        totalRetailProducts: totalRetailProducts || 0,
+        totalRetailCustomers: totalRetailCustomers || 0,
+        retailOrdersThisMonth: retailOrdersThisMonth || 0,
+        retailRevenueThisMonth,
+        retailReturnsThisMonth: retailReturnsThisMonth || 0,
       };
     },
     enabled: isAuthenticated && userProfile?.primary_role === 'SystemMaster'
@@ -919,6 +955,62 @@ export const SystemMasterDashboard = () => {
                 <p className="text-xs text-muted-foreground">
                   From paid orders
                 </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Retail Analytics */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Retail Products</CardTitle>
+                <Package className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{analyticsData?.totalRetailProducts || 0}</div>
+                <p className="text-xs text-muted-foreground">Active catalog items</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Retail Customers</CardTitle>
+                <Heart className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{analyticsData?.totalRetailCustomers || 0}</div>
+                <p className="text-xs text-muted-foreground">Loyalty members</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Retail Orders</CardTitle>
+                <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{analyticsData?.retailOrdersThisMonth || 0}</div>
+                <p className="text-xs text-muted-foreground">This month</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Retail Revenue</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  ${analyticsData?.retailRevenueThisMonth?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
+                </div>
+                <p className="text-xs text-muted-foreground">From paid retail orders</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Retail Returns</CardTitle>
+                <RotateCcw className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{analyticsData?.retailReturnsThisMonth || 0}</div>
+                <p className="text-xs text-muted-foreground">This month</p>
               </CardContent>
             </Card>
           </div>
