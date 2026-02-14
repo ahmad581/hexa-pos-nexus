@@ -1,15 +1,17 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, Minus, ShoppingCart, CreditCard, Banknote, Trash2 } from "lucide-react";
+import { Search, Plus, Minus, ShoppingCart, CreditCard, Banknote, Trash2, Percent, User } from "lucide-react";
 import { useRetailProducts } from "@/hooks/useRetailProducts";
 import { useRetailOrders } from "@/hooks/useRetailOrders";
+import { useRetailCustomers } from "@/hooks/useRetailCustomers";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBranch } from "@/contexts/BranchContext";
 import { useCurrency } from "@/hooks/useCurrency";
+import { useSettings } from "@/contexts/SettingsContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 
 interface CartItem {
@@ -25,13 +27,35 @@ interface CartItem {
 export const RetailPOS = () => {
   const { products } = useRetailProducts();
   const { createOrder } = useRetailOrders();
+  const { customers } = useRetailCustomers();
   const { userProfile } = useAuth();
   const { selectedBranch } = useBranch();
   const { formatCurrency: formatPrice } = useCurrency();
+  const { settings } = useSettings();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [paymentMethod, setPaymentMethod] = useState("cash");
-  const [customerName, setCustomerName] = useState("");
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [discountType, setDiscountType] = useState<"percent" | "fixed">("percent");
+  const [discountValue, setDiscountValue] = useState(0);
+
+  const taxRate = (settings.tax_rate ?? 8.25) / 100;
+
+  const selectedCustomer = useMemo(
+    () => customers.find(c => c.id === selectedCustomerId) || null,
+    [customers, selectedCustomerId]
+  );
+
+  const filteredCustomers = useMemo(
+    () => customerSearch.length < 1 ? [] : customers.filter(c =>
+      `${c.first_name} ${c.last_name}`.toLowerCase().includes(customerSearch.toLowerCase()) ||
+      c.phone?.includes(customerSearch) ||
+      c.email?.toLowerCase().includes(customerSearch.toLowerCase())
+    ).slice(0, 8),
+    [customers, customerSearch]
+  );
 
   const filteredProducts = products.filter(p =>
     p.stock_quantity > 0 && (
@@ -82,9 +106,12 @@ export const RetailPOS = () => {
   };
 
   const subtotal = cart.reduce((sum, i) => sum + i.total_price, 0);
-  const taxRate = 0.0825;
-  const taxAmount = subtotal * taxRate;
-  const total = subtotal + taxAmount;
+  const discountAmount = discountType === "percent"
+    ? subtotal * (discountValue / 100)
+    : Math.min(discountValue, subtotal);
+  const afterDiscount = subtotal - discountAmount;
+  const taxAmount = afterDiscount * taxRate;
+  const total = afterDiscount + taxAmount;
 
   const handleCheckout = async () => {
     if (cart.length === 0) {
@@ -101,14 +128,14 @@ export const RetailPOS = () => {
         business_id: userProfile.business_id,
         branch_id: selectedBranch.id,
         order_number: `RET-${Date.now().toString(36).toUpperCase()}`,
-        customer_id: null,
-        customer_name: customerName || null,
-        customer_phone: null,
+        customer_id: selectedCustomerId,
+        customer_name: selectedCustomer ? `${selectedCustomer.first_name} ${selectedCustomer.last_name}` : null,
+        customer_phone: selectedCustomer?.phone || null,
         order_type: 'in-store',
         status: 'completed',
         subtotal,
-        discount_amount: 0,
-        discount_type: null,
+        discount_amount: discountAmount,
+        discount_type: discountValue > 0 ? discountType : null,
         tax_amount: taxAmount,
         total_amount: total,
         payment_method: paymentMethod,
@@ -120,7 +147,9 @@ export const RetailPOS = () => {
     });
 
     setCart([]);
-    setCustomerName('');
+    setSelectedCustomerId(null);
+    setCustomerSearch('');
+    setDiscountValue(0);
   };
 
   return (
@@ -168,12 +197,44 @@ export const RetailPOS = () => {
           <h2 className="font-bold text-foreground">Cart ({cart.length})</h2>
         </div>
 
-        <Input
-          placeholder="Customer name (optional)"
-          value={customerName}
-          onChange={e => setCustomerName(e.target.value)}
-          className="mb-3"
-        />
+        {/* Customer search */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="mb-3 justify-start text-sm font-normal w-full">
+              <User className="h-4 w-4 mr-2 shrink-0" />
+              {selectedCustomer
+                ? `${selectedCustomer.first_name} ${selectedCustomer.last_name} (${selectedCustomer.loyalty_points} pts)`
+                : "Link customer (optional)"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80 p-2" align="start">
+            <Input
+              placeholder="Search by name, phone, email..."
+              value={customerSearch}
+              onChange={e => setCustomerSearch(e.target.value)}
+              className="mb-2"
+              autoFocus
+            />
+            {selectedCustomerId && (
+              <Button variant="ghost" size="sm" className="w-full mb-1 text-destructive" onClick={() => { setSelectedCustomerId(null); setCustomerSearch(''); }}>
+                Remove customer
+              </Button>
+            )}
+            {filteredCustomers.map(c => (
+              <button
+                key={c.id}
+                className="w-full text-left px-3 py-2 rounded-md hover:bg-muted text-sm"
+                onClick={() => { setSelectedCustomerId(c.id); setCustomerSearch(''); }}
+              >
+                <span className="font-medium text-foreground">{c.first_name} {c.last_name}</span>
+                <span className="text-muted-foreground ml-2 text-xs">{c.phone || c.email || ''}</span>
+              </button>
+            ))}
+            {customerSearch.length >= 1 && filteredCustomers.length === 0 && (
+              <p className="text-xs text-muted-foreground text-center py-2">No customers found</p>
+            )}
+          </PopoverContent>
+        </Popover>
 
         <div className="flex-1 overflow-y-auto space-y-2">
           {cart.length === 0 ? (
@@ -204,12 +265,41 @@ export const RetailPOS = () => {
         </div>
 
         <div className="border-t border-border pt-3 mt-3 space-y-2">
+          {/* Discount row */}
+          <div className="flex items-center gap-2">
+            <Percent className="h-4 w-4 text-muted-foreground shrink-0" />
+            <Select value={discountType} onValueChange={(v: "percent" | "fixed") => setDiscountType(v)}>
+              <SelectTrigger className="w-20 h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="percent">%</SelectItem>
+                <SelectItem value="fixed">$</SelectItem>
+              </SelectContent>
+            </Select>
+            <Input
+              type="number"
+              min={0}
+              max={discountType === "percent" ? 100 : subtotal}
+              value={discountValue || ''}
+              onChange={e => setDiscountValue(Number(e.target.value) || 0)}
+              placeholder="Discount"
+              className="h-8 text-sm"
+            />
+          </div>
+
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Subtotal</span>
             <span className="text-foreground">{formatPrice(subtotal)}</span>
           </div>
+          {discountAmount > 0 && (
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Discount</span>
+              <span className="text-destructive">-{formatPrice(discountAmount)}</span>
+            </div>
+          )}
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Tax (8.25%)</span>
+            <span className="text-muted-foreground">Tax ({(taxRate * 100).toFixed(2)}%)</span>
             <span className="text-foreground">{formatPrice(taxAmount)}</span>
           </div>
           <div className="flex justify-between text-lg font-bold">
