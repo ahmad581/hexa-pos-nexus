@@ -55,6 +55,9 @@ import { GroceryInventory } from "./pages/businesses/grocery/Inventory";
 
 // Gym imports
 import { Members } from "./pages/businesses/gym/Members";
+import { CheckIns } from "./pages/businesses/gym/CheckIns";
+import { Classes } from "./pages/businesses/gym/Classes";
+import { Equipment } from "./pages/businesses/gym/Equipment";
 
 // Auto repair imports
 import { AutoRepairServices } from "./pages/businesses/auto-repair/Services";
@@ -230,6 +233,21 @@ const App = () => (
                         <Route path="members" element={
                           <BusinessRoute allowedBusinessTypes={['gym']}>
                             <Members />
+                          </BusinessRoute>
+                        } />
+                        <Route path="check-ins" element={
+                          <BusinessRoute allowedBusinessTypes={['gym']}>
+                            <CheckIns />
+                          </BusinessRoute>
+                        } />
+                        <Route path="classes" element={
+                          <BusinessRoute allowedBusinessTypes={['gym']}>
+                            <Classes />
+                          </BusinessRoute>
+                        } />
+                        <Route path="equipment" element={
+                          <BusinessRoute allowedBusinessTypes={['gym']}>
+                            <Equipment />
                           </BusinessRoute>
                         } />
                         

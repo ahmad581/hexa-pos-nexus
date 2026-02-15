@@ -40,7 +40,7 @@ const BUSINESS_TYPE_FEATURES: Record<string, string[]> = {
   'restaurant': ['order-management', 'menu-management', 'table-management', 'inventory-management', 'employee-management', 'call-center'],
   'hotel': ['room-management', 'appointment-scheduling', 'inventory-management', 'employee-management', 'call-center'],
   'salon': ['appointment-scheduling', 'employee-management', 'inventory-management', 'call-center'],
-  'gym': ['member-management', 'employee-management', 'inventory-management', 'call-center'],
+  'gym': ['member-management', 'check-in-system', 'class-management', 'equipment-management', 'employee-management', 'inventory-management', 'call-center'],
   'retail': ['product-management', 'inventory-management', 'order-management', 'employee-management', 'call-center'],
   'pharmacy': ['prescription-management', 'inventory-management', 'employee-management', 'call-center'],
   'grocery': ['product-management', 'inventory-management', 'order-management', 'employee-management', 'call-center'],

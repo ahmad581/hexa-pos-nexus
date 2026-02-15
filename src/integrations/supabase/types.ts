@@ -1196,6 +1196,241 @@ export type Database = {
         }
         Relationships: []
       }
+      gym_check_ins: {
+        Row: {
+          branch_id: string
+          business_id: string | null
+          check_in_method: string
+          check_in_time: string
+          check_out_time: string | null
+          created_at: string
+          id: string
+          member_id: string
+          notes: string | null
+          zone: string | null
+        }
+        Insert: {
+          branch_id: string
+          business_id?: string | null
+          check_in_method?: string
+          check_in_time?: string
+          check_out_time?: string | null
+          created_at?: string
+          id?: string
+          member_id: string
+          notes?: string | null
+          zone?: string | null
+        }
+        Update: {
+          branch_id?: string
+          business_id?: string | null
+          check_in_method?: string
+          check_in_time?: string
+          check_out_time?: string | null
+          created_at?: string
+          id?: string
+          member_id?: string
+          notes?: string | null
+          zone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gym_check_ins_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "custom_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gym_check_ins_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gym_class_registrations: {
+        Row: {
+          attended: boolean | null
+          class_id: string
+          id: string
+          member_id: string
+          registered_at: string
+          status: string
+        }
+        Insert: {
+          attended?: boolean | null
+          class_id: string
+          id?: string
+          member_id: string
+          registered_at?: string
+          status?: string
+        }
+        Update: {
+          attended?: boolean | null
+          class_id?: string
+          id?: string
+          member_id?: string
+          registered_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gym_class_registrations_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "gym_classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gym_class_registrations_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gym_classes: {
+        Row: {
+          branch_id: string
+          business_id: string | null
+          capacity: number
+          class_type: string
+          created_at: string
+          day_of_week: string
+          description: string | null
+          duration_minutes: number
+          id: string
+          instructor_name: string | null
+          location: string | null
+          name: string
+          recurring: boolean
+          registered_count: number
+          start_time: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          branch_id: string
+          business_id?: string | null
+          capacity?: number
+          class_type: string
+          created_at?: string
+          day_of_week: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          instructor_name?: string | null
+          location?: string | null
+          name: string
+          recurring?: boolean
+          registered_count?: number
+          start_time: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string
+          business_id?: string | null
+          capacity?: number
+          class_type?: string
+          created_at?: string
+          day_of_week?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          instructor_name?: string | null
+          location?: string | null
+          name?: string
+          recurring?: boolean
+          registered_count?: number
+          start_time?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gym_classes_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "custom_businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gym_equipment: {
+        Row: {
+          branch_id: string
+          brand: string | null
+          business_id: string | null
+          category: string
+          condition: string
+          created_at: string
+          id: string
+          last_maintenance: string | null
+          maintenance_notes: string | null
+          model: string | null
+          name: string
+          next_maintenance: string | null
+          purchase_date: string | null
+          serial_number: string | null
+          status: string
+          updated_at: string
+          warranty_expiry: string | null
+          zone: string | null
+        }
+        Insert: {
+          branch_id: string
+          brand?: string | null
+          business_id?: string | null
+          category: string
+          condition?: string
+          created_at?: string
+          id?: string
+          last_maintenance?: string | null
+          maintenance_notes?: string | null
+          model?: string | null
+          name: string
+          next_maintenance?: string | null
+          purchase_date?: string | null
+          serial_number?: string | null
+          status?: string
+          updated_at?: string
+          warranty_expiry?: string | null
+          zone?: string | null
+        }
+        Update: {
+          branch_id?: string
+          brand?: string | null
+          business_id?: string | null
+          category?: string
+          condition?: string
+          created_at?: string
+          id?: string
+          last_maintenance?: string | null
+          maintenance_notes?: string | null
+          model?: string | null
+          name?: string
+          next_maintenance?: string | null
+          purchase_date?: string | null
+          serial_number?: string | null
+          status?: string
+          updated_at?: string
+          warranty_expiry?: string | null
+          zone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gym_equipment_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "custom_businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory_items: {
         Row: {
           branch_id: string | null
