@@ -58,6 +58,9 @@ import { Members } from "./pages/businesses/gym/Members";
 import { CheckIns } from "./pages/businesses/gym/CheckIns";
 import { Classes } from "./pages/businesses/gym/Classes";
 import { Equipment } from "./pages/businesses/gym/Equipment";
+import { MembershipPlans } from "./pages/businesses/gym/MembershipPlans";
+import { Trainers } from "./pages/businesses/gym/Trainers";
+import { VisitHistory } from "./pages/businesses/gym/VisitHistory";
 
 // Auto repair imports
 import { AutoRepairServices } from "./pages/businesses/auto-repair/Services";
@@ -248,6 +251,21 @@ const App = () => (
                         <Route path="equipment" element={
                           <BusinessRoute allowedBusinessTypes={['gym']}>
                             <Equipment />
+                          </BusinessRoute>
+                        } />
+                        <Route path="membership-plans" element={
+                          <BusinessRoute allowedBusinessTypes={['gym']}>
+                            <MembershipPlans />
+                          </BusinessRoute>
+                        } />
+                        <Route path="trainers" element={
+                          <BusinessRoute allowedBusinessTypes={['gym']}>
+                            <Trainers />
+                          </BusinessRoute>
+                        } />
+                        <Route path="visit-history" element={
+                          <BusinessRoute allowedBusinessTypes={['gym']}>
+                            <VisitHistory />
                           </BusinessRoute>
                         } />
                         
