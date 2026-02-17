@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { FileText, LayoutDashboard, ListChecks, Settings, Users, ShoppingBag, File, Home, Hotel, ClipboardList, UserPlus, BarChartBig, Phone, Menu, ChevronLeft, Pill, Package, Calendar, Dumbbell, Car, Heart, Building, Shield, ShoppingCart, RotateCcw, ScanLine, CreditCard, UserCheck, History } from "lucide-react";
+import { FileText, LayoutDashboard, ListChecks, Settings, Users, ShoppingBag, File, Home, Hotel, ClipboardList, UserPlus, BarChartBig, Phone, Menu, ChevronLeft, Pill, Package, Calendar, Dumbbell, Car, Heart, Building, Shield, ShoppingCart, RotateCcw, ScanLine, CreditCard, UserCheck, History, Receipt, UserPlus2, Bell } from "lucide-react";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRole } from "@/hooks/useRole";
@@ -228,11 +228,14 @@ export const Sidebar = () => {
     ...(hasRouteAccess('/menu') ? [{ to: "/menu", icon: FileText, label: t('nav.menu') }] : []),
     { to: "/members", icon: Users, label: t('nav.members') },
     { to: "/membership-plans", icon: CreditCard, label: "Plans & Pricing" },
+    { to: "/billing", icon: Receipt, label: "Billing" },
     { to: "/check-ins", icon: ScanLine, label: "Check-In" },
     { to: "/classes", icon: Calendar, label: "Classes" },
+    { to: "/class-registrations", icon: UserPlus2, label: "Registrations" },
     { to: "/trainers", icon: UserCheck, label: "Trainers" },
     { to: "/equipment", icon: Dumbbell, label: "Equipment" },
-    { to: "/visit-history", icon: History, label: "Visit History" }
+    { to: "/visit-history", icon: History, label: "Visit History" },
+    { to: "/member-engagement", icon: Bell, label: "Engagement" },
   ].filter(item => hasRouteAccess(item.to));
 
   const autoRepairItems = [

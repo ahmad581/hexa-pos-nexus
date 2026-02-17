@@ -61,6 +61,9 @@ import { Equipment } from "./pages/businesses/gym/Equipment";
 import { MembershipPlans } from "./pages/businesses/gym/MembershipPlans";
 import { Trainers } from "./pages/businesses/gym/Trainers";
 import { VisitHistory } from "./pages/businesses/gym/VisitHistory";
+import { Billing } from "./pages/businesses/gym/Billing";
+import { ClassRegistrations } from "./pages/businesses/gym/ClassRegistrations";
+import { MemberEngagement } from "./pages/businesses/gym/MemberEngagement";
 
 // Auto repair imports
 import { AutoRepairServices } from "./pages/businesses/auto-repair/Services";
@@ -266,6 +269,21 @@ const App = () => (
                         <Route path="visit-history" element={
                           <BusinessRoute allowedBusinessTypes={['gym']}>
                             <VisitHistory />
+                          </BusinessRoute>
+                        } />
+                        <Route path="billing" element={
+                          <BusinessRoute allowedBusinessTypes={['gym']}>
+                            <Billing />
+                          </BusinessRoute>
+                        } />
+                        <Route path="class-registrations" element={
+                          <BusinessRoute allowedBusinessTypes={['gym']}>
+                            <ClassRegistrations />
+                          </BusinessRoute>
+                        } />
+                        <Route path="member-engagement" element={
+                          <BusinessRoute allowedBusinessTypes={['gym']}>
+                            <MemberEngagement />
                           </BusinessRoute>
                         } />
                         

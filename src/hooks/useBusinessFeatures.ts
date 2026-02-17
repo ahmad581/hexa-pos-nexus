@@ -28,11 +28,15 @@ const FEATURE_ROUTE_MAP: Record<string, string[]> = {
   'member-management': ['/members'],
   'membership-plans': ['/membership-plans'],
   'check-in-system': ['/check-ins'],
-  'class-management': ['/classes'],
+  'class-management': ['/classes', '/class-registrations'],
   'equipment-management': ['/equipment'],
   'trainer-management': ['/trainers'],
   'visit-history': ['/visit-history'],
   'service-management': ['/auto-services'],
+  'billing-payments': ['/billing'],
+  'member-engagement': ['/member-engagement'],
+  'qr-checkin': ['/check-ins'],
+  'class-management-registrations': ['/class-registrations'],
 };
 
 export const useBusinessFeatures = () => {

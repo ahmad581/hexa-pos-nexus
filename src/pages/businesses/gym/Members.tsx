@@ -6,22 +6,33 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { User, Calendar, Activity, Search, Plus, Edit, Trash2, Loader2, Phone, Mail, Snowflake, XCircle, CheckCircle } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { User, Calendar, Activity, Search, Plus, Edit, Trash2, Loader2, Phone, Mail, Snowflake, XCircle, CheckCircle, QrCode } from "lucide-react";
 import { useMembers, type MemberInsert } from "@/hooks/useMembers";
+import { useGymFreezes } from "@/hooks/useGymFreezes";
+import { useGymMembershipPlans } from "@/hooks/useGymMembershipPlans";
 import { useBranch } from "@/contexts/BranchContext";
 import { format } from "date-fns";
+import { QRCodeGenerator } from "@/components/QRCodeGenerator";
 
 const MEMBERSHIP_TYPES = ["Basic", "Premium", "VIP", "Student", "Family", "Corporate", "Off-Peak", "Class-Only"];
 const STATUSES = ["active", "expired", "frozen", "cancelled", "pending"];
 
 export const Members = () => {
   const { members, isLoading, createMember, updateMember, deleteMember } = useMembers();
+  const { freezes, createFreeze, endFreeze, getActiveFreezeForMember, getDaysUsed } = useGymFreezes();
+  const { plans } = useGymMembershipPlans();
   const { selectedBranch } = useBranch();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<any>(null);
+  const [freezeDialogOpen, setFreezeDialogOpen] = useState(false);
+  const [freezeMemberId, setFreezeMemberId] = useState<string | null>(null);
+  const [freezeReason, setFreezeReason] = useState("");
+  const [freezeMaxDays, setFreezeMaxDays] = useState(30);
+  const [qrMember, setQrMember] = useState<any>(null);
 
   const [form, setForm] = useState({
     first_name: "", last_name: "", email: "", phone: "",
@@ -95,6 +106,35 @@ export const Members = () => {
 
   const changeStatus = (id: string, newStatus: string) => {
     updateMember.mutate({ id, status: newStatus });
+  };
+
+  const openFreezeDialog = (memberId: string) => {
+    setFreezeMemberId(memberId);
+    // Try to find the member's plan to get default max freeze days
+    const member = members.find(m => m.id === memberId);
+    const plan = plans.find(p => p.name === member?.membership_type);
+    setFreezeMaxDays(plan?.max_freeze_days ?? 30);
+    setFreezeReason("");
+    setFreezeDialogOpen(true);
+  };
+
+  const handleFreeze = () => {
+    if (!freezeMemberId) return;
+    createFreeze.mutate({
+      member_id: freezeMemberId,
+      reason: freezeReason || undefined,
+      max_days_allowed: freezeMaxDays,
+    });
+    setFreezeDialogOpen(false);
+  };
+
+  const handleUnfreeze = (memberId: string) => {
+    const activeFreeze = getActiveFreezeForMember(memberId);
+    if (activeFreeze) {
+      endFreeze.mutate({ freezeId: activeFreeze.id, memberId });
+    } else {
+      changeStatus(memberId, "active");
+    }
   };
 
   if (isLoading) {
@@ -223,15 +263,26 @@ export const Members = () => {
                     <Edit className="w-3.5 h-3.5 mr-1" />Edit
                   </Button>
                   {member.status === "active" && (
-                    <Button variant="ghost" size="sm" onClick={() => changeStatus(member.id, "frozen")}>
+                    <Button variant="ghost" size="sm" onClick={() => openFreezeDialog(member.id)}>
                       <Snowflake className="w-3.5 h-3.5 mr-1" />Freeze
                     </Button>
                   )}
                   {member.status === "frozen" && (
-                    <Button variant="ghost" size="sm" onClick={() => changeStatus(member.id, "active")}>
-                      <CheckCircle className="w-3.5 h-3.5 mr-1" />Activate
-                    </Button>
+                    <>
+                      {(() => {
+                        const af = getActiveFreezeForMember(member.id);
+                        return af ? (
+                          <span className="text-xs text-muted-foreground">{getDaysUsed(af)}/{af.max_days_allowed}d</span>
+                        ) : null;
+                      })()}
+                      <Button variant="ghost" size="sm" onClick={() => handleUnfreeze(member.id)}>
+                        <CheckCircle className="w-3.5 h-3.5 mr-1" />Activate
+                      </Button>
+                    </>
                   )}
+                  <Button variant="ghost" size="sm" onClick={() => setQrMember(member)}>
+                    <QrCode className="w-3.5 h-3.5" />
+                  </Button>
                   <Button variant="ghost" size="sm" className="text-destructive ml-auto" onClick={() => deleteMember.mutate(member.id)}>
                     <Trash2 className="w-3.5 h-3.5" />
                   </Button>
@@ -241,6 +292,42 @@ export const Members = () => {
           })}
         </div>
       )}
+
+      {/* Freeze Dialog */}
+      <Dialog open={freezeDialogOpen} onOpenChange={setFreezeDialogOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Freeze Membership</DialogTitle></DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div>
+              <Label>Max Freeze Days</Label>
+              <Input type="number" value={freezeMaxDays} onChange={e => setFreezeMaxDays(parseInt(e.target.value) || 30)} />
+              <p className="text-xs text-muted-foreground mt-1">Based on membership plan limit</p>
+            </div>
+            <div>
+              <Label>Reason (optional)</Label>
+              <Textarea value={freezeReason} onChange={e => setFreezeReason(e.target.value)} placeholder="e.g. Medical leave, travel..." />
+            </div>
+            <Button onClick={handleFreeze} disabled={createFreeze.isPending}>Freeze Membership</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* QR Code Dialog */}
+      <Dialog open={!!qrMember} onOpenChange={() => setQrMember(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Member QR Code</DialogTitle></DialogHeader>
+          {qrMember && (
+            <div className="flex flex-col items-center gap-4 py-4">
+              <QRCodeGenerator 
+                employeeId={qrMember.id} 
+                employeeName={`${qrMember.first_name} ${qrMember.last_name}`} 
+                qrCodeData={`GYMEMBER:${qrMember.member_number}`} 
+              />
+              <p className="text-xs text-muted-foreground">Scan this code at check-in</p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

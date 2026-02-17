@@ -34,15 +34,24 @@ export const CheckIns = () => {
   const currentlyIn = checkIns.filter(c => !c.check_out_time);
   const todayTotal = checkIns.length;
 
-  const handleCheckIn = (memberId: string) => {
-    // Check if already checked in
+  const handleCheckIn = (memberId: string, method: string = 'manual') => {
     const alreadyIn = checkIns.find(c => c.member_id === memberId && !c.check_out_time);
-    if (alreadyIn) {
-      return;
-    }
-    checkIn.mutate({ memberId, zone: selectedZone || undefined, method: 'manual' });
+    if (alreadyIn) return;
+    checkIn.mutate({ memberId, zone: selectedZone || undefined, method });
     setSearchQuery("");
     setSelectedMember("");
+  };
+
+  // QR code check-in handler
+  const handleQrCheckIn = (qrData: string) => {
+    // Expected format: GYMEMBER:MEMBER_NUMBER
+    const match = qrData.match(/^GYMEMBER:(.+)$/);
+    if (!match) return;
+    const memberNumber = match[1];
+    const member = activeMembers.find(m => m.member_number === memberNumber);
+    if (member) {
+      handleCheckIn(member.id, 'qr_code');
+    }
   };
 
   if (isLoading) {
