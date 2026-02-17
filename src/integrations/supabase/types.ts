@@ -1431,6 +1431,120 @@ export type Database = {
           },
         ]
       }
+      gym_membership_freezes: {
+        Row: {
+          branch_id: string
+          created_at: string
+          freeze_end: string | null
+          freeze_start: string
+          id: string
+          max_days_allowed: number
+          member_id: string
+          reason: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          branch_id: string
+          created_at?: string
+          freeze_end?: string | null
+          freeze_start?: string
+          id?: string
+          max_days_allowed?: number
+          member_id: string
+          reason?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string
+          created_at?: string
+          freeze_end?: string | null
+          freeze_start?: string
+          id?: string
+          max_days_allowed?: number
+          member_id?: string
+          reason?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gym_membership_freezes_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gym_membership_payments: {
+        Row: {
+          amount: number
+          branch_id: string
+          business_id: string | null
+          created_at: string
+          id: string
+          member_id: string
+          notes: string | null
+          payment_date: string
+          payment_method: string
+          payment_type: string
+          plan_id: string | null
+          status: string
+        }
+        Insert: {
+          amount?: number
+          branch_id: string
+          business_id?: string | null
+          created_at?: string
+          id?: string
+          member_id: string
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string
+          payment_type?: string
+          plan_id?: string | null
+          status?: string
+        }
+        Update: {
+          amount?: number
+          branch_id?: string
+          business_id?: string | null
+          created_at?: string
+          id?: string
+          member_id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string
+          payment_type?: string
+          plan_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gym_membership_payments_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "custom_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gym_membership_payments_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gym_membership_payments_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "gym_membership_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gym_membership_plans: {
         Row: {
           access_level: string
@@ -1958,6 +2072,7 @@ export type Database = {
           member_number: string
           membership_type: string
           phone: string | null
+          qr_code: string | null
           start_date: string
           status: string
           updated_at: string
@@ -1975,6 +2090,7 @@ export type Database = {
           member_number: string
           membership_type: string
           phone?: string | null
+          qr_code?: string | null
           start_date: string
           status?: string
           updated_at?: string
@@ -1992,6 +2108,7 @@ export type Database = {
           member_number?: string
           membership_type?: string
           phone?: string | null
+          qr_code?: string | null
           start_date?: string
           status?: string
           updated_at?: string
