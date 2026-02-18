@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, Users, DollarSign, Shield, Plus, Settings, Trash2, UserPlus, Info, Pill, UserCheck, ShoppingCart } from "lucide-react";
+import { Building2, Users, DollarSign, Shield, Plus, Settings, Trash2, UserPlus, Info, Pill, UserCheck, ShoppingCart, Dumbbell, CalendarCheck, CreditCard, Wrench } from "lucide-react";
 import { toast } from "sonner";
 
 interface Client {
@@ -346,6 +346,49 @@ export const ClientManagement = ({ clients, isLoading }: { clients: Client[], is
       };
     },
     enabled: !!clientBusiness && selectedClient?.business_type === 'pharmacy'
+  });
+
+  // Fetch gym-specific stats for gym clients
+  const { data: gymStats } = useQuery({
+    queryKey: ['client-gym-stats', clientBusiness?.id],
+    queryFn: async () => {
+      if (!clientBusiness) return null;
+
+      const { data: branches } = await supabase
+        .from('branches')
+        .select('id')
+        .eq('business_id', clientBusiness.id);
+
+      const branchIds = branches?.map(b => b.id) || [];
+      if (branchIds.length === 0) return { totalMembers: 0, activeMembers: 0, checkIns: 0, classes: 0, revenue: 0, equipment: 0, freezes: 0 };
+
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const [totalMembers, activeMembers, checkIns, classes, payments, equipment, freezes] = await Promise.all([
+        supabase.from('members').select('*', { count: 'exact', head: true }).in('branch_id', branchIds),
+        supabase.from('members').select('*', { count: 'exact', head: true }).in('branch_id', branchIds).eq('status', 'active'),
+        supabase.from('gym_check_ins').select('*', { count: 'exact', head: true }).in('branch_id', branchIds).gte('check_in_time', startOfMonth.toISOString()),
+        supabase.from('gym_classes').select('*', { count: 'exact', head: true }).in('branch_id', branchIds).eq('status', 'scheduled'),
+        supabase.from('gym_membership_payments').select('amount').in('branch_id', branchIds).gte('payment_date', startOfMonth.toISOString()).eq('status', 'completed'),
+        supabase.from('gym_equipment').select('*', { count: 'exact', head: true }).in('branch_id', branchIds).eq('status', 'operational'),
+        supabase.from('gym_membership_freezes').select('*', { count: 'exact', head: true }).in('branch_id', branchIds).eq('status', 'active'),
+      ]);
+
+      const revenue = payments.data?.reduce((sum, p) => sum + (Number(p.amount) || 0), 0) || 0;
+
+      return {
+        totalMembers: totalMembers.count || 0,
+        activeMembers: activeMembers.count || 0,
+        checkIns: checkIns.count || 0,
+        classes: classes.count || 0,
+        revenue,
+        equipment: equipment.count || 0,
+        freezes: freezes.count || 0,
+      };
+    },
+    enabled: !!clientBusiness && selectedClient?.business_type === 'gym'
   });
 
   const handleViewClient = (client: Client) => {
@@ -764,6 +807,86 @@ export const ClientManagement = ({ clients, isLoading }: { clients: Client[], is
                   </Card>
                 </div>
               )}
+
+              {/* Gym-specific stats */}
+              {selectedClient?.business_type === 'gym' && gymStats && (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <Users className="w-4 h-4 text-muted-foreground" />
+                        Members
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-2xl font-bold">{gymStats.totalMembers}</p>
+                      <p className="text-sm text-muted-foreground">{gymStats.activeMembers} active</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <CalendarCheck className="w-4 h-4 text-muted-foreground" />
+                        Check-Ins This Month
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-2xl font-bold">{gymStats.checkIns}</p>
+                      <p className="text-sm text-muted-foreground">Member visits</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <CreditCard className="w-4 h-4 text-muted-foreground" />
+                        Revenue This Month
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-2xl font-bold">
+                        ${gymStats.revenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </p>
+                      <p className="text-sm text-muted-foreground">From membership payments</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <Dumbbell className="w-4 h-4 text-muted-foreground" />
+                        Scheduled Classes
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-2xl font-bold">{gymStats.classes}</p>
+                      <p className="text-sm text-muted-foreground">Active group classes</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <Wrench className="w-4 h-4 text-muted-foreground" />
+                        Equipment
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-2xl font-bold">{gymStats.equipment}</p>
+                      <p className="text-sm text-muted-foreground">Operational machines</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <Users className="w-4 h-4 text-muted-foreground" />
+                        Active Freezes
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-2xl font-bold">{gymStats.freezes}</p>
+                      <p className="text-sm text-muted-foreground">Memberships on hold</p>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="financial" className="space-y-4 max-h-[50vh] overflow-y-auto">
@@ -811,6 +934,38 @@ export const ClientManagement = ({ clients, isLoading }: { clients: Client[], is
                   </CardContent>
                 </Card>
               </div>
+
+              {/* Gym-specific financial data */}
+              {selectedClient?.business_type === 'gym' && gymStats && (
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <CreditCard className="w-4 h-4 text-muted-foreground" />
+                        Membership Revenue (This Month)
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-2xl font-bold">
+                        ${gymStats.revenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-1">From gym membership payments</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <Users className="w-4 h-4 text-muted-foreground" />
+                        Active Members
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-2xl font-bold">{gymStats.activeMembers}</p>
+                      <p className="text-sm text-muted-foreground mt-1">Currently paying members</p>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="branches" className="space-y-4 max-h-[50vh] overflow-y-auto">
