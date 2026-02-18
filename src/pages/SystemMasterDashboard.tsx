@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Building2, Plus, Settings, Trash2, Users, BarChart3, Crown, Shield, LogOut, Info, ExternalLink, ArrowLeft, DollarSign, Phone, Pill, UserCheck, ShoppingCart, Package, RotateCcw, Heart } from "lucide-react";
+import { Building2, Plus, Settings, Trash2, Users, BarChart3, Crown, Shield, LogOut, Info, ExternalLink, ArrowLeft, DollarSign, Phone, Pill, UserCheck, ShoppingCart, Package, RotateCcw, Heart, Dumbbell, CalendarCheck, CreditCard, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import { ClientManagement } from "@/components/ClientManagement";
 import { SystemMasterRoleManagement } from "@/components/SystemMasterRoleManagement";
@@ -300,6 +300,46 @@ export const SystemMasterDashboard = () => {
         .select('*', { count: 'exact', head: true })
         .gte('created_at', startOfMonth.toISOString());
 
+      // Gym stats
+      const { count: totalMembers } = await supabase
+        .from('members')
+        .select('*', { count: 'exact', head: true });
+
+      const { count: activeMembers } = await supabase
+        .from('members')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'active');
+
+      const { count: gymCheckInsThisMonth } = await supabase
+        .from('gym_check_ins')
+        .select('*', { count: 'exact', head: true })
+        .gte('check_in_time', startOfMonth.toISOString());
+
+      const { count: gymClassesCount } = await supabase
+        .from('gym_classes')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'scheduled');
+
+      const { data: gymPaymentsData } = await supabase
+        .from('gym_membership_payments')
+        .select('amount')
+        .gte('payment_date', startOfMonth.toISOString())
+        .eq('status', 'completed');
+
+      const gymRevenueThisMonth = gymPaymentsData?.reduce(
+        (sum, p) => sum + (Number(p.amount) || 0), 0
+      ) || 0;
+
+      const { count: gymEquipmentCount } = await supabase
+        .from('gym_equipment')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'operational');
+
+      const { count: activeFreezes } = await supabase
+        .from('gym_membership_freezes')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'active');
+
       return {
         totalBusinesses: totalBusinesses || 0,
         activeBusinesses: activeCount,
@@ -316,6 +356,13 @@ export const SystemMasterDashboard = () => {
         retailOrdersThisMonth: retailOrdersThisMonth || 0,
         retailRevenueThisMonth,
         retailReturnsThisMonth: retailReturnsThisMonth || 0,
+        totalMembers: totalMembers || 0,
+        activeMembers: activeMembers || 0,
+        gymCheckInsThisMonth: gymCheckInsThisMonth || 0,
+        gymClassesCount: gymClassesCount || 0,
+        gymRevenueThisMonth,
+        gymEquipmentCount: gymEquipmentCount || 0,
+        activeFreezes: activeFreezes || 0,
       };
     },
     enabled: isAuthenticated && userProfile?.primary_role === 'SystemMaster'
@@ -1011,6 +1058,76 @@ export const SystemMasterDashboard = () => {
               <CardContent>
                 <div className="text-2xl font-bold">{analyticsData?.retailReturnsThisMonth || 0}</div>
                 <p className="text-xs text-muted-foreground">This month</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Gym Analytics */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Gym Members</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{analyticsData?.totalMembers || 0}</div>
+                <p className="text-xs text-muted-foreground">
+                  {analyticsData?.activeMembers || 0} active
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Check-Ins This Month</CardTitle>
+                <CalendarCheck className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{analyticsData?.gymCheckInsThisMonth || 0}</div>
+                <p className="text-xs text-muted-foreground">Member visits</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Gym Revenue</CardTitle>
+                <CreditCard className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  ${analyticsData?.gymRevenueThisMonth?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
+                </div>
+                <p className="text-xs text-muted-foreground">Membership payments this month</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Scheduled Classes</CardTitle>
+                <Dumbbell className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{analyticsData?.gymClassesCount || 0}</div>
+                <p className="text-xs text-muted-foreground">Active group classes</p>
+              </CardContent>
+            </Card>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Operational Equipment</CardTitle>
+                <Wrench className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{analyticsData?.gymEquipmentCount || 0}</div>
+                <p className="text-xs text-muted-foreground">Functioning machines</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Active Freezes</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{analyticsData?.activeFreezes || 0}</div>
+                <p className="text-xs text-muted-foreground">Memberships on hold</p>
               </CardContent>
             </Card>
           </div>
