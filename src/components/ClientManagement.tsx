@@ -148,55 +148,46 @@ export const ClientManagement = ({ clients, isLoading }: { clients: Client[], is
     enabled: !!clientBusiness
   });
 
-  // Filter and merge features based on business type
+  // Universal features available for ALL business types
+  const UNIVERSAL_FEATURE_IDS = new Set([
+    'employee-management',
+    'analytics-reporting',
+    'call-center',
+    'inventory-management',
+    'menu-management',
+    'appointment-scheduling',
+  ]);
+
+  // Business-type-specific feature keywords for filtering
+  const businessTypeToKeywords: Record<string, string[]> = {
+    'restaurant': ['restaurant', 'menu', 'food', 'dining', 'kitchen', 'table', 'order'],
+    'hotel': ['hotel', 'room', 'guest', 'reservation', 'hospitality', 'accommodation'],
+    'hair-salon': ['salon', 'beauty', 'stylist', 'appointment', 'hair'],
+    'medical-clinic': ['medical', 'clinic', 'healthcare', 'patient', 'appointment'],
+    'retail-store': ['retail', 'product', 'store', 'sales'],
+    'pharmacy': ['pharmacy', 'prescription', 'medication', 'drug', 'healthcare'],
+    'grocery': ['grocery', 'produce', 'fresh'],
+    'gym': ['gym', 'fitness', 'membership', 'class', 'equipment', 'trainer', 'check-in', 'member'],
+    'auto-repair': ['auto', 'vehicle', 'repair', 'service', 'parts'],
+    'pet-care': ['pet', 'veterinary', 'animal', 'grooming']
+  };
+
+  // Filter features: universal features + business-type-specific features
   const clientFeatures = allAvailableFeatures
     .filter(feature => {
       if (!selectedClient) return false;
 
+      // Always show universal features
+      if (UNIVERSAL_FEATURE_IDS.has(feature.id)) return true;
+
+      // Show business-type-specific features based on keywords
       const categoryLower = feature.category.toLowerCase();
       const nameLower = feature.name.toLowerCase();
-      
-      // Always show core business features
-      if (categoryLower.includes('core')) return true;
-
-      // Shared categories available for ALL business types ("shared features")
-      const sharedCategories = ['operations', 'hr', 'analytics', 'customer service', 'scheduling'];
-      if (sharedCategories.some(cat => categoryLower.includes(cat))) {
-        return true;
-      }
-      
-      // Universal features available for all business types
-      const universalKeywords = [
-        'employee', 'hr', 'staff', 'call center', 'inventory',
-        'analytics', 'reporting', 'branch', 'financial', 'user management',
-        'menu', 'catalog'
-      ];
-      
-      if (universalKeywords.some(keyword => 
-        categoryLower.includes(keyword) || nameLower.includes(keyword)
-      )) {
-        return true;
-      }
-      
-      // Business-specific features
-      const businessTypeToKeywords: Record<string, string[]> = {
-        'restaurant': ['restaurant', 'menu', 'food', 'dining', 'kitchen', 'table', 'order'],
-        'hotel': ['hotel', 'room', 'guest', 'reservation', 'hospitality', 'accommodation'],
-        'hair-salon': ['salon', 'beauty', 'stylist', 'appointment', 'hair'],
-        'medical-clinic': ['medical', 'clinic', 'healthcare', 'patient', 'appointment'],
-        'retail-store': ['retail', 'product', 'store', 'sales'],
-        'pharmacy': ['pharmacy', 'prescription', 'medication', 'drug'],
-        'grocery': ['grocery', 'produce', 'fresh'],
-        'gym': ['gym', 'fitness', 'membership', 'class', 'equipment', 'trainer'],
-        'auto-repair': ['auto', 'vehicle', 'repair', 'service', 'parts'],
-        'pet-care': ['pet', 'veterinary', 'animal', 'grooming']
-      };
-
       const keywords = businessTypeToKeywords[selectedClient.business_type] || [];
       return keywords.some(keyword => 
         categoryLower.includes(keyword) || 
         nameLower.includes(keyword) ||
-        feature.description.toLowerCase().includes(keyword)
+        (feature.description || '').toLowerCase().includes(keyword)
       );
     })
     .map(feature => {
