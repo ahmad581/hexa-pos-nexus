@@ -140,10 +140,10 @@ export const CheckIns = () => {
               </div>
             )}
           </div>
-          <Select value={selectedZone} onValueChange={setSelectedZone}>
+          <Select value={selectedZone || "all"} onValueChange={v => setSelectedZone(v === "all" ? "" : v)}>
             <SelectTrigger className="w-[150px]"><SelectValue placeholder="Zone" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Any Zone</SelectItem>
+              <SelectItem value="all">Any Zone</SelectItem>
               {ZONES.map(z => <SelectItem key={z} value={z}>{z}</SelectItem>)}
             </SelectContent>
           </Select>
