@@ -96,25 +96,28 @@ export const SystemMasterDashboard = () => {
     }
   }, [businessTypeFeatures]);
 
-  // Shared feature categories that should be selectable for ALL business types
-  const SHARED_CATEGORIES = new Set([
-    'operations',
-    'hr',
-    'analytics',
-    'customer service',
-    'scheduling',
+  // Universal features available for ALL business types regardless of type
+  const UNIVERSAL_FEATURE_IDS = new Set([
+    'employee-management',
+    'analytics-reporting',
+    'call-center',
+    'inventory-management',
+    'menu-management',
+    'appointment-scheduling',
   ]);
 
-  // Available features = shared features + business-type-specific features (deduped)
+  // Available features = universal features + business-type-specific features (deduped)
   const availableFeatures = (() => {
     const map = new Map<string, AvailableFeature>();
 
+    // Add universal features
     for (const f of allAvailableFeatures) {
-      if (SHARED_CATEGORIES.has((f.category || '').toLowerCase())) {
+      if (UNIVERSAL_FEATURE_IDS.has(f.id)) {
         map.set(f.id, f);
       }
     }
 
+    // Add business-type-specific features
     for (const bf of businessTypeFeatures || []) {
       const f = bf.available_features as unknown as AvailableFeature;
       if (f?.id) map.set(f.id, f);
