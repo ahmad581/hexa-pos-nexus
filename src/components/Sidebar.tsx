@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { FileText, LayoutDashboard, ListChecks, Settings, Users, ShoppingBag, File, Home, Hotel, ClipboardList, UserPlus, BarChartBig, Phone, Menu, ChevronLeft, Pill, Package, Calendar, Dumbbell, Car, Heart, Building, Shield, ShoppingCart, RotateCcw, ScanLine, CreditCard, UserCheck, History, Receipt, UserPlus2, Bell } from "lucide-react";
+import { FileText, LayoutDashboard, ListChecks, Settings, Users, ShoppingBag, File, Home, Hotel, ClipboardList, UserPlus, BarChartBig, Phone, Menu, ChevronLeft, Pill, Package, Calendar, Dumbbell, Car, Heart, Building, Shield, ShoppingCart, RotateCcw, ScanLine, CreditCard, UserCheck, History, Receipt, UserPlus2, Bell, Scissors, Sparkles } from "lucide-react";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRole } from "@/hooks/useRole";
@@ -190,9 +190,10 @@ export const Sidebar = () => {
   ].filter(item => hasRouteAccess(item.to));
 
   const salonItems = [
-    ...(hasRouteAccess('/menu') ? [{ to: "/menu", icon: FileText, label: t('nav.menu') }] : []),
-    { to: "/appointments", icon: ClipboardList, label: t('nav.appointments') },
-    { to: "/stylists", icon: Users, label: t('nav.stylists') }
+    { to: "/appointments", icon: ClipboardList, label: "Appointments" },
+    { to: "/stylists", icon: Scissors, label: "Stylists" },
+    { to: "/salon-services", icon: Sparkles, label: "Services" },
+    { to: "/salon-clients", icon: Users, label: "Clients" },
   ].filter(item => hasRouteAccess(item.to));
 
   const retailItems = [

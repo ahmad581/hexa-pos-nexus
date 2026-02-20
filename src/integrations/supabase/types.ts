@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           appointment_date: string
           branch_id: string
+          business_id: string | null
           created_at: string
           customer_email: string | null
           customer_name: string
@@ -34,6 +35,7 @@ export type Database = {
         Insert: {
           appointment_date: string
           branch_id: string
+          business_id?: string | null
           created_at?: string
           customer_email?: string | null
           customer_name: string
@@ -50,6 +52,7 @@ export type Database = {
         Update: {
           appointment_date?: string
           branch_id?: string
+          business_id?: string | null
           created_at?: string
           customer_email?: string | null
           customer_name?: string
@@ -63,7 +66,15 @@ export type Database = {
           stylist_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "appointments_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "custom_businesses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       available_features: {
         Row: {
@@ -3289,6 +3300,122 @@ export type Database = {
         }
         Relationships: []
       }
+      salon_clients: {
+        Row: {
+          allergies: string | null
+          branch_id: string
+          business_id: string | null
+          created_at: string
+          email: string | null
+          first_name: string
+          id: string
+          last_name: string
+          last_visit_date: string | null
+          notes: string | null
+          phone: string | null
+          preferred_stylist_id: string | null
+          updated_at: string
+          visit_count: number | null
+        }
+        Insert: {
+          allergies?: string | null
+          branch_id: string
+          business_id?: string | null
+          created_at?: string
+          email?: string | null
+          first_name: string
+          id?: string
+          last_name: string
+          last_visit_date?: string | null
+          notes?: string | null
+          phone?: string | null
+          preferred_stylist_id?: string | null
+          updated_at?: string
+          visit_count?: number | null
+        }
+        Update: {
+          allergies?: string | null
+          branch_id?: string
+          business_id?: string | null
+          created_at?: string
+          email?: string | null
+          first_name?: string
+          id?: string
+          last_name?: string
+          last_visit_date?: string | null
+          notes?: string | null
+          phone?: string | null
+          preferred_stylist_id?: string | null
+          updated_at?: string
+          visit_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "salon_clients_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "custom_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "salon_clients_preferred_stylist_id_fkey"
+            columns: ["preferred_stylist_id"]
+            isOneToOne: false
+            referencedRelation: "stylists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      salon_services: {
+        Row: {
+          branch_id: string
+          business_id: string | null
+          category: string
+          created_at: string
+          description: string | null
+          duration_minutes: number
+          id: string
+          is_active: boolean
+          name: string
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          branch_id: string
+          business_id?: string | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          price?: number
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string
+          business_id?: string | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "salon_services_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "custom_businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       services: {
         Row: {
           branch_id: string
@@ -3330,42 +3457,74 @@ export type Database = {
       }
       stylists: {
         Row: {
+          bio: string | null
           branch_id: string
+          business_id: string | null
           created_at: string
           email: string | null
+          experience_level: string
+          first_name: string
           hire_date: string | null
           id: string
           is_active: boolean
+          last_name: string | null
           name: string
           phone: string | null
+          rating: number | null
           specialties: string[] | null
+          status: string
           updated_at: string
+          working_hours: Json | null
         }
         Insert: {
+          bio?: string | null
           branch_id: string
+          business_id?: string | null
           created_at?: string
           email?: string | null
+          experience_level?: string
+          first_name?: string
           hire_date?: string | null
           id?: string
           is_active?: boolean
+          last_name?: string | null
           name: string
           phone?: string | null
+          rating?: number | null
           specialties?: string[] | null
+          status?: string
           updated_at?: string
+          working_hours?: Json | null
         }
         Update: {
+          bio?: string | null
           branch_id?: string
+          business_id?: string | null
           created_at?: string
           email?: string | null
+          experience_level?: string
+          first_name?: string
           hire_date?: string | null
           id?: string
           is_active?: boolean
+          last_name?: string | null
           name?: string
           phone?: string | null
+          rating?: number | null
           specialties?: string[] | null
+          status?: string
           updated_at?: string
+          working_hours?: Json | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "stylists_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "custom_businesses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tables: {
         Row: {
