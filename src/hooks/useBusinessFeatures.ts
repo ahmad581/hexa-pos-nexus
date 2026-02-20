@@ -22,7 +22,7 @@ const FEATURE_ROUTE_MAP: Record<string, string[]> = {
   'room-management': ['/rooms'],
   'hotel-services': ['/hotel-services'],
   'appointment-scheduling': ['/appointments', '/pet-appointments'],
-  'stylist-management': ['/stylists'],
+  'stylist-management': ['/stylists', '/salon-services', '/salon-clients'],
   'product-management': ['/products', '/retail-pos', '/retail-orders', '/retail-customers', '/retail-returns'],
   'prescription-management': ['/prescriptions', '/pharmacy-patients', '/pharmacy-pos'],
   'member-management': ['/members'],
