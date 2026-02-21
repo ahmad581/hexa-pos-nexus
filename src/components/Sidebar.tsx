@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { FileText, LayoutDashboard, ListChecks, Settings, Users, ShoppingBag, File, Home, Hotel, ClipboardList, UserPlus, BarChartBig, Phone, Menu, ChevronLeft, Pill, Package, Calendar, Dumbbell, Car, Heart, Building, Shield, ShoppingCart, RotateCcw, ScanLine, CreditCard, UserCheck, History, Receipt, UserPlus2, Bell, Scissors, Sparkles } from "lucide-react";
+import { FileText, LayoutDashboard, ListChecks, Settings, Users, ShoppingBag, File, Home, Hotel, ClipboardList, UserPlus, BarChartBig, Phone, Menu, ChevronLeft, Pill, Package, Calendar, Dumbbell, Car, Heart, Building, Shield, ShoppingCart, RotateCcw, ScanLine, CreditCard, UserCheck, History, Receipt, UserPlus2, Bell, Scissors, Sparkles, CalendarDays } from "lucide-react";
 import { useBusinessType } from "@/contexts/BusinessTypeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRole } from "@/hooks/useRole";
@@ -191,9 +191,12 @@ export const Sidebar = () => {
 
   const salonItems = [
     { to: "/appointments", icon: ClipboardList, label: "Appointments" },
+    { to: "/salon-schedule", icon: CalendarDays, label: "Schedule" },
     { to: "/stylists", icon: Scissors, label: "Stylists" },
     { to: "/salon-services", icon: Sparkles, label: "Services" },
     { to: "/salon-clients", icon: Users, label: "Clients" },
+    { to: "/salon-pos", icon: ShoppingCart, label: "Checkout" },
+    { to: "/salon-packages", icon: Package, label: "Packages" },
   ].filter(item => hasRouteAccess(item.to));
 
   const retailItems = [

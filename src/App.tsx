@@ -37,6 +37,9 @@ import { Appointments } from "./pages/salon/Appointments";
 import { Stylists } from "./pages/salon/Stylists";
 import { SalonServices } from "./pages/salon/SalonServices";
 import { SalonClients } from "./pages/salon/SalonClients";
+import { SalonPOS } from "./pages/salon/SalonPOS";
+import { SalonPackages } from "./pages/salon/SalonPackages";
+import { StylistSchedule } from "./pages/salon/StylistSchedule";
 
 // Retail imports
 import { Products } from "./pages/businesses/retail/Products";
@@ -182,6 +185,21 @@ const App = () => (
                         <Route path="salon-clients" element={
                           <BusinessRoute allowedBusinessTypes={['hair-salon']}>
                             <SalonClients />
+                          </BusinessRoute>
+                        } />
+                        <Route path="salon-pos" element={
+                          <BusinessRoute allowedBusinessTypes={['hair-salon']}>
+                            <SalonPOS />
+                          </BusinessRoute>
+                        } />
+                        <Route path="salon-packages" element={
+                          <BusinessRoute allowedBusinessTypes={['hair-salon']}>
+                            <SalonPackages />
+                          </BusinessRoute>
+                        } />
+                        <Route path="salon-schedule" element={
+                          <BusinessRoute allowedBusinessTypes={['hair-salon']}>
+                            <StylistSchedule />
                           </BusinessRoute>
                         } />
                         
