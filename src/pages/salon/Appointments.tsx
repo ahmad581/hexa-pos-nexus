@@ -7,11 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Clock, User, Scissors, Search, Plus, Edit, Trash2, Loader2, Phone, Mail, CalendarDays } from "lucide-react";
+import { Clock, User, Scissors, Search, Plus, Edit, Trash2, Loader2, Phone, Mail, CalendarDays, Bell, BellOff, CheckCircle2 } from "lucide-react";
 import { useSalonAppointments, APPOINTMENT_STATUSES } from "@/hooks/useSalonAppointments";
 import { useStylists } from "@/hooks/useStylists";
 import { useSalonServices } from "@/hooks/useSalonServices";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, isFuture, addHours } from "date-fns";
+import { toast } from "@/hooks/use-toast";
 
 const STATUS_COLORS: Record<string, string> = {
   scheduled: "bg-blue-500/20 text-blue-400",
@@ -271,6 +272,29 @@ export const Appointments = () => {
 
                 {a.price != null && a.price > 0 && (
                   <div className="text-primary font-bold">${a.price.toFixed(2)}</div>
+                )}
+
+                {/* Reminder indicator */}
+                {dt && isFuture(dt) && (a.status === "scheduled" || a.status === "confirmed") && (
+                  <div className="flex items-center gap-2 text-xs">
+                    {(a as any).reminder_sent ? (
+                      <span className="flex items-center gap-1 text-primary">
+                        <CheckCircle2 size={12} /> Reminder sent
+                      </span>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs h-7"
+                        onClick={() => {
+                          updateAppointment({ id: a.id, reminder_sent: true, reminder_sent_at: new Date().toISOString() } as any);
+                          toast({ title: "Reminder sent", description: `Reminder marked for ${a.customer_name}` });
+                        }}
+                      >
+                        <Bell size={12} className="mr-1" /> Send Reminder
+                      </Button>
+                    )}
+                  </div>
                 )}
 
                 {/* Quick status actions */}

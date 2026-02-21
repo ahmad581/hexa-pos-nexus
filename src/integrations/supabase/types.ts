@@ -27,6 +27,8 @@ export type Database = {
           id: string
           notes: string | null
           price: number | null
+          reminder_sent: boolean | null
+          reminder_sent_at: string | null
           service_type: string
           status: string
           stylist_id: string | null
@@ -44,6 +46,8 @@ export type Database = {
           id?: string
           notes?: string | null
           price?: number | null
+          reminder_sent?: boolean | null
+          reminder_sent_at?: string | null
           service_type: string
           status?: string
           stylist_id?: string | null
@@ -61,6 +65,8 @@ export type Database = {
           id?: string
           notes?: string | null
           price?: number | null
+          reminder_sent?: boolean | null
+          reminder_sent_at?: string | null
           service_type?: string
           status?: string
           stylist_id?: string | null
@@ -3300,6 +3306,66 @@ export type Database = {
         }
         Relationships: []
       }
+      salon_client_packages: {
+        Row: {
+          branch_id: string
+          business_id: string | null
+          client_id: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          package_id: string | null
+          purchased_at: string
+          sessions_remaining: number
+          sessions_used: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          branch_id: string
+          business_id?: string | null
+          client_id?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          package_id?: string | null
+          purchased_at?: string
+          sessions_remaining?: number
+          sessions_used?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string
+          business_id?: string | null
+          client_id?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          package_id?: string | null
+          purchased_at?: string
+          sessions_remaining?: number
+          sessions_used?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "salon_client_packages_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "salon_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "salon_client_packages_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "salon_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       salon_clients: {
         Row: {
           allergies: string | null
@@ -3366,6 +3432,54 @@ export type Database = {
           },
         ]
       }
+      salon_packages: {
+        Row: {
+          branch_id: string
+          business_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          package_type: string
+          price: number
+          services: Json
+          total_sessions: number | null
+          updated_at: string
+          validity_days: number | null
+        }
+        Insert: {
+          branch_id: string
+          business_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          package_type?: string
+          price?: number
+          services?: Json
+          total_sessions?: number | null
+          updated_at?: string
+          validity_days?: number | null
+        }
+        Update: {
+          branch_id?: string
+          business_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          package_type?: string
+          price?: number
+          services?: Json
+          total_sessions?: number | null
+          updated_at?: string
+          validity_days?: number | null
+        }
+        Relationships: []
+      }
       salon_services: {
         Row: {
           branch_id: string
@@ -3412,6 +3526,74 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "custom_businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      salon_transactions: {
+        Row: {
+          appointment_id: string | null
+          branch_id: string
+          business_id: string | null
+          client_name: string
+          created_at: string
+          discount_amount: number
+          id: string
+          notes: string | null
+          payment_method: string
+          payment_status: string
+          services: Json
+          stylist_id: string | null
+          subtotal: number
+          tax_amount: number
+          tip_amount: number
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          branch_id: string
+          business_id?: string | null
+          client_name: string
+          created_at?: string
+          discount_amount?: number
+          id?: string
+          notes?: string | null
+          payment_method?: string
+          payment_status?: string
+          services?: Json
+          stylist_id?: string | null
+          subtotal?: number
+          tax_amount?: number
+          tip_amount?: number
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string | null
+          branch_id?: string
+          business_id?: string | null
+          client_name?: string
+          created_at?: string
+          discount_amount?: number
+          id?: string
+          notes?: string | null
+          payment_method?: string
+          payment_status?: string
+          services?: Json
+          stylist_id?: string | null
+          subtotal?: number
+          tax_amount?: number
+          tip_amount?: number
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "salon_transactions_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
             referencedColumns: ["id"]
           },
         ]
